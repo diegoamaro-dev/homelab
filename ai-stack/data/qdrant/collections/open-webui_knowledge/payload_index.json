@@ -1,0 +1,1 @@
+{"schema":{"metadata.hash":{"type":"keyword","on_disk":false},"metadata.file_id":{"type":"keyword","on_disk":false},"tenant_id":{"type":"keyword","is_tenant":true,"on_disk":false}}}

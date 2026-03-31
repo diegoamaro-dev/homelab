@@ -1,0 +1,18 @@
+[0;1;32m●[0m homelab-tools.service - Homelab AI Tools API
+     Loaded: loaded (]8;;file://homelab/etc/systemd/system/homelab-tools.service/etc/systemd/system/homelab-tools.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;32mactive (running)[0m since Fri 2026-03-13 14:35:26 CET; 9s ago
+   Main PID: 210692 (python)
+      Tasks: 1 (limit: 35564)
+     Memory: 19.7M (peak: 20.6M)
+        CPU: 84ms
+     CGroup: /system.slice/homelab-tools.service
+             └─[0;38;5;245m210692 /home/diego/homelab/ai-tools/venv/bin/python /home/diego/homelab/ai-tools/docker_status.py[0m
+
+mar 13 14:35:26 homelab systemd[1]: Started homelab-tools.service - Homelab AI Tools API.
+mar 13 14:35:26 homelab python[210692]:  * Serving Flask app 'docker_status'
+mar 13 14:35:26 homelab python[210692]:  * Debug mode: off
+mar 13 14:35:26 homelab python[210692]: WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+mar 13 14:35:26 homelab python[210692]:  * Running on all addresses (0.0.0.0)
+mar 13 14:35:26 homelab python[210692]:  * Running on http://127.0.0.1:5050
+mar 13 14:35:26 homelab python[210692]:  * Running on http://192.168.178.203:5050
+mar 13 14:35:26 homelab python[210692]: Press CTRL+C to quit
