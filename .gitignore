@@ -1,0 +1,40 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Secrets / env
+.env
+.env.*
+*.key
+*.pem
+
+# Node / build
+node_modules/
+.next/
+dist/
+build/
+
+# Python
+__pycache__/
+*.pyc
+
+# Docker runtime / local data
+*/data/
+*/logs/
+
+# Zigbee2MQTT runtime
+03_services/zigbee-stack/zigbee2mqtt/data/
+
+# Databases / backups
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.swp
