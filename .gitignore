@@ -38,3 +38,14 @@ __pycache__/
 # Temporary files
 *.tmp
 *.swp
+
+# Zigbee2MQTT runtime REAL
+03_services/zigbee-stack/zigbee2mqtt/data/
+
+# Mosquitto
+03_services/zigbee-stack/mosquitto/data/
+03_services/zigbee-stack/mosquitto/log/
+
+# Volúmenes Docker genéricos
+*/data/
+*/logs/
