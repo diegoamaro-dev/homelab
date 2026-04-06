@@ -48,6 +48,7 @@ UUID=<DISK_UUID> /mnt/storage ext4 defaults,nofail 0 2
 
 
 ## Validation
+
 - Disk successfully mounted using `mount -a`
 - Verified with `df -h`
 - Write test performed (`test.txt` created successfully)
