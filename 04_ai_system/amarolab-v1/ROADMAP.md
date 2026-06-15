@@ -1,6 +1,6 @@
 # ROADMAP — Amarolab Assistant v1
 
-Last updated: 2026-06-15
+Last updated: 2026-06-15 (Phase A.4 v0.1 application result; D-32..D-34 added)
 
 Phase plan for the Amarolab Assistant v1 sub-project. For the
 homelab-wide roadmap see
@@ -67,26 +67,68 @@ current, what's next, what's blocked, what's decided.
 - Evidence:
   [`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md).
 
+### Phase A.4 v0 — Open WebUI default model + system prompt v0 — APPLIED
+- Date applied: 2026-06-15.
+- Outcome: `config.DEFAULT_MODELS = "qwen2.5:7b-instruct"`; v0
+  system prompt (2 310 chars) installed in `model.params.system`
+  on the qwen2.5 row. `meta.toolIds=["time_now"]` and
+  `meta.description` preserved. `llama3:latest` (Jarvis) and
+  `llama3.2:latest` untouched.
+- Validation: **13 / 17 PASS**, 4 FAIL (V-5a, V-6a, V-6b, V-10).
+- Decisions added: D-27..D-31 (see below).
+- Evidence:
+  [`../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-design.md`](../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-design.md)
+  and
+  [`../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-applied.md`](../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-applied.md).
+
+### Phase A.4 v0.1 — System prompt revision — PARTIALLY APPLIED
+- Date applied: 2026-06-15.
+- Outcome: v0.1 prompt (3 342 chars) replaces v0 on the qwen2.5
+  row. `meta.toolIds`, `meta.description`, `DEFAULT_MODELS` all
+  unchanged. No services restarted.
+- Validation: **15 / 21 PASS**, 6 FAIL across three issues:
+  - **Issue T (most serious):** `time_now` not invoked from chat;
+    audit log records 0 invocations during V-10. Same root cause
+    fails V-10a, V-10b, V-12. Blocks Phase B.
+  - **Issue L:** English greeting on turn 1 still defaults to
+    Spanish (V-6a, V-6b). Multi-turn explicit switch works (V-11).
+  - **Issue B:** `rag_search` refusal no longer names "Phase B"
+    (V-8b regressed from v0).
+- Decisions added: D-32..D-34 (see below).
+- Evidence:
+  [`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-design.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-design.md)
+  and
+  [`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md).
+
 ---
 
 ## Current phase
 
-### Phase A.4 — Open WebUI default model + system prompt v0 (next)
+### Phase A.4 v0.2 (or Issue-T diagnosis) — next
 
-Phase A.3 is complete. The remaining Phase A items, per
-[`05-implementation-roadmap.md`](05-implementation-roadmap.md):
+Phase A.4 is **not closed**. The v0.1 prompt fixed the
+Spanish-greeting persona and added a working multi-turn language
+switch, but introduced no progress on the most consequential
+regression: `time_now` is not invoked from chat when a custom
+`params.system` is in scope. Phase B (`rag_search`) cannot start
+until tool-calling from chat is proven again.
 
-- Set the workspace default model in Open WebUI admin to
-  `qwen2.5:7b-instruct` (currently still the user must pick it from
-  the dropdown).
-- Draft a v0 system prompt with the tool-composition rules from
-  [`03-tools.md`](03-tools.md), trimmed to the three A.2 tools (only
-  `time_now` is wired so far, but the prompt should still describe
-  the routing rules so it survives Phase B and Phase D landing).
-- Exit: default model is qwen2.5; system prompt is loaded.
+Recommended next sub-step (per
+[`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md)
+§"Recommended next step"):
 
-Phase A.4 status: **not started**. No plan yet committed; no UI
-changes made.
+- **Option A — diagnose first.** Hit Ollama directly
+  (`curl http://127.0.0.1:11434/api/chat`) with the v0.1 system
+  prompt + `time_now` tool definition + `"¿qué hora es?"`. The
+  outcome decides whether v0.2 is a prompt-only iteration or
+  whether Open WebUI's prompt+tools wiring needs work.
+- Option B — v0.2 prompt iteration without diagnosis (drop
+  `time_now(timezone?, format?)` signature line, remove `[1]`
+  citation example, drop language-ambiguity escape, re-add
+  "Phase B" label under the `rag_search` description).
+- Option C — rollback to v0 prompt (loses V-5a + V-11 fixes).
+
+Phase A.4 v0.2 status: **not started**. No code, no UI changes.
 
 ---
 
@@ -117,6 +159,10 @@ work has actually been sequenced.
 - Draft a v0 system prompt with the tool-composition rules from
   [`03-tools.md`](03-tools.md), trimmed to the three Phase A.2 tools.
 - Exit: default model is qwen2.5; system prompt is loaded.
+
+(v0 and v0.1 have already been applied; see §"Completed phases"
+above. Phase A.4 is **not closed** — see §"Current phase" for v0.2
+options and blocker B-09.)
 
 ### Phase B — Knowledge Tool + audit corpus
 - Add `infra_audits` corpus to `ingest/conf/corpora.yaml` and create
@@ -187,6 +233,7 @@ blocked" can start):
 |---|---|---|---|---|
 | B-07 | HA Long-Lived Access Token not issued | C | user | Must be created in HA UI; not automatable |
 | B-08 | MyFreeTour source path unknown | G | user | Phase 1 placeholder corpus stays empty until decided |
+| B-09 | Tool-calling regression with custom `params.system` (Issue T) — `time_now` not invoked from chat | B | user (decide A/B/C in Phase A.4 §"Current phase") | Audit log: 0 `time_now` invocations during V-10 in v0.1 validation. Phase A.3 proves the Tool itself works; root cause is the prompt+tool wiring once a system prompt is attached |
 
 Resolved blockers (kept for traceability; superseded by locked
 decisions D-18 … D-22):
@@ -242,6 +289,18 @@ explicit user decision and a new design entry.
 | D-20 | Open WebUI per-Tool visibility = **`qwen2.5:7b-instruct` only**. The three A.2 tools (and any future tool) are scoped to the primary tool-calling model; `llama3:latest` / `llama3.2` / `phi3` do not see them | 2026-06-15 | Phase A.2 approval |
 | D-21 | Audit-log host path **confirmed** as `/srv/homelab/data/openwebui/amarolab-audit.log` (container path `/app/backend/data/amarolab-audit.log`). No deviation from D-07 | 2026-06-15 | Phase A.2 approval |
 | D-22 | `rag_search` collection enum **keeps** `myfreetour`. When called, the Tool returns `{"error":"empty_collection","code":"empty_collection"}` until the corpus is indexed (Phase G). Forces the LLM to apologise cleanly instead of silently picking another corpus | 2026-06-15 | Phase A.2 approval |
+| D-23 | **Tool source location** = `/home/diego/homelab/ai-stack/openwebui-tools/` (sibling to `ai-stack/ingest/`). Tracked in the homelab git repo; synced to GitHub. The bind-mounted `/srv/homelab/data/openwebui/` is **not** used to hold Tool source — Open WebUI 0.8.10 does not auto-discover Tools from disk | 2026-06-15 | Phase A.3 plan revision after Open WebUI 0.8.10 compatibility audit |
+| D-24 | **Tool code shape** = `class Tools` with type-hinted methods. Module-level callables are not supported by Open WebUI 0.8.10's tool loader (`load_tool_module_by_id` requires `hasattr(module, "Tools")` and raises otherwise). Each public, non-class, non-underscore attribute of the `Tools()` instance becomes a separately-callable tool | 2026-06-15 | Compatibility report §3 |
+| D-25 | **Tool install workflow** = the supported Open WebUI API/UI flow: `POST /api/v1/tools/create` (or admin UI: Workspace → Tools → "+"). Open WebUI stores the source in `webui.db`. The disk-side `openwebui-tools/tools/*.py` files are the canonical version-controlled copy; the DB row is the runtime copy. Edits round-trip via `POST /api/v1/tools/id/{id}/update` | 2026-06-15 | Compatibility report §5 |
+| D-26 | **Shared helper handling** = inline the audit / RateLimiter / redaction helper in each Tool file. Open WebUI executes each Tool in its own `tool_{id}` module namespace; cross-Tool `import` does not work. For v1, accept ~30 lines of duplicated audit code per Tool; revisit at v2 if the Tool count grows. (The canonical helper text still lives once at `openwebui-tools/lib/audit_helper.py` and is textually inlined by the install helper.) | 2026-06-15 | Compatibility report §7 |
+| D-27 | **System-prompt scope** = per-model only, attached to the `qwen2.5:7b-instruct` Model entry. Other models (`llama3:latest`, `llama3.2:latest`) remain clean | 2026-06-15 | Phase A.4 design approval |
+| D-28 | **Persona** = "Amarolab Assistant"; default language Spanish; style concise / technical / practical; prefer documented facts over assumptions | 2026-06-15 | Phase A.4 design approval |
+| D-29 | **Tool routing description** in the system prompt names all three Phase A.2 tools (`time_now`, `rag_search`, `system_status`) with current implementation status, so the prompt is forward-compatible with Phase B and Phase D | 2026-06-15 | Phase A.4 design approval |
+| D-30 | **Refusal block** for four out-of-scope action classes: Home Assistant control (Phase C), shell exec, filesystem writes, Guardian Cloud backend changes. Refusal names the planned phase when applicable | 2026-06-15 | Phase A.4 design approval |
+| D-31 | **Citation grammar** = `[N]` inline + final `[N] <source>` list; extends from `time_now` today to `rag_search` in Phase B. Refined by D-34 | 2026-06-15 | Phase A.4 design approval |
+| D-32 | **First-turn self-introduction** is mandatory in the system prompt: single short opening sentence identifying as "Amarolab Assistant" on the first reply of a conversation only | 2026-06-15 | Phase A.4 v0.1 design |
+| D-33 | **Tool invocation rule** in the system prompt: the model MUST issue a real tool call (never describe one in text, never write literal `[N]` placeholders) when a wired tool can answer the question. *Aspirational on qwen2.5 until Issue T is resolved.* | 2026-06-15 | Phase A.4 v0.1 design |
+| D-34 | **Citation precondition**: a citation may only be rendered after an actual tool invocation that returned a result. Refines (does not replace) D-31's citation grammar. *Aspirational on qwen2.5 until Issue T is resolved.* | 2026-06-15 | Phase A.4 v0.1 design |
 | D-23 | **Tool source location** = `/home/diego/homelab/ai-stack/openwebui-tools/` (sibling to `ai-stack/ingest/`). Tracked in the homelab git repo; synced to GitHub. The bind-mounted `/srv/homelab/data/openwebui/` is **not** used to hold Tool source — Open WebUI 0.8.10 does not auto-discover Tools from disk | 2026-06-15 | Phase A.3 plan revision after Open WebUI 0.8.10 compatibility audit |
 | D-24 | **Tool code shape** = `class Tools` with type-hinted methods. Module-level callables are not supported by Open WebUI 0.8.10's tool loader (`load_tool_module_by_id` requires `hasattr(module, "Tools")` and raises otherwise). Each public, non-class, non-underscore attribute of the `Tools()` instance becomes a separately-callable tool | 2026-06-15 | Compatibility report §3 |
 | D-25 | **Tool install workflow** = the supported Open WebUI API/UI flow: `POST /api/v1/tools/create` (or admin UI: Workspace → Tools → "+"). Open WebUI stores the source in `webui.db`. The disk-side `openwebui-tools/tools/*.py` files are the canonical version-controlled copy; the DB row is the runtime copy. Edits round-trip via `POST /api/v1/tools/id/{id}/update` | 2026-06-15 | Compatibility report §5 |

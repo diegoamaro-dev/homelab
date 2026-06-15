@@ -1,6 +1,6 @@
 # CURRENT_STATE — Amarolab Assistant v1
 
-Last updated: 2026-06-15
+Last updated: 2026-06-15 (Phase A.4 v0.1 application result)
 
 Scope: live state of the Amarolab Assistant v1 sub-project. For
 homelab-wide state see
@@ -71,8 +71,9 @@ and Phase A.3 applied log
 | `WEBUI_SECRET_KEY` | (64 hex) | same file |
 | `HA_BASE_URL`, `HA_LLAT` | **not set** | reserved for Phase C |
 | `HOMELAB_TOOLS_URL` | **not set** | reserved for system_status backing service |
-| `AMAROLAB_AUDIT_LOG` | **not set** | will land with Phase A.3 helper |
-| Open WebUI default model | unchanged from pre-Phase-A | not yet set to qwen2.5 |
+| `AMAROLAB_AUDIT_LOG` | **set** (live since Phase A.3) | inlined in each Tool; on host at `/srv/homelab/data/openwebui/amarolab-audit.log` |
+| Open WebUI workspace `DEFAULT_MODELS` | `"qwen2.5:7b-instruct"` | `config.DEFAULT_MODELS` in `webui.db` (set Phase A.4 v0 apply 2026-06-15) |
+| `qwen2.5:7b-instruct` per-model `params.system` | **v0.1 prompt, 3 342 chars** | `model.params.system` in `webui.db`; persona + tool routing + refusals. See log set in §"Pending in Phase A" below for the open regression on this prompt. |
 
 ## What is validated
 
@@ -98,12 +99,28 @@ and Phase A.3 applied log
 - Phase A.3 — **APPLIED 2026-06-15**. `time_now` canary live in
   `webui.db`; per-model scoping in place; audit log writing.
   Evidence: [`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md).
-- A.4 (next, not started): set Open WebUI default model to
-  `qwen2.5:7b-instruct`.
-- A.4: draft v0 system prompt with routing rules from
-  [`03-tools.md`](03-tools.md), trimmed to the three A.2 tools (only
-  `time_now` is wired so far; prompt should describe full routing so
-  it survives B and D).
+- Phase A.4 v0 — **APPLIED 2026-06-15**. `DEFAULT_MODELS` set;
+  persona-only system prompt landed on the qwen2.5 Model entry.
+  13/17 validation PASS; 4 FAIL (V-5a, V-6a, V-6b, V-10) flagged a
+  v0 prompt regression. Evidence:
+  [`../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-applied.md`](../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-applied.md).
+- Phase A.4 v0.1 — **PARTIALLY APPLIED 2026-06-15**. v0.1 prompt
+  replaces v0 (3 342 chars); fixed Spanish-greeting persona (V-5a)
+  and multi-turn language switch (V-11). **Issue T persists**:
+  `time_now` tool is not invoked from chat — the model still
+  hallucinates `[1]` and renders the function signature instead of
+  issuing a real call. Audit log confirms 0 invocations during
+  validation. 15/21 validation PASS. Evidence:
+  [`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md).
+- A.4 next sub-step: **diagnose Issue T** by hitting Ollama
+  directly (`curl http://127.0.0.1:11434/api/chat`) with the v0.1
+  system prompt + `time_now` tool definition + `"¿qué hora es?"`,
+  to determine whether the regression is at the model layer or at
+  Open WebUI's prompt+tools wiring. Then either a v0.2 prompt
+  iteration or an Open WebUI configuration fix. **Phase B must not
+  start until Issue T is resolved** — `time_now` is the canary for
+  the very tool-calling muscle that `rag_search` and
+  `system_status` will rely on.
 
 ### Pending in Phase B
 - Add `infra_audits` corpus to `ingest/conf/corpora.yaml`.
@@ -143,26 +160,49 @@ and Phase A.3 applied log
 
 ## Latest completed milestone
 
-**Phase A.3 — Open WebUI Tools scaffold + `time_now` canary —
-APPLIED 2026-06-15.**
+**Phase A.4 v0.1 — Open WebUI default model + system prompt v0.1 —
+PARTIALLY APPLIED 2026-06-15.**
 
-Evidence:
-[`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md).
+What works (15/21 PASS):
 
-Highlights:
+- Workspace `DEFAULT_MODELS = "qwen2.5:7b-instruct"` (V-1).
+- v0.1 system prompt landed on the qwen2.5 Model entry; preserves
+  `meta.toolIds = ["time_now"]` and `meta.description` (V-2).
+- `llama3:latest` (Jarvis) and `llama3.2:latest` untouched (V-3, V-4).
+- Spanish greeting → *"¡Hola! Soy Amarolab Assistant…"* (V-5).
+- HA control refused, naming Phase C (V-7).
+- doc-search refused, explains tool not yet available (V-8 — but
+  see open regression V-8b below).
+- `llama3:latest` chat shows no Amarolab persona (V-9).
+- Multi-turn language switch (ES turn 1 → explicit EN turn 2) works
+  (V-11).
 
-- Source tree at `/home/diego/homelab/ai-stack/openwebui-tools/`
-  (`README.md`, `tools/time_now.py`, `lib/audit_helper.py`,
-  `bin/install_tool`, `bin/dump_tools`).
-- `time_now` Tool row in `webui.db` (5180 char content, 1 spec).
-- Custom Model entry for `qwen2.5:7b-instruct` with
-  `meta.toolIds=["time_now"]`; per-model scoping (D-20) verified.
-- Audit log live at `/srv/homelab/data/openwebui/amarolab-audit.log`.
-- 19 of 21 validation checks PASS, 1 informational (V-20 RAM), 1
-  PASS (V-21 static network check). End-to-end happy path returns
-  correct real date/time with citation `[1]`.
+What is broken (6 FAILs, see
+[`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md)):
 
-Prior milestone (Phase A.1 — model pull) is still valid:
-`qwen2.5:7b-instruct` resident in Ollama (ID `845dbda0ea48`), ~4.6 GB
-warm. Evidence:
-[`../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md`](../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md).
+- **Issue T (most serious):** `time_now` is not invoked from chat
+  when the v0.1 system prompt is in scope; the model writes
+  `[1] time_now("Europe/Madrid", "%H:%M:%S")` in plain text
+  instead. Audit log: 0 invocations during V-10. V-10a, V-10b, V-12
+  all FAIL on this single root cause.
+- **Issue L:** English greeting on turn 1 (short `"hi there"`) still
+  defaults to Spanish (V-6a, V-6b). Multi-turn explicit switch
+  works (V-11).
+- **Issue B:** `rag_search` refusal does not name "Phase B"
+  explicitly (V-8b regressed from v0).
+
+Prior milestones (still valid):
+
+- Phase A.3 — Tool installed in `webui.db`; happy path proven
+  *before any system prompt existed* (so Phase A.3 evidence isolates
+  Issue T to the prompt+model interaction, not the Tool itself).
+  See [`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md).
+- Phase A.1 — `qwen2.5:7b-instruct` resident in Ollama
+  (ID `845dbda0ea48`, ~4.6 GB warm). See
+  [`../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md`](../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md).
+
+Pre-flight backups retained:
+
+- `/tmp/amarolab-phaseA4-backup/webui.db.pre-A4` (pre-A.4 state)
+- `/tmp/amarolab-phaseA4-v0_1-backup/webui.db.pre-v0_1` (post-v0,
+  pre-v0.1 state)
