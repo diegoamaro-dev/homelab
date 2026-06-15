@@ -49,9 +49,10 @@ Add at the end:
    read only = no
    writable = yes
    valid users = smbuser
-   force user = smbuser
-   create mask = 0660
-   directory mask = 0770
+   force user = diego
+   force group = shared
+   create mask = 0664
+   directory mask = 2775
 6. Improve compatibility with Windows
 
 Inside [global]:
@@ -99,3 +100,21 @@ Migrate all development projects to /mnt/storage/projects
 Configure automatic network drive mounting on client devices
 Implement backup strategy
 Integrate storage with Docker services
+## Permission Model Fix
+
+### Problem
+Initial Samba access worked from Windows, but direct terminal access from the main server user (`diego`) failed with permission denied errors.
+
+### Root Cause
+The storage path was initially owned by the dedicated Samba user only, which created an inconsistent access model between SMB and direct Linux access.
+
+### Solution
+A shared group model was introduced:
+- shared group created
+- `diego` and `smbuser` added to the same group
+- ownership aligned to `diego:shared`
+- setgid permissions applied to directories
+- Samba forced to write as `diego:shared`
+
+### Final Result
+Both Samba and direct terminal access now use a consistent permission model.
