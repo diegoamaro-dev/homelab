@@ -16,8 +16,9 @@ homelab-wide state see
 | RAG ingest | host cron `02:30 *`, user `diego` | Active | bare-metal venv at `/home/diego/homelab/ai-stack/ingest/venv` |
 | Embedding cache | (no process) | Populated | `/srv/homelab/data/openwebui/cache/embedding/models/` |
 
-Nothing else from the v1 design is running yet. **No** Functions
-directory, **no** `homelab-tools` container, **no**
+Nothing else from the v1 design is running yet. **No** Open WebUI
+Tools installed (the `tool` table in `webui.db` is empty for Amarolab
+entries), **no** `homelab-tools` container, **no**
 `docker-socket-proxy`, **no** containerized ingest service.
 
 ## What is implemented
@@ -45,9 +46,13 @@ Dimensionality: 384 (multilingual-e5-small). Distance: cosine.
 Payload indexes on `collection`, `source_kind`, `source_rel`.
 
 ### Tool layer
-**Not implemented.** No Functions directory exists on disk.
-`time_now`, `rag_search`, `system_status` are designed only — see
-Phase A.2 design report (in conversation, 2026-06-15).
+**Not implemented.** No Open WebUI Tool source files on disk; no
+Amarolab entries in the `tool` table of `webui.db`. `time_now`,
+`rag_search`, `system_status` are designed only — see Phase A.2
+design log
+([`../../09_logs/2026-06-15_phaseA2-tool-layer-design.md`](../../09_logs/2026-06-15_phaseA2-tool-layer-design.md))
+and the revised A.3 plan
+([`../../09_logs/2026-06-15_phaseA3-tool-canary-design.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-design.md)).
 
 ### Environment / configuration
 | Knob | Value | Where |
@@ -77,13 +82,25 @@ Phase A.2 design report (in conversation, 2026-06-15).
 ## What is pending
 
 ### Pending in Phase A (current)
-- Resolve 5 open questions on Phase A.2 design (see ROADMAP.md → blockers).
-- A.3: create `/srv/homelab/data/openwebui/functions/` on host.
-- A.3: drop `amarolab_common.py` (audit + RateLimiter + redaction).
-- A.3: implement `time_now` as the canary; end-to-end Functions smoke.
+- Phase A.2 — **APPROVED 2026-06-15**. Five locked decisions
+  (D-18..D-22 in [`ROADMAP.md`](ROADMAP.md)).
+- Open WebUI 0.8.10 compatibility audit complete 2026-06-15;
+  see [`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md).
+- A.3 **revised plan**: durable log at
+  [`../../09_logs/2026-06-15_phaseA3-tool-canary-design.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-design.md).
+  **Awaiting implementation approval.**
+- A.3: create source tree at `/home/diego/homelab/ai-stack/openwebui-tools/`
+  (`tools/`, `lib/`, `bin/`, `README.md`) — repo-tracked, sibling to
+  `ai-stack/ingest/`.
+- A.3: write `tools/time_now.py` as a `class Tools` Open WebUI Tool
+  (D-24). Audit helper inlined (D-26).
+- A.3: install into Open WebUI via the API/UI flow (D-25), not via
+  filesystem auto-discovery.
+- A.3: scope the Tool to `qwen2.5:7b-instruct` only in Open WebUI
+  admin (D-20).
 - A.4: set Open WebUI default model to `qwen2.5:7b-instruct`.
 - A.4: draft v0 system prompt with routing rules from
-  [`03-tools.md`](03-tools.md).
+  [`03-tools.md`](03-tools.md), trimmed to the three A.2 tools.
 
 ### Pending in Phase B
 - Add `infra_audits` corpus to `ingest/conf/corpora.yaml`.
@@ -135,7 +152,7 @@ Highlights:
 - Memory budget within design forecast: model resident ~4.6 GB, ~14
   GiB free at peak (after the unrelated VSCode EH bloat was resolved).
 - No untouched-area drift: Home Assistant, Guardian Cloud, Open WebUI
-  Functions, Qdrant, ingest, and homelab repository all unchanged.
+  Tools, Qdrant, ingest, and homelab repository all unchanged.
 
 Memory snapshot at last check (with model warm):
 

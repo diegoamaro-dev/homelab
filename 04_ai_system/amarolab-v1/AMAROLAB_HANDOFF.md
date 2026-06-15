@@ -34,14 +34,14 @@ Constraints (non-negotiable):
 USER (LAN 192.168.178.0/24 / Tailnet)
    │
    ▼
-Open WebUI :3000      ◄── chat UI + Functions runtime (Python)
+Open WebUI :3000      ◄── chat UI + Tools runtime (Python)
    │
    ▼
 Ollama :11434
    ├─ qwen2.5:7b-instruct  (primary, tool-calling, pulled 2026-06-15)
    └─ llama3:latest        (fallback non-tool chat)
    │
-   ▼ (Functions, NOT yet implemented; designed only)
+   ▼ (Open WebUI Tools, NOT yet implemented; designed only)
    ┌──────────────────────────────────────────────────────────────┐
    │ time_now()           — designed (Phase A.2)                  │
    │ rag_search()         — designed (Phase A.2)                  │
@@ -67,16 +67,24 @@ Ingest: bare-metal venv, cron 02:30 daily, writes to Qdrant only.
 
 ## Current phase
 
-**Phase A.2 — Tool layer design (review).**
+**Phase A.3 — Open WebUI Tools scaffold + `time_now` canary
+(revised planning).**
 
 - Phase A.1 (model pull + tool-calling smoke test) — **APPLIED**
   2026-06-15. See
   [`../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md`](../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md).
-- Phase A.2 (three-tool design: `time_now`, `rag_search`,
-  `system_status`) — **design delivered** 2026-06-15, awaiting user
-  approval and resolution of 5 open questions. Lives in the
-  conversation transcript; no repo artefact yet.
-- Phase A.3+ — not started.
+- Phase A.2 (three-tool design lock-in: `time_now`, `rag_search`,
+  `system_status`) — **APPROVED** 2026-06-15 with 5 locked decisions
+  (D-18..D-22 in [`ROADMAP.md`](ROADMAP.md)). See
+  [`../../09_logs/2026-06-15_phaseA2-tool-layer-design.md`](../../09_logs/2026-06-15_phaseA2-tool-layer-design.md).
+- Open WebUI 0.8.10 Tools API audit — **APPROVED** 2026-06-15. See
+  [`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md).
+  Four additional decisions locked (D-23..D-26).
+- Phase A.3 — **revised plan committed** 2026-06-15; awaiting
+  implementation approval. No Tool source files exist on disk; no
+  Amarolab entries in `webui.db`. See
+  [`../../09_logs/2026-06-15_phaseA3-tool-canary-design.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-design.md).
+- Phase A.4+ — not started.
 
 ## Mandatory reading order
 
@@ -88,10 +96,11 @@ For a future session resuming work, read in this order:
 4. [`README.md`](README.md) — design package overview.
 5. [`01-current-state-review.md`](01-current-state-review.md) — pre-design state snapshot.
 6. [`02-target-architecture.md`](02-target-architecture.md) — v1 target shape.
-7. [`03-tools.md`](03-tools.md) — full tool catalog (superset of Phase A.2).
+7. [`03-tools.md`](03-tools.md) — full tool catalog (superset of Phase A.2). **Read with the amendments banner at the top in mind**; Open WebUI 0.8.10's actual runtime contract is captured in §11 below.
 8. [`04-security-and-permissions.md`](04-security-and-permissions.md) — trust model, allowlists, audit.
 9. [`05-implementation-roadmap.md`](05-implementation-roadmap.md) — phase-by-phase plan with exit criteria.
-10. Most recent log in [`../../09_logs/`](../../09_logs/) matching `*phase*applied*.md`.
+10. [`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md) — **MANDATORY** for anyone implementing Tools. Source-grounded Open WebUI 0.8.10 contract: `class Tools`, JSON-Schema build, install path, valves, frontmatter.
+11. Most recent log in [`../../09_logs/`](../../09_logs/) matching `*phase*-applied*.md` (applied work) and `*phase*-design*.md` (design lock-ins).
 
 ## Safety rules (Amarolab-specific)
 
@@ -108,9 +117,12 @@ apply. The following are **sub-project additions**:
 - **The LLM is adversarial input.** Tool argument allowlists are
   file-level Python constants. No `eval`, no `subprocess`, no
   path-from-arg, no shell building from arguments.
-- **No Open WebUI Functions are created** until the user explicitly
-  approves the next sub-phase. As of 2026-06-15 the Functions
-  directory does not exist.
+- **No Open WebUI Tools are created** in `webui.db` until the user
+  explicitly approves the next sub-phase. As of 2026-06-15 no
+  Amarolab Tools are installed; no Tool source files exist on disk.
+  (Note: the v1 design package uses "Functions" loosely — Open WebUI
+  0.8.10's runtime term is **Tools**; see
+  [`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md).)
 - **Default model in Open WebUI must not be changed** without explicit
   user approval. Phase A.1 pulled `qwen2.5:7b-instruct` but did not
   set it as default.

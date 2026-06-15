@@ -43,29 +43,48 @@ current, what's next, what's blocked, what's decided.
 - Evidence:
   [`../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md`](../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md).
 
+### Phase A.2 — Tool layer design
+- Date approved: 2026-06-15.
+- Outcome: first three-tool set locked — `time_now`, `rag_search`,
+  `system_status`. Five sub-decisions resolved (D-18 … D-22 below).
+- Tools deferred out of this phase: `audit_search` (waits for
+  `infra_audits` corpus in Phase B), `ha_get_state`, `ha_call_service`
+  (Phase C).
+- Evidence:
+  [`../../09_logs/2026-06-15_phaseA2-tool-layer-design.md`](../../09_logs/2026-06-15_phaseA2-tool-layer-design.md).
+
 ---
 
 ## Current phase
 
-### Phase A.2 — Tool layer design (in review)
+### Phase A.3 — Open WebUI Tools scaffold + `time_now` canary (revised plan)
 
-Three tools designed as the first implementation set:
+With Phase A.2 approved, the next implementation milestone is the
+**Open WebUI Tools** scaffold (the v1 design called these "Functions";
+the correct 0.8.10 vocabulary is **Tools** — see
+[`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md)).
+Concretely:
 
-| Tool | Role | Status |
-|---|---|---|
-| `time_now` | Canary for the entire Functions pipeline; also a real utility tool | Design delivered |
-| `rag_search` | Dense retrieval + cross-encoder rerank over indexed corpora | Design delivered |
-| `system_status` | Live containers / ports / volumes / disk introspection | Design delivered (backing-service path is an open question) |
+- Create source tree at `/home/diego/homelab/ai-stack/openwebui-tools/`
+  (repo path, version-controlled, alongside `ai-stack/ingest/`).
+- Write `tools/time_now.py` as a `class Tools` Open WebUI Tool — the
+  only shape Open WebUI 0.8.10 accepts (D-24).
+- Inline the audit / rate-limit helper inside the Tool file rather
+  than via a shared module (D-26).
+- Install the Tool into Open WebUI via the supported API/UI flow —
+  POST `/api/v1/tools/create` (or paste in the admin UI). Open WebUI
+  stores the source in `webui.db`; the on-disk file remains the
+  canonical version-controlled copy (D-25).
+- In Open WebUI admin, scope the Tool to `qwen2.5:7b-instruct` only
+  (D-20).
+- Verify end-to-end against the validation plan in the revised A.3
+  design log.
 
-Tools **deferred** out of this phase: `audit_search` (waits for
-`infra_audits` corpus in Phase B), `ha_get_state`, `ha_call_service`
-(Phase C, Home Assistant).
-
-Phase A.2 status: **awaiting user approval and resolution of 5 open
-questions** (see `Blockers` below). The design report lives in the
-conversation transcript dated 2026-06-15; if durable storage is
-desired it should be committed as
-`09_logs/2026-06-15_phaseA2-tool-layer-design.md`.
+Phase A.3 status: **revised plan prepared 2026-06-15** based on the
+Open WebUI 0.8.10 source review; durable log committed at
+[`../../09_logs/2026-06-15_phaseA3-tool-canary-design.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-design.md).
+**Awaiting implementation approval.** No Tool source created on disk;
+no Open WebUI Tools installed in `webui.db`; no admin-UI changes.
 
 ---
 
@@ -76,13 +95,19 @@ The numbering matches
 applicable, with the Phase A subdivided into A.1 … A.4 to match how
 work has actually been sequenced.
 
-### Phase A.3 — Functions scaffold + canary
-- Create `/srv/homelab/data/openwebui/functions/` on host.
-- Drop `amarolab_common.py` (audit helper, redaction, RateLimiter).
-- Implement `time_now()` (zero external deps).
-- Exit: in Open WebUI chat, `"what time is it?"` produces a
-  `time_now` tool call, the Function returns the JSON payload, the
-  audit log accumulates a JSON line per call.
+### Phase A.3 — Open WebUI Tools scaffold + canary
+- Create source tree at `/home/diego/homelab/ai-stack/openwebui-tools/`
+  (`tools/`, `lib/`, `bin/`, `README.md`) — repo-tracked.
+- Write `tools/time_now.py` as a `class Tools` Open WebUI Tool
+  (Open WebUI 0.8.10 mandates this shape — D-24). Helper inlined per
+  Tool file (D-26).
+- Install into Open WebUI via the supported API/UI flow into
+  `webui.db` (D-25). No filesystem auto-discovery; the on-disk file
+  is the canonical version-controlled copy.
+- Scope the Tool to `qwen2.5:7b-instruct` only (D-20).
+- Exit: in Open WebUI chat with qwen2.5, *"what time is it?"*
+  triggers a `time_now` tool call, the Tool method returns the JSON
+  payload, the audit log accumulates one JSON line per call.
 
 ### Phase A.4 — Open WebUI default + system prompt v0
 - Set the workspace default model to `qwen2.5:7b-instruct` in Open
@@ -91,18 +116,20 @@ work has actually been sequenced.
   [`03-tools.md`](03-tools.md), trimmed to the three Phase A.2 tools.
 - Exit: default model is qwen2.5; system prompt is loaded.
 
-### Phase B — Knowledge tool + audit corpus
+### Phase B — Knowledge Tool + audit corpus
 - Add `infra_audits` corpus to `ingest/conf/corpora.yaml` and create
   the Qdrant collection.
 - One-shot backfill from `/home/diego/server-audit-2026-06-13/**/*.md`.
 - Bind-mount the ingest tree read-only into the openwebui container at
-  `/opt/ingest`.
-- Implement `rag_search.py` reusing `ingest.embedder.Embedder` and
-  `ingest.reranker.Reranker`.
-- Implement `audit_search.py` as sugar over
-  `rag_search(collection="infra_audits", …)`.
+  `/opt/ingest` so the Tool can `from ingest.embedder import Embedder`
+  and `from ingest.reranker import Reranker`.
+- Write `tools/rag_search.py` as a `class Tools` Open WebUI Tool
+  (D-24); same shape as `time_now`.
+- Write `tools/audit_search.py` as a separate Tool that internally
+  calls `rag_search(collection="infra_audits", …)`.
+- Install both via the supported API/UI flow into `webui.db` (D-25).
 - Exit: the Phase 1.5 reranker benchmark reproduces when routed
-  through the Function path (top-6 ≥ 95 % on guardian_cloud).
+  through the Tool path (top-6 ≥ 95 % on guardian_cloud).
 
 ### Phase C — Home Assistant integration
 - Create dedicated HA user `assistant`; issue Long-Lived Access Token
@@ -116,12 +143,14 @@ work has actually been sequenced.
 - Exit: read + bounded write of HA via tools; refusal path tested.
 
 ### Phase D — `system_status` backing service
-- If A.2 question 1 chooses **Path A** (recommended): build the
-  `homelab-tools` container (FastAPI) + `tecnativa/docker-socket-proxy`
-  on the `ai-local_default` network, no host port published.
+- Per locked D-18 (Path C), this phase builds the containerized
+  `homelab-tools` (FastAPI) + `tecnativa/docker-socket-proxy` on the
+  `ai-local_default` network, no host port published.
 - Add per-scope endpoints (`/containers`, `/ports`, `/volumes`,
   `/disk`, `/healthz`) — see contract in [`03-tools.md`](03-tools.md).
-- Implement `system_status.py` as a thin HTTP client of the container.
+- Write `tools/system_status.py` as a `class Tools` Open WebUI Tool
+  (D-24): thin HTTP client of `HOMELAB_TOOLS_URL`.
+- Install via the supported API/UI flow (D-25).
 - Disable the bare-metal `homelab-tools.service`. Closes audit R-02.
 - Exit: live system data readable from chat; bare-metal Flask service
   is gone.
@@ -154,14 +183,20 @@ blocked" can start):
 
 | # | Blocker | Phase blocked | Owner | Notes |
 |---|---|---|---|---|
-| B-01 | Phase A.2 design unapproved | A.3 onward | user | Design delivered 2026-06-15; awaiting sign-off |
-| B-02 | A.2 question 1: `system_status` backing path (A / B / C) | D (or A.2 if Path A) | user | A.2 recommendation: Path C (defer to D); avoids reintroducing R-02 |
-| B-03 | A.2 question 2: `time_now` default timezone (Europe/Madrid vs UTC) | A.3 | user | A.2 recommendation: `Europe/Madrid` for `human`, ISO + Unix always present |
-| B-04 | A.2 question 3: Function visibility scope (all models vs qwen2.5 only) | A.3 | user | A.2 recommendation: all models |
-| B-05 | A.2 question 4: confirm audit-log host path | A.3 | user | A.2 recommendation: `/srv/homelab/data/openwebui/amarolab-audit.log` (matches v1 security model — no deviation) |
-| B-06 | A.2 question 5: `myfreetour` enum treatment | B | user | A.2 recommendation: leave in enum, return `empty_collection` |
 | B-07 | HA Long-Lived Access Token not issued | C | user | Must be created in HA UI; not automatable |
 | B-08 | MyFreeTour source path unknown | G | user | Phase 1 placeholder corpus stays empty until decided |
+
+Resolved blockers (kept for traceability; superseded by locked
+decisions D-18 … D-22):
+
+| # | Blocker | Resolved on | Resolution |
+|---|---|---|---|
+| B-01 | Phase A.2 design unapproved | 2026-06-15 | Approved by user; see D-18..D-22 |
+| B-02 | A.2 Q1: `system_status` backing path | 2026-06-15 | Path C — defer implementation to Phase D (D-18) |
+| B-03 | A.2 Q2: `time_now` default timezone | 2026-06-15 | `Europe/Madrid` (D-19) |
+| B-04 | A.2 Q3: Function visibility scope | 2026-06-15 | `qwen2.5:7b-instruct` only (D-20) |
+| B-05 | A.2 Q4: confirm audit-log host path | 2026-06-15 | Confirmed `/srv/homelab/data/openwebui/amarolab-audit.log` (re-affirms D-07) |
+| B-06 | A.2 Q5: `myfreetour` enum treatment | 2026-06-15 | Leave in enum; return `empty_collection` (D-22) |
 
 Non-blocking carry-overs (do not stop any v1 phase, listed for
 visibility):
@@ -186,7 +221,7 @@ explicit user decision and a new design entry.
 | D-01 | Primary tool-calling LLM = `qwen2.5:7b-instruct` (Q4_K_M) | 2026-06-15 | Phase A architecture review |
 | D-02 | `llama3:latest` (Llama 3.0 8B Q4_0) retained as fallback non-tool chat | 2026-06-15 | same |
 | D-03 | Do **not** pull `llama3.1:8b-instruct` in Phase A | 2026-06-15 | same |
-| D-04 | Open WebUI Functions are the tool runtime (no separate tool server) | Pre-A (v1 design) | [`02-target-architecture.md`](02-target-architecture.md) |
+| D-04 | Open WebUI's Tools subsystem is the tool runtime (no separate tool server). *(v1 design called this "Functions"; Open WebUI 0.8.10's term is "Tools" — see D-24.)* | Pre-A (v1 design) | [`02-target-architecture.md`](02-target-architecture.md) |
 | D-05 | `amarolab_common.py` is the single shared helper (audit + rate limit + redact) | v1 design | [`03-tools.md`](03-tools.md) |
 | D-06 | Trust model: LLM is adversarial; allowlists are file-level constants; no `eval`, `subprocess`, or path-from-arg | v1 design | [`04-security-and-permissions.md`](04-security-and-permissions.md) |
 | D-07 | Audit-log path: `/srv/homelab/data/openwebui/amarolab-audit.log` (host) | v1 design | [`04-security-and-permissions.md`](04-security-and-permissions.md) |
@@ -200,3 +235,12 @@ explicit user decision and a new design entry.
 | D-15 | No public exposure of the assistant via Cloudflare in v1; LAN/tailnet only | v1 design | [`02-target-architecture.md`](02-target-architecture.md) |
 | D-16 | No conversation memory across sessions in v1; in-session only via Open WebUI's webui.db | v1 design | [`02-target-architecture.md`](02-target-architecture.md) |
 | D-17 | Out-of-band: VSCode Remote machine settings written with `search.followSymlinks: false` + Steam Proton excludes | 2026-06-15 | Investigation report (outside repo) |
+| D-18 | `system_status` backing path = **C (defer to Phase D)**. No bare-metal Flask call in A.2/A.3; the Tool is not implemented until the containerized `homelab-tools` + `docker-socket-proxy` are built in Phase D | 2026-06-15 | Phase A.2 approval |
+| D-19 | `time_now` default timezone = `Europe/Madrid`. `format` enum is `iso` (default) / `human` / `unix`; all four representations (`now`, `unix`, `weekday`, `date`+`time`) are always returned regardless of `format` | 2026-06-15 | Phase A.2 approval |
+| D-20 | Open WebUI per-Tool visibility = **`qwen2.5:7b-instruct` only**. The three A.2 tools (and any future tool) are scoped to the primary tool-calling model; `llama3:latest` / `llama3.2` / `phi3` do not see them | 2026-06-15 | Phase A.2 approval |
+| D-21 | Audit-log host path **confirmed** as `/srv/homelab/data/openwebui/amarolab-audit.log` (container path `/app/backend/data/amarolab-audit.log`). No deviation from D-07 | 2026-06-15 | Phase A.2 approval |
+| D-22 | `rag_search` collection enum **keeps** `myfreetour`. When called, the Tool returns `{"error":"empty_collection","code":"empty_collection"}` until the corpus is indexed (Phase G). Forces the LLM to apologise cleanly instead of silently picking another corpus | 2026-06-15 | Phase A.2 approval |
+| D-23 | **Tool source location** = `/home/diego/homelab/ai-stack/openwebui-tools/` (sibling to `ai-stack/ingest/`). Tracked in the homelab git repo; synced to GitHub. The bind-mounted `/srv/homelab/data/openwebui/` is **not** used to hold Tool source — Open WebUI 0.8.10 does not auto-discover Tools from disk | 2026-06-15 | Phase A.3 plan revision after Open WebUI 0.8.10 compatibility audit |
+| D-24 | **Tool code shape** = `class Tools` with type-hinted methods. Module-level callables are not supported by Open WebUI 0.8.10's tool loader (`load_tool_module_by_id` requires `hasattr(module, "Tools")` and raises otherwise). Each public, non-class, non-underscore attribute of the `Tools()` instance becomes a separately-callable tool | 2026-06-15 | Compatibility report §3 |
+| D-25 | **Tool install workflow** = the supported Open WebUI API/UI flow: `POST /api/v1/tools/create` (or admin UI: Workspace → Tools → "+"). Open WebUI stores the source in `webui.db`. The disk-side `openwebui-tools/tools/*.py` files are the canonical version-controlled copy; the DB row is the runtime copy. Edits round-trip via `POST /api/v1/tools/id/{id}/update` | 2026-06-15 | Compatibility report §5 |
+| D-26 | **Shared helper handling** = inline the audit / RateLimiter / redaction helper in each Tool file. Open WebUI executes each Tool in its own `tool_{id}` module namespace; cross-Tool `import` does not work. For v1, accept ~30 lines of duplicated audit code per Tool; revisit at v2 if the Tool count grows. (The canonical helper text still lives once at `openwebui-tools/lib/audit_helper.py` and is textually inlined by the install helper.) | 2026-06-15 | Compatibility report §7 |

@@ -1,5 +1,41 @@
 # 03 — Tool catalog
 
+> **AMENDMENTS — 2026-06-15.** This document was written before the
+> Open WebUI 0.8.10 source review. Two assumptions in it are wrong as
+> stated; act on the corrected sources instead of this file's
+> implementation details:
+>
+> 1. **Code shape.** The catalog shows module-level functions
+>    (`def rag_search(...): ...`). Open WebUI 0.8.10's tool loader
+>    (`load_tool_module_by_id`) **requires** `class Tools:` and
+>    raises `Exception("No Tools class found in the module")`
+>    otherwise. Every tool must be a method of a `class Tools`.
+> 2. **Source location.** The catalog says each tool is a Python file
+>    under `/srv/homelab/data/openwebui/functions/`. Open WebUI 0.8.10
+>    does **not** auto-discover Tools from disk; source is stored in
+>    `webui.db` and installed via `POST /api/v1/tools/create` (or the
+>    admin UI). The canonical disk copies live in the homelab repo at
+>    `/home/diego/homelab/ai-stack/openwebui-tools/`.
+>
+> Authoritative corrected sources:
+>
+> - [`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md)
+>   — full Open WebUI 0.8.10 runtime contract, source-grounded, with
+>   a minimal working example.
+> - [`../../09_logs/2026-06-15_phaseA3-tool-canary-design.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-design.md)
+>   — corrected Phase A.3 plan (`time_now` canary in `class Tools`
+>   shape, installed via API).
+> - Decisions D-23..D-26 in [`ROADMAP.md`](ROADMAP.md) — locked.
+>
+> Everything else in this catalog (per-tool **purpose**, **inputs**,
+> **outputs**, **schemas**, **error codes**, **allowlists**, **security
+> considerations**, **rate limits**, **system-prompt routing rules**)
+> is still authoritative. Treat the implementation outlines below as
+> pseudocode of the *behaviour* the tools must implement, not as
+> ready-to-run code.
+
+---
+
 Five tools. Each tool is a single Python file under
 `/srv/homelab/data/openwebui/functions/`. Open WebUI loads them at
 startup and exposes them to whichever model the user selects (Open

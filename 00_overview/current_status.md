@@ -125,3 +125,4 @@ A partir de aquí, cualquier cambio relevante debe:
 ## Principio operativo
 
 Si no está documentado, no existe.
+
