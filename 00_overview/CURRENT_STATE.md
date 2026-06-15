@@ -1,4 +1,9 @@
 # CURRENT_STATE
+Related documents:
+
+- AMAROLAB_HANDOFF.md
+- ROADMAP.md
+- INITIAL_SYSTEM_STATUS.md
 
 Last updated: 2026-06-15
 
