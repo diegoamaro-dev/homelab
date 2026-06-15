@@ -49,3 +49,11 @@ __pycache__/
 # Volúmenes Docker genéricos
 */data/
 */logs/
+
+ai-stack/ingest/venv/
+ai-stack/ingest/logs/
+ai-stack/ingest/.env
+*.log
+.env
+.env.*
+__pycache__/
