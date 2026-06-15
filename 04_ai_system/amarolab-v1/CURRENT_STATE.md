@@ -1,6 +1,6 @@
 # CURRENT_STATE — Amarolab Assistant v1
 
-Last updated: 2026-06-15 (Phase A.4 v0.1 application result)
+Last updated: 2026-06-15 (Phase A formally closed; Phase B now current)
 
 Scope: live state of the Amarolab Assistant v1 sub-project. For
 homelab-wide state see
@@ -73,7 +73,7 @@ and Phase A.3 applied log
 | `HOMELAB_TOOLS_URL` | **not set** | reserved for system_status backing service |
 | `AMAROLAB_AUDIT_LOG` | **set** (live since Phase A.3) | inlined in each Tool; on host at `/srv/homelab/data/openwebui/amarolab-audit.log` |
 | Open WebUI workspace `DEFAULT_MODELS` | `"qwen2.5:7b-instruct"` | `config.DEFAULT_MODELS` in `webui.db` (set Phase A.4 v0 apply 2026-06-15) |
-| `qwen2.5:7b-instruct` per-model `params.system` | **v0.1 prompt, 3 342 chars** | `model.params.system` in `webui.db`; persona + tool routing + refusals. See log set in §"Pending in Phase A" below for the open regression on this prompt. |
+| `qwen2.5:7b-instruct` per-model `params.system` | **v0.1 prompt, 3 342 chars** | `model.params.system` in `webui.db`; persona + tool routing + refusals. Prompt-cosmetic v0.2 carry-overs documented in [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md) §3.1. |
 
 ## What is validated
 
@@ -91,38 +91,43 @@ and Phase A.3 applied log
 
 ## What is pending
 
-### Pending in Phase A (current)
-- Phase A.2 — **APPROVED 2026-06-15**. Five locked decisions
-  (D-18..D-22 in [`ROADMAP.md`](ROADMAP.md)).
-- Open WebUI 0.8.10 compatibility audit complete 2026-06-15;
-  see [`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md).
-- Phase A.3 — **APPLIED 2026-06-15**. `time_now` canary live in
-  `webui.db`; per-model scoping in place; audit log writing.
-  Evidence: [`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md).
-- Phase A.4 v0 — **APPLIED 2026-06-15**. `DEFAULT_MODELS` set;
-  persona-only system prompt landed on the qwen2.5 Model entry.
-  13/17 validation PASS; 4 FAIL (V-5a, V-6a, V-6b, V-10) flagged a
-  v0 prompt regression. Evidence:
-  [`../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-applied.md`](../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-applied.md).
-- Phase A.4 v0.1 — **PARTIALLY APPLIED 2026-06-15**. v0.1 prompt
-  replaces v0 (3 342 chars); fixed Spanish-greeting persona (V-5a)
-  and multi-turn language switch (V-11). **Issue T persists**:
-  `time_now` tool is not invoked from chat — the model still
-  hallucinates `[1]` and renders the function signature instead of
-  issuing a real call. Audit log confirms 0 invocations during
-  validation. 15/21 validation PASS. Evidence:
-  [`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md).
-- A.4 next sub-step: **diagnose Issue T** by hitting Ollama
-  directly (`curl http://127.0.0.1:11434/api/chat`) with the v0.1
-  system prompt + `time_now` tool definition + `"¿qué hora es?"`,
-  to determine whether the regression is at the model layer or at
-  Open WebUI's prompt+tools wiring. Then either a v0.2 prompt
-  iteration or an Open WebUI configuration fix. **Phase B must not
-  start until Issue T is resolved** — `time_now` is the canary for
-  the very tool-calling muscle that `rag_search` and
-  `system_status` will rely on.
+### Phase A (closed 2026-06-15)
+- **Phase A is formally CLOSED.** See
+  [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md)
+  for the durable decision + criteria check.
+- All sub-phase deliverables are live: A.1 (qwen2.5 in Ollama), A.2
+  (three-tool design + D-18..D-22), A.3 (`time_now` canary in
+  `webui.db` + scoping + audit log), A.4 v0 (`DEFAULT_MODELS` set),
+  A.4 v0.1 (system prompt 3 342 chars on qwen2.5 Model entry +
+  D-32..D-34).
+- **Issue T (B-09) — RESOLVED.** The V-10 / V-12 failures were a
+  validation-methodology artefact: the validator omitted `tool_ids`
+  from `POST /api/chat/completions`, so Open WebUI 0.8.10's
+  `main.py:1783` saw no tools and the chat went to qwen2.5 without
+  a tools array. The model, the prompt, the Tool, and Ollama all
+  behave correctly. The browser UI auto-attaches `tool_ids` from
+  `model.info.meta.toolIds` (bundle `GxGTGtKc.js`), so the
+  user-facing path was already correct. Evidence:
+  [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md).
+- **New known carry-over BX — Open WebUI 0.8.10 browser-UI
+  WebSocket race.** When the WebSocket / socket.io handshake hasn't
+  completed before the first send, `session_id` is omitted from the
+  request body, Open WebUI falls through to a streaming SSE
+  response, and the frontend helper `A()` in `C2Mvb_V1.js` calls
+  `.json()` on it — producing
+  `Unexpected token 'd', "data: {"id"... is not valid JSON`. **Not
+  caused by anything in Phase A.** Workaround: open the UI over
+  LAN/Tailnet (`http://192.168.178.x:3000`), hard-refresh, wait for
+  the connection indicator before the first send. Durable fix
+  belongs upstream. Evidence:
+  [`../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md`](../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md).
+- Prompt-cosmetic carry-overs (Issue L — short English greeting
+  defaults to Spanish; Issue B — `rag_search` refusal doesn't name
+  "Phase B"; `[1]` self-contradiction in the no-tools fallback) are
+  tracked for a v0.2 prompt iteration. **Not Phase B blockers.**
 
-### Pending in Phase B
+### Pending in Phase B (current)
+- Plan: [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
 - Add `infra_audits` corpus to `ingest/conf/corpora.yaml`.
 - One-shot backfill of `/home/diego/server-audit-2026-06-13/**/*.md`
   into the new Qdrant collection.
@@ -160,46 +165,35 @@ and Phase A.3 applied log
 
 ## Latest completed milestone
 
-**Phase A.4 v0.1 — Open WebUI default model + system prompt v0.1 —
-PARTIALLY APPLIED 2026-06-15.**
+**Phase A — CLOSED 2026-06-15.** All sub-phases applied; remaining
+V-check failures diagnosed and reclassified out of the blocker
+set. See
+[`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md)
+for the closure decision + criteria check.
 
-What works (15/21 PASS):
+What is live:
 
-- Workspace `DEFAULT_MODELS = "qwen2.5:7b-instruct"` (V-1).
-- v0.1 system prompt landed on the qwen2.5 Model entry; preserves
-  `meta.toolIds = ["time_now"]` and `meta.description` (V-2).
-- `llama3:latest` (Jarvis) and `llama3.2:latest` untouched (V-3, V-4).
-- Spanish greeting → *"¡Hola! Soy Amarolab Assistant…"* (V-5).
-- HA control refused, naming Phase C (V-7).
-- doc-search refused, explains tool not yet available (V-8 — but
-  see open regression V-8b below).
-- `llama3:latest` chat shows no Amarolab persona (V-9).
-- Multi-turn language switch (ES turn 1 → explicit EN turn 2) works
-  (V-11).
+- A.1 — `qwen2.5:7b-instruct` resident in Ollama (ID
+  `845dbda0ea48`, ~4.6 GB warm); native `tool_calls` confirmed via
+  direct-Ollama probes A–D in
+  [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md).
+- A.2 — three-tool design locked (D-18..D-22).
+- A.3 — `time_now` Tool installed in `webui.db`; per-model scoping;
+  audit log writing. Full end-to-end run via Probe E in the Issue T
+  analysis (audit log delta +1; reply contains the real time).
+- A.4 v0 — `DEFAULT_MODELS = "qwen2.5:7b-instruct"`.
+- A.4 v0.1 — system prompt (3 342 chars) attached to qwen2.5 Model
+  entry; D-32 / D-33 / D-34 added.
 
-What is broken (6 FAILs, see
-[`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md)):
+Open carry-overs (non-blocking):
 
-- **Issue T (most serious):** `time_now` is not invoked from chat
-  when the v0.1 system prompt is in scope; the model writes
-  `[1] time_now("Europe/Madrid", "%H:%M:%S")` in plain text
-  instead. Audit log: 0 invocations during V-10. V-10a, V-10b, V-12
-  all FAIL on this single root cause.
-- **Issue L:** English greeting on turn 1 (short `"hi there"`) still
-  defaults to Spanish (V-6a, V-6b). Multi-turn explicit switch
-  works (V-11).
-- **Issue B:** `rag_search` refusal does not name "Phase B"
-  explicitly (V-8b regressed from v0).
-
-Prior milestones (still valid):
-
-- Phase A.3 — Tool installed in `webui.db`; happy path proven
-  *before any system prompt existed* (so Phase A.3 evidence isolates
-  Issue T to the prompt+model interaction, not the Tool itself).
-  See [`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md).
-- Phase A.1 — `qwen2.5:7b-instruct` resident in Ollama
-  (ID `845dbda0ea48`, ~4.6 GB warm). See
-  [`../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md`](../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md).
+- **v0.2 prompt iteration** for Issue L (short English greeting),
+  Issue B (refusal phase pointer), and the `[1]` self-contradiction
+  in the no-tools fallback. Tracked in the closeout log §3.1.
+- **BX — browser-UI WebSocket race.** Open WebUI 0.8.10 frontend
+  bug. Workaround in
+  [`../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md`](../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md)
+  §7.1.
 
 Pre-flight backups retained:
 

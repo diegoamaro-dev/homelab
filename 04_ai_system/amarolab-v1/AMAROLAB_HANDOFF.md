@@ -67,10 +67,15 @@ Ingest: bare-metal venv, cron 02:30 daily, writes to Qdrant only.
 
 ## Current phase
 
-**Phase A.4 — Open WebUI default model + system prompt v0
-(design approved; no UI changes applied).**
+**Phase B — Knowledge Tool + audit corpus.** Not started; execution
+plan in [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
 
-- Phase A.1 (model pull + tool-calling smoke test) — **APPLIED**
+**Phase A is formally CLOSED** as of 2026-06-15. Closure decision +
+criteria check in
+[`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md).
+Phase A applied set (all live):
+
+- Phase A.1 (qwen2.5 pull + tool-calling smoke test) — **APPLIED**
   2026-06-15. See
   [`../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md`](../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md).
 - Phase A.2 (three-tool design lock-in: `time_now`, `rag_search`,
@@ -86,15 +91,28 @@ Ingest: bare-metal venv, cron 02:30 daily, writes to Qdrant only.
   `time_now` Tool installed in `webui.db` (5180 chars, 1 spec);
   per-model scoping wired (`qwen2.5:7b-instruct` Model entry with
   `meta.toolIds=["time_now"]`); audit log live at
-  `/srv/homelab/data/openwebui/amarolab-audit.log`. 19/21 V- checks
+  `/srv/homelab/data/openwebui/amarolab-audit.log`. 19/21 V-checks
   PASS, 1 informational, 1 PASS. See
   [`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md).
-- Phase A.4 (default model + system prompt v0) — **design APPROVED**
-  2026-06-15 with 5 new locked decisions (D-27..D-31). No UI changes
-  applied yet; default model still unchanged; system prompt not yet
-  loaded. See
-  [`../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-design.md`](../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-design.md).
-- Phase B+ — not started.
+- Phase A.4 v0 (default model + system prompt v0) — **APPLIED**
+  2026-06-15. Five new locked decisions (D-27..D-31). See
+  [`../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-applied.md`](../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-applied.md).
+- Phase A.4 v0.1 (system prompt revision) — **APPLIED** 2026-06-15
+  with three new locked decisions (D-32..D-34). v0.1 prompt
+  (3 342 chars) attached to qwen2.5 Model entry. See
+  [`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md).
+- **Issue T (B-09)** — **RESOLVED** as a validation-methodology
+  artefact. The validator omitted `tool_ids` from
+  `POST /api/chat/completions`; Open WebUI 0.8.10 does not
+  auto-resolve `meta.toolIds` for that endpoint. Browser UI auto-
+  attaches it. See
+  [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md).
+- **New carry-over BX — Open WebUI 0.8.10 browser-UI WebSocket
+  race** (`Unexpected token 'd', "data: {"id"... is not valid JSON`
+  shown when the first message is sent before socket.io connects).
+  Upstream frontend bug; workaround in
+  [`../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md`](../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md).
+  Not a Phase B blocker.
 
 ## Mandatory reading order
 
@@ -110,7 +128,12 @@ For a future session resuming work, read in this order:
 8. [`04-security-and-permissions.md`](04-security-and-permissions.md) — trust model, allowlists, audit.
 9. [`05-implementation-roadmap.md`](05-implementation-roadmap.md) — phase-by-phase plan with exit criteria.
 10. [`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md) — **MANDATORY** for anyone implementing Tools. Source-grounded Open WebUI 0.8.10 contract: `class Tools`, JSON-Schema build, install path, valves, frontmatter.
-11. Most recent log in [`../../09_logs/`](../../09_logs/) matching `*phase*-applied*.md` (applied work) and `*phase*-design*.md` (design lock-ins).
+11. **Phase A closure & current state** — read these together:
+    - [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md) — durable closure record.
+    - [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md) — why B-09 is resolved.
+    - [`../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md`](../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md) — BX workaround for UI verification.
+12. **Phase B execution plan** — [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md). Read before touching anything for Phase B.
+13. Most recent log in [`../../09_logs/`](../../09_logs/) matching `*phase*-applied*.md` (applied work) and `*phase*-design*.md` (design lock-ins).
 
 ## Safety rules (Amarolab-specific)
 

@@ -1,6 +1,6 @@
 # ROADMAP — Amarolab Assistant v1
 
-Last updated: 2026-06-15 (Phase A.4 v0.1 application result; D-32..D-34 added)
+Last updated: 2026-06-15 (Phase A formally closed; Phase B now current; B-09 resolved; BX added)
 
 Phase plan for the Amarolab Assistant v1 sub-project. For the
 homelab-wide roadmap see
@@ -81,54 +81,52 @@ current, what's next, what's blocked, what's decided.
   and
   [`../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-applied.md`](../../09_logs/2026-06-15_phaseA4-default-model-and-prompt-applied.md).
 
-### Phase A.4 v0.1 — System prompt revision — PARTIALLY APPLIED
+### Phase A.4 v0.1 — System prompt revision — APPLIED
 - Date applied: 2026-06-15.
 - Outcome: v0.1 prompt (3 342 chars) replaces v0 on the qwen2.5
   row. `meta.toolIds`, `meta.description`, `DEFAULT_MODELS` all
   unchanged. No services restarted.
-- Validation: **15 / 21 PASS**, 6 FAIL across three issues:
-  - **Issue T (most serious):** `time_now` not invoked from chat;
-    audit log records 0 invocations during V-10. Same root cause
-    fails V-10a, V-10b, V-12. Blocks Phase B.
-  - **Issue L:** English greeting on turn 1 still defaults to
-    Spanish (V-6a, V-6b). Multi-turn explicit switch works (V-11).
-  - **Issue B:** `rag_search` refusal no longer names "Phase B"
-    (V-8b regressed from v0).
-- Decisions added: D-32..D-34 (see below).
+- Validation: **15 / 21 PASS at apply time**; remaining six
+  failures triaged and reclassified in §"Issue-T resolution"
+  below.
+- Decisions added: D-32..D-34.
 - Evidence:
   [`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-design.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-design.md)
   and
   [`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md).
 
+### Phase A — formally CLOSED
+- Date closed: 2026-06-15.
+- Decision + criteria check:
+  [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md).
+- Issue T (B-09) **resolved** as a validation-methodology
+  artefact, not a runtime regression. Evidence:
+  [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md).
+- New known carry-over **BX — Open WebUI 0.8.10 browser-UI
+  WebSocket race**. Workaround documented; durable fix upstream;
+  not a Phase B blocker. Evidence:
+  [`../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md`](../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md).
+- Prompt-cosmetic carry-overs (Issue L, Issue B, `[1]` literal
+  contradiction in the no-tools fallback) move to a v0.2 prompt
+  iteration scheduled at the user's discretion; **not Phase B
+  blockers**.
+
 ---
 
 ## Current phase
 
-### Phase A.4 v0.2 (or Issue-T diagnosis) — next
+### Phase B — Knowledge Tool + audit corpus
 
-Phase A.4 is **not closed**. The v0.1 prompt fixed the
-Spanish-greeting persona and added a working multi-turn language
-switch, but introduced no progress on the most consequential
-regression: `time_now` is not invoked from chat when a custom
-`params.system` is in scope. Phase B (`rag_search`) cannot start
-until tool-calling from chat is proven again.
+Phase B implements the `rag_search` and `audit_search` Tools and
+the `infra_audits` Qdrant corpus.
 
-Recommended next sub-step (per
-[`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md)
-§"Recommended next step"):
+Execution plan:
+[`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
 
-- **Option A — diagnose first.** Hit Ollama directly
-  (`curl http://127.0.0.1:11434/api/chat`) with the v0.1 system
-  prompt + `time_now` tool definition + `"¿qué hora es?"`. The
-  outcome decides whether v0.2 is a prompt-only iteration or
-  whether Open WebUI's prompt+tools wiring needs work.
-- Option B — v0.2 prompt iteration without diagnosis (drop
-  `time_now(timezone?, format?)` signature line, remove `[1]`
-  citation example, drop language-ambiguity escape, re-add
-  "Phase B" label under the `rag_search` description).
-- Option C — rollback to v0 prompt (loses V-5a + V-11 fixes).
-
-Phase A.4 v0.2 status: **not started**. No code, no UI changes.
+Status: **not started**. No code, no UI changes, no container
+recreate. Phase B kick-off requires explicit user approval of the
+gated decisions in the execution plan (notably the openwebui
+container recreate to add the ingest bind-mount).
 
 ---
 
@@ -139,45 +137,29 @@ The numbering matches
 applicable, with the Phase A subdivided into A.1 … A.4 to match how
 work has actually been sequenced.
 
-### Phase A.3 — Open WebUI Tools scaffold + canary
-- Create source tree at `/home/diego/homelab/ai-stack/openwebui-tools/`
-  (`tools/`, `lib/`, `bin/`, `README.md`) — repo-tracked.
-- Write `tools/time_now.py` as a `class Tools` Open WebUI Tool
-  (Open WebUI 0.8.10 mandates this shape — D-24). Helper inlined per
-  Tool file (D-26).
-- Install into Open WebUI via the supported API/UI flow into
-  `webui.db` (D-25). No filesystem auto-discovery; the on-disk file
-  is the canonical version-controlled copy.
-- Scope the Tool to `qwen2.5:7b-instruct` only (D-20).
-- Exit: in Open WebUI chat with qwen2.5, *"what time is it?"*
-  triggers a `time_now` tool call, the Tool method returns the JSON
-  payload, the audit log accumulates one JSON line per call.
+(Phase A.3 and Phase A.4 are CLOSED — see §"Completed phases"
+above and the Phase A closeout log
+[`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md).)
 
-### Phase A.4 — Open WebUI default + system prompt v0
-- Set the workspace default model to `qwen2.5:7b-instruct` in Open
-  WebUI admin.
-- Draft a v0 system prompt with the tool-composition rules from
-  [`03-tools.md`](03-tools.md), trimmed to the three Phase A.2 tools.
-- Exit: default model is qwen2.5; system prompt is loaded.
-
-(v0 and v0.1 have already been applied; see §"Completed phases"
-above. Phase A.4 is **not closed** — see §"Current phase" for v0.2
-options and blocker B-09.)
-
-### Phase B — Knowledge Tool + audit corpus
+### Phase B — Knowledge Tool + audit corpus (current)
 - Add `infra_audits` corpus to `ingest/conf/corpora.yaml` and create
   the Qdrant collection.
 - One-shot backfill from `/home/diego/server-audit-2026-06-13/**/*.md`.
 - Bind-mount the ingest tree read-only into the openwebui container at
   `/opt/ingest` so the Tool can `from ingest.embedder import Embedder`
-  and `from ingest.reranker import Reranker`.
+  and `from ingest.reranker import Reranker`. **Gated** — requires
+  user approval (openwebui container recreate).
 - Write `tools/rag_search.py` as a `class Tools` Open WebUI Tool
   (D-24); same shape as `time_now`.
 - Write `tools/audit_search.py` as a separate Tool that internally
   calls `rag_search(collection="infra_audits", …)`.
 - Install both via the supported API/UI flow into `webui.db` (D-25).
+- Update qwen2.5 Model entry `meta.toolIds` to
+  `["time_now","rag_search","audit_search"]` (D-20).
 - Exit: the Phase 1.5 reranker benchmark reproduces when routed
   through the Tool path (top-6 ≥ 95 % on guardian_cloud).
+- Detailed execution plan:
+  [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
 
 ### Phase C — Home Assistant integration
 - Create dedicated HA user `assistant`; issue Long-Lived Access Token
@@ -233,10 +215,9 @@ blocked" can start):
 |---|---|---|---|---|
 | B-07 | HA Long-Lived Access Token not issued | C | user | Must be created in HA UI; not automatable |
 | B-08 | MyFreeTour source path unknown | G | user | Phase 1 placeholder corpus stays empty until decided |
-| B-09 | Tool-calling regression with custom `params.system` (Issue T) — `time_now` not invoked from chat | B | user (decide A/B/C in Phase A.4 §"Current phase") | Audit log: 0 `time_now` invocations during V-10 in v0.1 validation. Phase A.3 proves the Tool itself works; root cause is the prompt+tool wiring once a system prompt is attached |
 
 Resolved blockers (kept for traceability; superseded by locked
-decisions D-18 … D-22):
+decisions D-18 … D-22 and the Phase A closeout):
 
 | # | Blocker | Resolved on | Resolution |
 |---|---|---|---|
@@ -246,6 +227,7 @@ decisions D-18 … D-22):
 | B-04 | A.2 Q3: Function visibility scope | 2026-06-15 | `qwen2.5:7b-instruct` only (D-20) |
 | B-05 | A.2 Q4: confirm audit-log host path | 2026-06-15 | Confirmed `/srv/homelab/data/openwebui/amarolab-audit.log` (re-affirms D-07) |
 | B-06 | A.2 Q5: `myfreetour` enum treatment | 2026-06-15 | Leave in enum; return `empty_collection` (D-22) |
+| B-09 | Tool-calling regression with custom `params.system` (Issue T) — `time_now` not invoked from chat | 2026-06-15 | **Validation-methodology artefact**: validator omitted `tool_ids` in `POST /api/chat/completions` body; Open WebUI 0.8.10 does not auto-resolve `meta.toolIds` for this endpoint. Real browser UI auto-attaches it from `model.info.meta.toolIds`. The Tool, the prompt, the model, and Ollama all behave correctly. Evidence: [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md) |
 
 Non-blocking carry-overs (do not stop any v1 phase, listed for
 visibility):
@@ -257,6 +239,8 @@ visibility):
 | C-03 | R-09 / R-10 / R-11 / R-13 | System-hardening sweep, do after v1 is stable |
 | C-04 | Off-site backup mirror | Out of scope for v1 |
 | C-05 | Containerise the ingest service | Cleaner backup story; targeted for v1.1 |
+| BX | Open WebUI 0.8.10 browser-UI WebSocket race — `Unexpected token 'd', "data: {"id"... is not valid JSON` shown to the user when the first chat is sent before socket.io has connected | Upstream Open WebUI frontend bug (helper `A()` in `C2Mvb_V1.js` calls `.json()` on a streaming SSE response). Workaround: LAN-direct UI + hard-refresh + wait for the connection indicator. Evidence: [`../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md`](../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md). Not a Phase B blocker; Phase B UI verification uses the workaround |
+| v0.2 | Prompt-cosmetic carry-overs: Issue L (short English greeting), Issue B (Phase B not named in refusal), `[1]` literal contradiction in the no-tools fallback path | Tracked in the Phase A closeout [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md) §3.1. Can land before, during, or after Phase B at the user's discretion |
 
 ---
 
