@@ -1,5 +1,10 @@
 # AMAROLAB_HANDOFF
+## Mandatory Reading Order
 
+1. AMAROLAB_HANDOFF.md
+2. CURRENT_STATE.md
+3. ROADMAP.md
+4. INITIAL_SYSTEM_STATUS.md (optional historical context)
 Last updated: 2026-06-15
 
 ## Purpose
