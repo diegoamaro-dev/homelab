@@ -1,0 +1,97 @@
+# homelab-rag-ingest corpora definition
+# Created Phase 1 on 2026-06-13.
+#
+# Each entry becomes one Qdrant collection of the same name.
+# - type: fs | git
+# - path: absolute root on the host
+# - include: list of glob patterns evaluated relative to `path`
+# - exclude: list of glob patterns; same matcher; takes precedence
+# - enabled: false skips the corpus entirely (use for placeholders)
+# - source_kind_map: file extension → label stored in payload.source_kind
+#   (used later by the assistant to hint at code vs prose vs config)
+
+defaults:
+  source_kind_map:
+    .md: markdown
+    .yaml: yaml
+    .yml: yaml
+    .conf: conf
+    .toml: toml
+    .json: json
+    .py: code
+    .ts: code
+    .tsx: code
+    .js: code
+    .jsx: code
+    .sh: code
+    .sql: code
+    .html: html
+    .txt: text
+  max_file_bytes: 5_000_000   # skip files larger than 5 MB
+  exclude_global:
+    - "**/.git/**"
+    - "**/node_modules/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/.next/**"
+    - "**/.gradle/**"
+    - "**/.idea/**"
+    - "**/.venv/**"
+    - "**/venv/**"
+    - "**/__pycache__/**"
+    - "**/*.lock"
+    - "**/package-lock.json"
+    - "**/yarn.lock"
+
+corpora:
+  - name: homelab_docs
+    type: fs
+    path: /home/diego/homelab
+    include:
+      - "**/*.md"
+      - "**/*.yaml"
+      - "**/*.yml"
+      - "**/*.conf"
+    exclude:
+      - "ai-tools/venv/**"
+      - "ai-stack/ingest/**"      # don't recurse into our own source
+      - "ai-stack/data/**"
+      - "**/.HA_VERSION"
+    enabled: true
+
+  - name: guardian_cloud
+    type: git
+    path: /mnt/storage/projects/guardian-cloud
+    include:
+      - "docs/**/*.md"
+      - "strategy/**/*.md"
+      - "playbook/**/*.md"
+      - "Pagina web/**/*.md"
+      - "*.md"
+      - "**/README.md"
+    exclude:
+      - "mobile/**"
+      - "app/**"
+      - "backend/**"
+      - "gradle/**"
+    enabled: true
+
+  - name: ensambla2
+    type: git
+    path: /mnt/storage/projects/ensambla2
+    include:
+      - "*.md"
+      - "docs/**/*.md"
+      - "**/README.md"
+      - "packages/*/README.md"
+    exclude:
+      - "tests/**"
+      - "scripts/**"
+    enabled: true
+
+  - name: myfreetour
+    type: git
+    path: /TBD/path/from/user
+    include: ["**/*.md", "README*"]
+    exclude: []
+    enabled: false   # placeholder — flip to true and set path once provided

@@ -1,0 +1,78 @@
+# homelab-rag-ingest
+
+Per-corpus ingestion service that feeds the assistant's Qdrant index.
+
+Built as Phase 1 of the
+[server-audit-2026-06-13/phase3-ai-assistant](../../server-audit-2026-06-13/phase3-ai-assistant)
+plan.
+
+## Layout
+
+```
+ingest/
+├── bin/ingest                # CLI wrapper (activates venv, runs cli.py)
+├── conf/corpora.yaml         # corpus definitions
+├── install.sh                # one-shot venv setup
+├── requirements.txt
+├── ingest/                   # python package
+│   ├── cli.py
+│   ├── config.py
+│   ├── chunker.py
+│   ├── connectors/{fs,git}.py
+│   ├── embedder.py
+│   ├── pipeline.py
+│   └── store.py
+├── logs/                     # cron output lands here
+└── venv/                     # created by install.sh
+```
+
+## Install
+
+```bash
+cd /home/diego/homelab/ai-stack/ingest
+./install.sh
+```
+
+This creates a Python venv and installs `qdrant-client`,
+`sentence-transformers`, `langchain-text-splitters`, `PyYAML`, and a
+CPU-only build of `torch`. ~1.4 GB total.
+
+## Commands
+
+```bash
+# Status of every collection
+./bin/ingest status
+
+# Sync one or all corpora
+./bin/ingest sync                       # all enabled corpora
+./bin/ingest sync --collection homelab_docs
+./bin/ingest sync --dry-run             # walk & chunk; do not embed or write
+
+# Search a collection
+./bin/ingest search --collection homelab_docs --query "how do I rebuild zigbee" --k 6
+
+# Drop all points (requires --yes)
+./bin/ingest drop --collection myfreetour --yes
+```
+
+## How idempotency works
+
+- Point IDs are deterministic: `uuid(sha256(collection|source_rel|chunk_index))`.
+- For each file we compute per-chunk `content_sha`s and compare against the
+  payloads already stored. Chunks whose `content_sha` is unchanged are
+  skipped — no embedding call, no write.
+- If a file shrank, its old chunk indexes are deleted before re-upserting.
+- Files that no longer exist on disk get their points garbage-collected at
+  the end of the run.
+
+## Sensitive config
+
+Reads `QDRANT_API_KEY` from `/home/diego/homelab/ai-stack/.env` (Phase 0 /
+R-07 placed it there with mode `0600`). Falls back to the env variable of
+the same name.
+
+## Scheduling
+
+Designed to be invoked nightly by cron at ~02:30 (before the 03:00 restic
+backup so the new vector state lands in the snapshot). The cron entry is
+not installed yet — see Phase 1 P1.10.
