@@ -95,3 +95,13 @@ corpora:
     include: ["**/*.md", "README*"]
     exclude: []
     enabled: false   # placeholder — flip to true and set path once provided
+
+  - name: infra_audits
+    type: fs
+    path: /home/diego/server-audit-2026-06-13
+    include:
+      - "**/*.md"
+    exclude:
+      - "**/inspect-snapshots/**"
+      - "**/*.json"
+    enabled: true
