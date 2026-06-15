@@ -1,6 +1,6 @@
 # CURRENT_STATE — Amarolab Assistant v1
 
-Last updated: 2026-06-15 (Phase A formally closed; Phase B now current)
+Last updated: 2026-06-16 (Phase A formally closed; Issue T re-opening REMEDIATED 2026-06-16; Phase B now current)
 
 Scope: live state of the Amarolab Assistant v1 sub-project. For
 homelab-wide state see
@@ -57,6 +57,16 @@ runtime copy in `webui.db` (5180 chars, 1 spec). Scoped to
 `meta.toolIds=["time_now"]`. End-to-end smoke + error + concurrency
 validated.
 
+**Browser-UI end-to-end path validated 2026-06-16** after the Issue T
+re-opening — see
+[`../../09_logs/2026-06-15_issueT_remediation_applied.md`](../../09_logs/2026-06-15_issueT_remediation_applied.md).
+Until that date, the Phase A.3 end-to-end claim was true only for
+API requests that manually attached `tool_ids:["time_now"]`; the
+browser path was broken by the qwen2.5 Model entry's
+`base_model_id` value (now `NULL` — see new row in
+*Environment / configuration* below and **D-35** in
+[`ROADMAP.md`](ROADMAP.md)).
+
 `rag_search`, `audit_search`, `system_status`, `ha_get_state`,
 `ha_call_service` are designed only — see Phase A.2 design log
 ([`../../09_logs/2026-06-15_phaseA2-tool-layer-design.md`](../../09_logs/2026-06-15_phaseA2-tool-layer-design.md))
@@ -74,6 +84,7 @@ and Phase A.3 applied log
 | `AMAROLAB_AUDIT_LOG` | **set** (live since Phase A.3) | inlined in each Tool; on host at `/srv/homelab/data/openwebui/amarolab-audit.log` |
 | Open WebUI workspace `DEFAULT_MODELS` | `"qwen2.5:7b-instruct"` | `config.DEFAULT_MODELS` in `webui.db` (set Phase A.4 v0 apply 2026-06-15) |
 | `qwen2.5:7b-instruct` per-model `params.system` | **v0.1 prompt, 3 342 chars** | `model.params.system` in `webui.db`; persona + tool routing + refusals. Prompt-cosmetic v0.2 carry-overs documented in [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md) §3.1. |
+| `qwen2.5:7b-instruct` Model-entry `base_model_id` | **`NULL`** (was `"qwen2.5:7b-instruct"` until 2026-06-16) | `model.base_model_id` in `webui.db`. Required for OWUI 0.8.10's `get_all_models` to expose `info.meta.toolIds` via `/api/models` — see [`../../09_logs/2026-06-15_issueT_browser_validation_reopened.md`](../../09_logs/2026-06-15_issueT_browser_validation_reopened.md) §2.4 and locked decision **D-35** in [`ROADMAP.md`](ROADMAP.md). |
 
 ## What is validated
 
@@ -88,6 +99,7 @@ and Phase A.3 applied log
 | Reranker uplift on guardian_cloud benchmark | Phase 1.5 evaluation harness | Top-6 lifted from 80% to ≥ 95% | 2026-06-14 |
 | Ingest scheduling | cron + log file | Daily 02:30 entries in `ingest.log` | 2026-06-14 |
 | Audit-log format and path | **Designed**, not yet written by code | No on-disk validation possible until Phase A.3 | — |
+| Browser-UI chat invokes `time_now` end-to-end | `POST /api/chat/completions` with the post-fix browser body shape (`tool_ids:["time_now"]` auto-attached) | **PASS** — reply contains real wall-clock time; audit-log delta `+1`; `result_code: "ok"`; `duration_ms: 10` | 2026-06-16 |
 
 ## What is pending
 
@@ -100,15 +112,26 @@ and Phase A.3 applied log
   `webui.db` + scoping + audit log), A.4 v0 (`DEFAULT_MODELS` set),
   A.4 v0.1 (system prompt 3 342 chars on qwen2.5 Model entry +
   D-32..D-34).
-- **Issue T (B-09) — RESOLVED.** The V-10 / V-12 failures were a
-  validation-methodology artefact: the validator omitted `tool_ids`
-  from `POST /api/chat/completions`, so Open WebUI 0.8.10's
-  `main.py:1783` saw no tools and the chat went to qwen2.5 without
-  a tools array. The model, the prompt, the Tool, and Ollama all
-  behave correctly. The browser UI auto-attaches `tool_ids` from
-  `model.info.meta.toolIds` (bundle `GxGTGtKc.js`), so the
-  user-facing path was already correct. Evidence:
-  [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md).
+- **Issue T (B-09)** — initially diagnosed 2026-06-15 as a
+  validator-shape artefact, **REOPENED 2026-06-16** when a live
+  browser test reproduced the failure, and **RE-RESOLVED
+  2026-06-16** after a one-row SQL UPDATE. Real root cause: the
+  qwen2.5 Model entry was created with
+  `base_model_id = "qwen2.5:7b-instruct"` (same as its `id`),
+  which sends it to OWUI 0.8.10's `elif … continue` skip branch
+  in `utils/models.py:159–175`. The custom entry was silently
+  dropped from `/api/models`, so the browser's auto-attach
+  (`ee.info.meta.toolIds` in `GxGTGtKc.js`) had nothing to read
+  and `tool_ids` never made it into the request body. Fix: one
+  SQL UPDATE setting `base_model_id = NULL`. The model, the
+  prompt, the Tool, and Ollama all behave correctly. Evidence:
+  [`../../09_logs/2026-06-15_issueT_browser_validation_reopened.md`](../../09_logs/2026-06-15_issueT_browser_validation_reopened.md)
+  (root-cause investigation),
+  [`../../09_logs/2026-06-15_issueT_remediation_plan.md`](../../09_logs/2026-06-15_issueT_remediation_plan.md)
+  (plan), and
+  [`../../09_logs/2026-06-15_issueT_remediation_applied.md`](../../09_logs/2026-06-15_issueT_remediation_applied.md)
+  (apply log, including browser-equivalent validation and the
+  `+1` audit-log line).
 - **New known carry-over BX — Open WebUI 0.8.10 browser-UI
   WebSocket race.** When the WebSocket / socket.io handshake hasn't
   completed before the first send, `session_id` is omitted from the
@@ -165,9 +188,12 @@ and Phase A.3 applied log
 
 ## Latest completed milestone
 
-**Phase A — CLOSED 2026-06-15.** All sub-phases applied; remaining
-V-check failures diagnosed and reclassified out of the blocker
-set. See
+**Phase A — CLOSED 2026-06-15; Issue T re-opening REMEDIATED 2026-06-16.**
+All sub-phases applied; remaining V-check failures diagnosed and
+reclassified out of the blocker set; the browser-UI tool-calling
+path verified end-to-end after the `base_model_id` fix (see
+[`../../09_logs/2026-06-15_issueT_remediation_applied.md`](../../09_logs/2026-06-15_issueT_remediation_applied.md)).
+See
 [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md)
 for the closure decision + criteria check.
 

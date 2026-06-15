@@ -1,6 +1,6 @@
 # ROADMAP — Amarolab Assistant v1
 
-Last updated: 2026-06-15 (Phase A formally closed; Phase B now current; B-09 resolved; BX added)
+Last updated: 2026-06-16 (Phase A formally closed; B-09 re-opened 2026-06-16 due to browser-path failure, then remediated same day; BX still open; Phase B unblocked)
 
 Phase plan for the Amarolab Assistant v1 sub-project. For the
 homelab-wide roadmap see
@@ -110,6 +110,22 @@ current, what's next, what's blocked, what's decided.
   contradiction in the no-tools fallback) move to a v0.2 prompt
   iteration scheduled at the user's discretion; **not Phase B
   blockers**.
+- **Issue T re-opening (2026-06-16).** A live browser test
+  reproduced the V-10 / V-12 failure on 2026-06-16, B-09 was
+  re-opened, the true root cause was traced to the qwen2.5
+  Model entry's `base_model_id` value (same as `id`, causing
+  OWUI 0.8.10 to silently drop the custom entry in
+  `get_all_models`), and a one-row SQL UPDATE remediation was
+  applied the same day. See
+  [`../../09_logs/2026-06-15_issueT_browser_validation_reopened.md`](../../09_logs/2026-06-15_issueT_browser_validation_reopened.md)
+  (root-cause investigation),
+  [`../../09_logs/2026-06-15_issueT_remediation_plan.md`](../../09_logs/2026-06-15_issueT_remediation_plan.md)
+  (plan), and
+  [`../../09_logs/2026-06-15_issueT_remediation_applied.md`](../../09_logs/2026-06-15_issueT_remediation_applied.md)
+  (apply, with browser-equivalent end-to-end validation and the
+  `+1` audit-log line that closes B-09 for the second and
+  final time). New locked decision **D-35** captures the
+  operational rule.
 
 ---
 
@@ -227,7 +243,7 @@ decisions D-18 … D-22 and the Phase A closeout):
 | B-04 | A.2 Q3: Function visibility scope | 2026-06-15 | `qwen2.5:7b-instruct` only (D-20) |
 | B-05 | A.2 Q4: confirm audit-log host path | 2026-06-15 | Confirmed `/srv/homelab/data/openwebui/amarolab-audit.log` (re-affirms D-07) |
 | B-06 | A.2 Q5: `myfreetour` enum treatment | 2026-06-15 | Leave in enum; return `empty_collection` (D-22) |
-| B-09 | Tool-calling regression with custom `params.system` (Issue T) — `time_now` not invoked from chat | 2026-06-15 | **Validation-methodology artefact**: validator omitted `tool_ids` in `POST /api/chat/completions` body; Open WebUI 0.8.10 does not auto-resolve `meta.toolIds` for this endpoint. Real browser UI auto-attaches it from `model.info.meta.toolIds`. The Tool, the prompt, the model, and Ollama all behave correctly. Evidence: [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md) |
+| B-09 | Tool-calling regression with custom `params.system` (Issue T) — `time_now` not invoked from chat | 2026-06-15 → re-opened 2026-06-16 → re-resolved 2026-06-16 | **2026-06-15 (incorrect):** diagnosed as a validation-methodology artefact (validator omitted `tool_ids`). **2026-06-16 re-investigation:** a live browser test reproduced the failure; real root cause is the qwen2.5 Model entry's `base_model_id = "qwen2.5:7b-instruct"` (same as `id`), which sends it to OWUI 0.8.10's `elif … continue` skip branch in `utils/models.py:159–175`. The custom entry was silently dropped from `/api/models`, so the browser's auto-attach (`ee.info.meta.toolIds` in `GxGTGtKc.js`) had no `info` to read and `tool_ids` never made it into the request body. **Remediated 2026-06-16** with a one-row SQL UPDATE setting `base_model_id = NULL`; browser-equivalent validation green; audit log gained one fresh `time_now / result_code: ok` line at `2026-06-15T22:34:39Z`. Captured as locked decision **D-35**. Evidence: [`../../09_logs/2026-06-15_issueT_browser_validation_reopened.md`](../../09_logs/2026-06-15_issueT_browser_validation_reopened.md), [`../../09_logs/2026-06-15_issueT_remediation_plan.md`](../../09_logs/2026-06-15_issueT_remediation_plan.md), [`../../09_logs/2026-06-15_issueT_remediation_applied.md`](../../09_logs/2026-06-15_issueT_remediation_applied.md). The prior partially-incorrect analysis is preserved at [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md) for traceability. |
 
 Non-blocking carry-overs (do not stop any v1 phase, listed for
 visibility):
@@ -284,7 +300,8 @@ explicit user decision and a new design entry.
 | D-31 | **Citation grammar** = `[N]` inline + final `[N] <source>` list; extends from `time_now` today to `rag_search` in Phase B. Refined by D-34 | 2026-06-15 | Phase A.4 design approval |
 | D-32 | **First-turn self-introduction** is mandatory in the system prompt: single short opening sentence identifying as "Amarolab Assistant" on the first reply of a conversation only | 2026-06-15 | Phase A.4 v0.1 design |
 | D-33 | **Tool invocation rule** in the system prompt: the model MUST issue a real tool call (never describe one in text, never write literal `[N]` placeholders) when a wired tool can answer the question. *Aspirational on qwen2.5 until Issue T is resolved.* | 2026-06-15 | Phase A.4 v0.1 design |
-| D-34 | **Citation precondition**: a citation may only be rendered after an actual tool invocation that returned a result. Refines (does not replace) D-31's citation grammar. *Aspirational on qwen2.5 until Issue T is resolved.* | 2026-06-15 | Phase A.4 v0.1 design |
+| D-34 | **Citation precondition**: a citation may only be rendered after an actual tool invocation that returned a result. Refines (does not replace) D-31's citation grammar. Honoured by qwen2.5 as of the Issue T remediation 2026-06-16 (the model now actually invokes the tool before citing). | 2026-06-15 | Phase A.4 v0.1 design |
+| D-35 | **Custom Model entries that override an existing base model id MUST set `base_model_id = NULL`** (not `= id`). Rationale: OWUI 0.8.10's `get_all_models` (`utils/models.py:159–175`) silently drops same-id custom rows whose `base_model_id` is non-NULL, which hides `info.meta.toolIds` from `/api/models` and breaks the browser's `tool_ids` auto-attach. Applies to: the existing `qwen2.5:7b-instruct` row (fixed 2026-06-16); any future Model entry created via API/UI/script in this sub-project. The Tool runtime contract (D-23..D-26) is unchanged; this is a Model-entry shape rule one level above it. | 2026-06-16 | Issue T re-investigation + remediation |
 | D-23 | **Tool source location** = `/home/diego/homelab/ai-stack/openwebui-tools/` (sibling to `ai-stack/ingest/`). Tracked in the homelab git repo; synced to GitHub. The bind-mounted `/srv/homelab/data/openwebui/` is **not** used to hold Tool source — Open WebUI 0.8.10 does not auto-discover Tools from disk | 2026-06-15 | Phase A.3 plan revision after Open WebUI 0.8.10 compatibility audit |
 | D-24 | **Tool code shape** = `class Tools` with type-hinted methods. Module-level callables are not supported by Open WebUI 0.8.10's tool loader (`load_tool_module_by_id` requires `hasattr(module, "Tools")` and raises otherwise). Each public, non-class, non-underscore attribute of the `Tools()` instance becomes a separately-callable tool | 2026-06-15 | Compatibility report §3 |
 | D-25 | **Tool install workflow** = the supported Open WebUI API/UI flow: `POST /api/v1/tools/create` (or admin UI: Workspace → Tools → "+"). Open WebUI stores the source in `webui.db`. The disk-side `openwebui-tools/tools/*.py` files are the canonical version-controlled copy; the DB row is the runtime copy. Edits round-trip via `POST /api/v1/tools/id/{id}/update` | 2026-06-15 | Compatibility report §5 |

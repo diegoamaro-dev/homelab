@@ -1,6 +1,6 @@
 # AMAROLAB_HANDOFF — Amarolab Assistant v1
 
-Last updated: 2026-06-15
+Last updated: 2026-06-16
 
 ## Purpose
 
@@ -101,12 +101,29 @@ Phase A applied set (all live):
   with three new locked decisions (D-32..D-34). v0.1 prompt
   (3 342 chars) attached to qwen2.5 Model entry. See
   [`../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md`](../../09_logs/2026-06-15_phaseA4-prompt-v0.1-applied.md).
-- **Issue T (B-09)** — **RESOLVED** as a validation-methodology
-  artefact. The validator omitted `tool_ids` from
-  `POST /api/chat/completions`; Open WebUI 0.8.10 does not
-  auto-resolve `meta.toolIds` for that endpoint. Browser UI auto-
-  attaches it. See
-  [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md).
+- **Issue T (B-09)** — **RESOLVED 2026-06-15 → REOPENED 2026-06-16
+  → RE-RESOLVED 2026-06-16.** Initial 2026-06-15 diagnosis (validator
+  omitted `tool_ids`) was correct *for the validator path only* but
+  wrong about the browser path. Real root cause: the
+  `qwen2.5:7b-instruct` Model entry was created with
+  `base_model_id` equal to its own `id`, which OWUI 0.8.10's
+  `get_all_models` (`utils/models.py:159–175`) silently drops from
+  `/api/models`. The browser's auto-attach (`ee.info.meta.toolIds`
+  in `GxGTGtKc.js`) therefore had no `info` to read and
+  `tool_ids` never made it into the chat-completion body. Fix:
+  one-row SQL UPDATE setting `base_model_id = NULL`. Apply day
+  validation: `+1` audit-log line at `2026-06-15T22:34:39Z`,
+  `result_code: ok`. New locked decision **D-35** captures the
+  rule. Evidence:
+  [`../../09_logs/2026-06-15_issueT_browser_validation_reopened.md`](../../09_logs/2026-06-15_issueT_browser_validation_reopened.md)
+  (root cause),
+  [`../../09_logs/2026-06-15_issueT_remediation_plan.md`](../../09_logs/2026-06-15_issueT_remediation_plan.md)
+  (plan),
+  [`../../09_logs/2026-06-15_issueT_remediation_applied.md`](../../09_logs/2026-06-15_issueT_remediation_applied.md)
+  (apply). The 2026-06-15 partially-incorrect analysis is preserved
+  at
+  [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md)
+  for traceability.
 - **New carry-over BX — Open WebUI 0.8.10 browser-UI WebSocket
   race** (`Unexpected token 'd', "data: {"id"... is not valid JSON`
   shown when the first message is sent before socket.io connects).
@@ -130,10 +147,14 @@ For a future session resuming work, read in this order:
 10. [`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md) — **MANDATORY** for anyone implementing Tools. Source-grounded Open WebUI 0.8.10 contract: `class Tools`, JSON-Schema build, install path, valves, frontmatter.
 11. **Phase A closure & current state** — read these together:
     - [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md) — durable closure record.
-    - [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md) — why B-09 is resolved.
+    - [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md) — the **2026-06-15** partially-correct B-09 diagnosis (kept for traceability).
     - [`../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md`](../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md) — BX workaround for UI verification.
-12. **Phase B execution plan** — [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md). Read before touching anything for Phase B.
-13. Most recent log in [`../../09_logs/`](../../09_logs/) matching `*phase*-applied*.md` (applied work) and `*phase*-design*.md` (design lock-ins).
+12. **Issue T re-opening (2026-06-16) — read in order**:
+    - [`../../09_logs/2026-06-15_issueT_browser_validation_reopened.md`](../../09_logs/2026-06-15_issueT_browser_validation_reopened.md) — the corrected B-09 root cause (`base_model_id = id` collision with the OWUI 0.8.10 model-merge skip branch).
+    - [`../../09_logs/2026-06-15_issueT_remediation_plan.md`](../../09_logs/2026-06-15_issueT_remediation_plan.md) — the minimal remediation plan.
+    - [`../../09_logs/2026-06-15_issueT_remediation_applied.md`](../../09_logs/2026-06-15_issueT_remediation_applied.md) — the apply log, including browser-equivalent end-to-end validation and the audit-log `+1` proof.
+13. **Phase B execution plan** — [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md). Read before touching anything for Phase B.
+14. Most recent log in [`../../09_logs/`](../../09_logs/) matching `*phase*-applied*.md` (applied work) and `*phase*-design*.md` (design lock-ins).
 
 ## Safety rules (Amarolab-specific)
 
