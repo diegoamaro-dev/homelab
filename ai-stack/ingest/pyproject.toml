@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ingest"
+version = "0.1.0"
+dependencies = [
+    "qdrant-client>=1.12,<2",
+    "sentence-transformers>=3.0,<4",
+    "langchain-text-splitters>=0.3,<1",
+    "PyYAML>=6"
+]
+
+[tool.setuptools]
+packages = ["ingest"]

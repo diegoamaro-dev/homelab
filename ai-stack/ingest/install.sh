@@ -18,6 +18,8 @@ pip install --extra-index-url https://download.pytorch.org/whl/cpu \
             "torch<3" \
             -r requirements.txt
 
+pip install -e .
+
 echo "==> install complete"
 echo "    venv: $ROOT/venv"
 echo "    cli:  $ROOT/bin/ingest"
