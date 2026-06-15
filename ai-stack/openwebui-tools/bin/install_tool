@@ -1,0 +1,201 @@
+#!/usr/bin/env python3
+"""
+install_tool — install / update an Amarolab Open WebUI Tool.
+
+Reads a Tool source file from disk, inlines lib/audit_helper.py into
+it via the `# @@AMAROLAB_INLINE:audit_helper@@` marker, computes the
+Tool id from the basename, authenticates to Open WebUI by minting a
+JWT signed with WEBUI_SECRET_KEY, and POSTs to /api/v1/tools/create
+(or .../id/{id}/update if the id already exists).
+
+Usage:
+  install_tool <path/to/tool.py>           install or update
+  install_tool --dry-run <path/...>        inline only, print, do not POST
+
+Environment overrides:
+  AMAROLAB_ENV_FILE     path to .env containing WEBUI_SECRET_KEY
+                        (default: /home/diego/homelab/ai-stack/.env)
+  OPENWEBUI_URL         (default: http://127.0.0.1:3000)
+  OPENWEBUI_USER_ID     UUID of the admin (default: diego's id)
+  WEBUI_SECRET_KEY      direct override; if set, .env is not read
+
+Exit codes:
+  0  success
+  1  source / network / install error
+  2  auth / config error
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+import uuid
+from pathlib import Path
+
+try:
+    import jwt  # PyJWT
+    import requests
+except ImportError as e:
+    sys.exit(f"missing dep: {e}. install with: pip install --user PyJWT requests")
+
+REPO_ROOT = Path(__file__).resolve().parent.parent  # ai-stack/openwebui-tools
+LIB_HELPER = REPO_ROOT / "lib" / "audit_helper.py"
+ENV_FILE = Path(os.environ.get(
+    "AMAROLAB_ENV_FILE",
+    "/home/diego/homelab/ai-stack/.env",
+))
+OPENWEBUI_URL = os.environ.get("OPENWEBUI_URL", "http://127.0.0.1:3000").rstrip("/")
+USER_ID = os.environ.get(
+    "OPENWEBUI_USER_ID",
+    "3a49344e-acf6-41a1-b28d-8cce95c36c2a",  # diego (admin) on this homelab
+)
+INLINE_MARKER = "# @@AMAROLAB_INLINE:audit_helper@@"
+INLINE_RE = re.compile(
+    r"# --- INLINE START ---\n(.*?)\n# --- INLINE END ---",
+    re.DOTALL,
+)
+
+
+def read_secret() -> str:
+    s = os.environ.get("WEBUI_SECRET_KEY")
+    if s:
+        return s
+    if not ENV_FILE.exists():
+        sys.exit(f"[config] WEBUI_SECRET_KEY not in env and {ENV_FILE} missing")
+    for line in ENV_FILE.read_text().splitlines():
+        if line.startswith("WEBUI_SECRET_KEY="):
+            return line.split("=", 1)[1].strip()
+    sys.exit(f"[config] WEBUI_SECRET_KEY not found in {ENV_FILE}")
+
+
+def mint_token(secret: str) -> str:
+    payload = {"id": USER_ID, "jti": str(uuid.uuid4())}
+    return jwt.encode(payload, secret, algorithm="HS256")
+
+
+def extract_helper_block(helper_text: str) -> str:
+    m = INLINE_RE.search(helper_text)
+    if not m:
+        sys.exit(f"[helper] {LIB_HELPER} has no INLINE START/END markers")
+    return m.group(1)
+
+
+def inline(tool_text: str) -> str:
+    if INLINE_MARKER not in tool_text:
+        sys.exit(f"[source] tool has no {INLINE_MARKER} marker")
+    helper = extract_helper_block(LIB_HELPER.read_text(encoding="utf-8"))
+    return tool_text.replace(INLINE_MARKER, helper)
+
+
+def parse_frontmatter(content: str) -> dict:
+    m = re.match(r'^\s*"""(.*?)"""', content, re.DOTALL)
+    if not m:
+        return {}
+    fm = {}
+    for line in m.group(1).splitlines():
+        line = line.strip()
+        if not line or ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        fm[k.strip()] = v.strip()
+    return fm
+
+
+def post(endpoint: str, headers: dict, body: dict, timeout: int = 30):
+    r = requests.post(endpoint, headers=headers, json=body, timeout=timeout)
+    return r
+
+
+def get_existing(headers: dict, tool_id: str):
+    r = requests.get(
+        f"{OPENWEBUI_URL}/api/v1/tools/id/{tool_id}",
+        headers=headers,
+        timeout=10,
+    )
+    return r
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description="Install/update an Amarolab Open WebUI Tool.")
+    ap.add_argument("source", help="Path to the Tool .py source file")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="Inline + show body, do not POST")
+    args = ap.parse_args(argv)
+
+    src = Path(args.source).resolve()
+    if not src.exists():
+        print(f"[source] not found: {src}", file=sys.stderr)
+        return 1
+
+    raw = src.read_text(encoding="utf-8")
+    inlined = inline(raw)
+    fm = parse_frontmatter(inlined)
+    tool_id = src.stem.lower()
+
+    if not tool_id.isidentifier():
+        print(f"[source] {tool_id!r} is not a valid Python identifier", file=sys.stderr)
+        return 1
+
+    name = fm.get("title", tool_id)
+    description = fm.get("description", name)
+    manifest = {k: fm[k] for k in ("author", "author_url", "version", "license") if k in fm}
+
+    body = {
+        "id": tool_id,
+        "name": name,
+        "content": inlined,
+        "meta": {"description": description, "manifest": manifest},
+        "access_grants": None,
+    }
+
+    if args.dry_run:
+        print(f"# would install id={tool_id} name={name!r} (content {len(inlined)} chars)")
+        print(f"# description: {description}")
+        print(f"# manifest: {json.dumps(manifest)}")
+        print("# --- inlined content follows ---")
+        print(inlined)
+        return 0
+
+    try:
+        secret = read_secret()
+    except SystemExit:
+        return 2
+
+    headers = {
+        "Authorization": f"Bearer {mint_token(secret)}",
+        "Content-Type": "application/json",
+    }
+
+    existing = get_existing(headers, tool_id)
+    if existing.status_code == 401:
+        print(f"[auth] HTTP 401 - token rejected", file=sys.stderr)
+        return 2
+    if existing.status_code not in (200, 401, 404):
+        # 401 here actually means "not found" per the update endpoint's ERROR_MESSAGES.NOT_FOUND
+        # 404 if route returns proper status (Open WebUI uses 401 for both unauth and not-found
+        # in some places). Try POST /create unless we got a real 200.
+        pass
+
+    action = "update" if existing.status_code == 200 else "create"
+    endpoint = (
+        f"{OPENWEBUI_URL}/api/v1/tools/id/{tool_id}/update"
+        if action == "update"
+        else f"{OPENWEBUI_URL}/api/v1/tools/create"
+    )
+
+    r = post(endpoint, headers, body)
+    if r.status_code >= 300:
+        print(f"[install] HTTP {r.status_code}: {r.text[:500]}", file=sys.stderr)
+        return 1
+
+    out = r.json() or {}
+    out_id = out.get("id", tool_id)
+    spec_count = len(out.get("specs", []) or [])
+    print(f"OK id={out_id} name={out.get('name', name)!r} action={action} specs={spec_count}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

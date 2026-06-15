@@ -53,38 +53,40 @@ current, what's next, what's blocked, what's decided.
 - Evidence:
   [`../../09_logs/2026-06-15_phaseA2-tool-layer-design.md`](../../09_logs/2026-06-15_phaseA2-tool-layer-design.md).
 
+### Phase A.3 — Open WebUI Tools scaffold + `time_now` canary
+- Date applied: 2026-06-15.
+- Outcome: source tree at `/home/diego/homelab/ai-stack/openwebui-tools/`
+  (5 files); `time_now` Tool installed in `webui.db` (5180 chars
+  content, 1 spec); per-model scoping wired (Model entry for
+  `qwen2.5:7b-instruct` with `meta.toolIds=["time_now"]`); audit log
+  live at `/srv/homelab/data/openwebui/amarolab-audit.log`.
+- Validation: V-1..V-19 PASS; V-20 informational (no regression);
+  V-21 PASS. End-to-end happy path returns correct real date/time
+  with citation; rate limit exact at 60/min; redaction works; other
+  models do not see the Tool.
+- Evidence:
+  [`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md).
+
 ---
 
 ## Current phase
 
-### Phase A.3 — Open WebUI Tools scaffold + `time_now` canary (revised plan)
+### Phase A.4 — Open WebUI default model + system prompt v0 (next)
 
-With Phase A.2 approved, the next implementation milestone is the
-**Open WebUI Tools** scaffold (the v1 design called these "Functions";
-the correct 0.8.10 vocabulary is **Tools** — see
-[`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md)).
-Concretely:
+Phase A.3 is complete. The remaining Phase A items, per
+[`05-implementation-roadmap.md`](05-implementation-roadmap.md):
 
-- Create source tree at `/home/diego/homelab/ai-stack/openwebui-tools/`
-  (repo path, version-controlled, alongside `ai-stack/ingest/`).
-- Write `tools/time_now.py` as a `class Tools` Open WebUI Tool — the
-  only shape Open WebUI 0.8.10 accepts (D-24).
-- Inline the audit / rate-limit helper inside the Tool file rather
-  than via a shared module (D-26).
-- Install the Tool into Open WebUI via the supported API/UI flow —
-  POST `/api/v1/tools/create` (or paste in the admin UI). Open WebUI
-  stores the source in `webui.db`; the on-disk file remains the
-  canonical version-controlled copy (D-25).
-- In Open WebUI admin, scope the Tool to `qwen2.5:7b-instruct` only
-  (D-20).
-- Verify end-to-end against the validation plan in the revised A.3
-  design log.
+- Set the workspace default model in Open WebUI admin to
+  `qwen2.5:7b-instruct` (currently still the user must pick it from
+  the dropdown).
+- Draft a v0 system prompt with the tool-composition rules from
+  [`03-tools.md`](03-tools.md), trimmed to the three A.2 tools (only
+  `time_now` is wired so far, but the prompt should still describe
+  the routing rules so it survives Phase B and Phase D landing).
+- Exit: default model is qwen2.5; system prompt is loaded.
 
-Phase A.3 status: **revised plan prepared 2026-06-15** based on the
-Open WebUI 0.8.10 source review; durable log committed at
-[`../../09_logs/2026-06-15_phaseA3-tool-canary-design.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-design.md).
-**Awaiting implementation approval.** No Tool source created on disk;
-no Open WebUI Tools installed in `webui.db`; no admin-UI changes.
+Phase A.4 status: **not started**. No plan yet committed; no UI
+changes made.
 
 ---
 

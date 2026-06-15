@@ -16,10 +16,14 @@ homelab-wide state see
 | RAG ingest | host cron `02:30 *`, user `diego` | Active | bare-metal venv at `/home/diego/homelab/ai-stack/ingest/venv` |
 | Embedding cache | (no process) | Populated | `/srv/homelab/data/openwebui/cache/embedding/models/` |
 
-Nothing else from the v1 design is running yet. **No** Open WebUI
-Tools installed (the `tool` table in `webui.db` is empty for Amarolab
-entries), **no** `homelab-tools` container, **no**
-`docker-socket-proxy`, **no** containerized ingest service.
+From the v1 design, the following is now in place after Phase A.3
+(2026-06-15): one Open WebUI Tool installed in `webui.db`
+(`time_now`), scoped to `qwen2.5:7b-instruct` only via a custom Model
+entry, audit log writing one JSONL line per call to
+`/srv/homelab/data/openwebui/amarolab-audit.log`. Still missing:
+**no** `rag_search` or `audit_search` (Phase B), **no** HA tools
+(Phase C), **no** `homelab-tools` container or `docker-socket-proxy`
+(Phase D), **no** containerized ingest service (deferred).
 
 ## What is implemented
 
@@ -46,13 +50,18 @@ Dimensionality: 384 (multilingual-e5-small). Distance: cosine.
 Payload indexes on `collection`, `source_kind`, `source_rel`.
 
 ### Tool layer
-**Not implemented.** No Open WebUI Tool source files on disk; no
-Amarolab entries in the `tool` table of `webui.db`. `time_now`,
-`rag_search`, `system_status` are designed only — see Phase A.2
-design log
+**`time_now` shipped** (Phase A.3, 2026-06-15). Canonical source at
+`/home/diego/homelab/ai-stack/openwebui-tools/tools/time_now.py`;
+runtime copy in `webui.db` (5180 chars, 1 spec). Scoped to
+`qwen2.5:7b-instruct` only (D-20) via a Model entry with
+`meta.toolIds=["time_now"]`. End-to-end smoke + error + concurrency
+validated.
+
+`rag_search`, `audit_search`, `system_status`, `ha_get_state`,
+`ha_call_service` are designed only — see Phase A.2 design log
 ([`../../09_logs/2026-06-15_phaseA2-tool-layer-design.md`](../../09_logs/2026-06-15_phaseA2-tool-layer-design.md))
-and the revised A.3 plan
-([`../../09_logs/2026-06-15_phaseA3-tool-canary-design.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-design.md)).
+and Phase A.3 applied log
+([`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md)).
 
 ### Environment / configuration
 | Knob | Value | Where |
@@ -86,21 +95,15 @@ and the revised A.3 plan
   (D-18..D-22 in [`ROADMAP.md`](ROADMAP.md)).
 - Open WebUI 0.8.10 compatibility audit complete 2026-06-15;
   see [`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md).
-- A.3 **revised plan**: durable log at
-  [`../../09_logs/2026-06-15_phaseA3-tool-canary-design.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-design.md).
-  **Awaiting implementation approval.**
-- A.3: create source tree at `/home/diego/homelab/ai-stack/openwebui-tools/`
-  (`tools/`, `lib/`, `bin/`, `README.md`) — repo-tracked, sibling to
-  `ai-stack/ingest/`.
-- A.3: write `tools/time_now.py` as a `class Tools` Open WebUI Tool
-  (D-24). Audit helper inlined (D-26).
-- A.3: install into Open WebUI via the API/UI flow (D-25), not via
-  filesystem auto-discovery.
-- A.3: scope the Tool to `qwen2.5:7b-instruct` only in Open WebUI
-  admin (D-20).
-- A.4: set Open WebUI default model to `qwen2.5:7b-instruct`.
+- Phase A.3 — **APPLIED 2026-06-15**. `time_now` canary live in
+  `webui.db`; per-model scoping in place; audit log writing.
+  Evidence: [`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md).
+- A.4 (next, not started): set Open WebUI default model to
+  `qwen2.5:7b-instruct`.
 - A.4: draft v0 system prompt with routing rules from
-  [`03-tools.md`](03-tools.md), trimmed to the three A.2 tools.
+  [`03-tools.md`](03-tools.md), trimmed to the three A.2 tools (only
+  `time_now` is wired so far; prompt should describe full routing so
+  it survives B and D).
 
 ### Pending in Phase B
 - Add `infra_audits` corpus to `ingest/conf/corpora.yaml`.
@@ -140,23 +143,26 @@ and the revised A.3 plan
 
 ## Latest completed milestone
 
-**Phase A.1 — Tool-calling LLM pull — APPLIED 2026-06-15.**
+**Phase A.3 — Open WebUI Tools scaffold + `time_now` canary —
+APPLIED 2026-06-15.**
 
 Evidence:
-[`../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md`](../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md).
+[`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md).
 
 Highlights:
-- `qwen2.5:7b-instruct` present in `ollama list` (ID `845dbda0ea48`).
-- Tool-calling smoke test PASS — `tool_calls` array returned, no
-  hallucinated time string.
-- Memory budget within design forecast: model resident ~4.6 GB, ~14
-  GiB free at peak (after the unrelated VSCode EH bloat was resolved).
-- No untouched-area drift: Home Assistant, Guardian Cloud, Open WebUI
-  Tools, Qdrant, ingest, and homelab repository all unchanged.
 
-Memory snapshot at last check (with model warm):
+- Source tree at `/home/diego/homelab/ai-stack/openwebui-tools/`
+  (`README.md`, `tools/time_now.py`, `lib/audit_helper.py`,
+  `bin/install_tool`, `bin/dump_tools`).
+- `time_now` Tool row in `webui.db` (5180 char content, 1 spec).
+- Custom Model entry for `qwen2.5:7b-instruct` with
+  `meta.toolIds=["time_now"]`; per-model scoping (D-20) verified.
+- Audit log live at `/srv/homelab/data/openwebui/amarolab-audit.log`.
+- 19 of 21 validation checks PASS, 1 informational (V-20 RAM), 1
+  PASS (V-21 static network check). End-to-end happy path returns
+  correct real date/time with citation `[1]`.
 
-```
-Mem:   29 GiB total / 13 GiB used / 9.6 GiB free / 6.8 GiB buff/cache / 15 GiB available
-Swap:   8 GB total /  1.4 GB used (steady, pre-existing)
-```
+Prior milestone (Phase A.1 — model pull) is still valid:
+`qwen2.5:7b-instruct` resident in Ollama (ID `845dbda0ea48`), ~4.6 GB
+warm. Evidence:
+[`../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md`](../../09_logs/2026-06-15_phaseA1-tool-calling-llm-applied.md).
