@@ -1,6 +1,6 @@
 # AMAROLAB_HANDOFF — Amarolab Assistant v1
 
-Last updated: 2026-06-17
+Last updated: 2026-06-16
 
 ## Purpose
 
@@ -67,21 +67,33 @@ Ingest: bare-metal venv, cron 02:30 daily, writes to Qdrant only.
 
 ## Current phase
 
-**Phase B — Knowledge Tool + audit corpus.** **B-1..B-8
-applied.** As of 2026-06-17, both Phase B Tools (`rag_search`,
-`audit_search`) are authored, committed, installed in
-`webui.db`, and attached to the `qwen2.5:7b-instruct` Model
-entry's `meta.toolIds`. Browser-path end-to-end was exercised
-by the user on `audit_search` with two `result_code: ok` runs;
-Tool-runtime evidence for `rag_search` end-to-end was captured
-via a read-only probe against the installed source. **Gates
-G-1, G-2, G-3 all approved.** Only **B-9 (docs sync + git
-commit/push)** and **B-10 (Phase C hand-off note)** remain.
-The literal W-4 / W-5 / W-6 / W-7 prompts from the formal B-8
-plan exit were not exercised; tracked in the validation log
-§7 as best-effort follow-ups. Execution plan in
-[`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md);
-status overlay in [`ROADMAP.md`](ROADMAP.md).
+**Phase B — Knowledge Tool + audit corpus.** **CLOSED
+2026-06-16.** Closeout record:
+[`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md).
+Both Phase B Tools (`rag_search`, `audit_search`) are
+authored, committed, installed in `webui.db`, and attached to
+the `qwen2.5:7b-instruct` Model entry's `meta.toolIds`.
+Browser-path end-to-end was exercised by the user on
+`audit_search` with two `result_code: ok` runs; Tool-runtime
+evidence for `rag_search` end-to-end was captured via a
+read-only probe against the installed source. **Gates G-1,
+G-2, G-3 all approved.** B-9 (docs sync) and B-10 (Phase C
+hand-off note — the closeout log) are delivered; only
+mechanical git commit/push of the Phase B artefacts remains
+and is user-gated. The literal W-4 / W-5 / W-6 / W-7 prompts
+from the formal B-8 plan exit + V-A / V-B add-on probes
+survive as best-effort follow-ups (not blockers) — itemised
+in the closeout log §3 and the validation log §7.
+
+**Phase C — Home Assistant integration. NEXT PHASE.** Not
+started. Gated by blocker B-07 (user must create dedicated
+HA user `assistant` and issue its Long-Lived Access Token in
+the HA UI; not automatable). Exact starting point in the
+Phase B closeout log §6. Execution plan in
+[`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md)
+remains the historical Phase B reference; the Phase C
+playbook lives in the closeout log §6 and the ROADMAP "Phase
+C — Home Assistant integration" section.
 
 **Phase A is formally CLOSED** as of 2026-06-15. Closure decision +
 criteria check in
@@ -177,6 +189,7 @@ For a future session resuming work, read in this order:
     - [`../../09_logs/2026-06-17_phaseB_rag_search_design.md`](../../09_logs/2026-06-17_phaseB_rag_search_design.md) — B-4 design + local validation of `tools/rag_search.py`.
     - [`../../09_logs/2026-06-17_phaseB_audit_search_design.md`](../../09_logs/2026-06-17_phaseB_audit_search_design.md) — B-5 design + local validation of `tools/audit_search.py`.
     - [`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md) — B-6 install + B-7 `meta.toolIds` extension + B-8 browser/Tool-runtime validation evidence (with the W-4/W-5/W-6/W-7 follow-up gap explicitly documented in §7).
+    - [`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md) — **Phase B formal closure (2026-06-16).** Hard-criteria check (§5), the durable list of best-effort follow-ups (§3), and the **exact Phase C starting point (§6)**. Counterpart to [`2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md). Read this before any Phase C work.
 15. Most recent log in [`../../09_logs/`](../../09_logs/) matching `*phase*-applied*.md` (applied work) and `*phase*-design*.md` (design lock-ins).
 
 ## Safety rules (Amarolab-specific)

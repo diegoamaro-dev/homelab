@@ -1,6 +1,6 @@
 # CURRENT_STATE — Amarolab Assistant v1
 
-Last updated: 2026-06-17 (Phase B B-4..B-8 applied 2026-06-16; `rag_search` + `audit_search` installed in `webui.db`, qwen2.5 `meta.toolIds = ["time_now","rag_search","audit_search"]`, two browser-path `audit_search` runs `result_code: ok`; only B-9 docs/commit + B-10 hand-off remaining)
+Last updated: 2026-06-16 (Phase B CLOSED; Phase C is next phase. Both Tools live in `webui.db`, qwen2.5 `meta.toolIds = ["time_now","rag_search","audit_search"]`, browser-path `audit_search` end-to-end PASS. W-4 / W-5 / W-6 / W-7 survive as best-effort follow-ups. Closeout in [`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md).)
 
 Scope: live state of the Amarolab Assistant v1 sub-project. For
 homelab-wide state see
@@ -226,15 +226,23 @@ designed-only — see Phase A.2 design log
   "Phase B"; `[1]` self-contradiction in the no-tools fallback) are
   tracked for a v0.2 prompt iteration. **Not Phase B blockers.**
 
-### Phase B (current — B-1..B-8 applied; B-9/B-10 remaining)
-- Plan: [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
-- Status: **operationally functional** (both Tools live in
-  `webui.db`, qwen2.5 sees them, browser-path `audit_search`
-  end-to-end PASS), **not formally closed** — B-9 (this docs
-  sync + commit/push) and B-10 (Phase C hand-off note) still
-  pending; the literal W-4 / W-5 / W-6 / W-7 prompts from the
-  formal B-8 sweep remain open follow-ups (see the validation
-  log §7).
+### Phase B — CLOSED 2026-06-16
+- Plan (historical):
+  [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
+- Closure record:
+  [`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md).
+- Status: **CLOSED.** All B-1..B-8 deliverables applied; B-9
+  docs sync done (this turn) and B-10 (Phase C hand-off note —
+  the closeout log) written. **Hard-criteria block** (install,
+  scope, browser-path Tool invocation OK, no Phase A
+  regression) **fully met.** W-4 / W-5 / W-6 / W-7 survive as
+  best-effort follow-ups; documented in
+  [`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md)
+  §3 and the validation log §7. Git commit/push of the Phase B
+  artefacts (closeout log + state-doc updates + `audit_search`
+  design log + the validation log + the `.dumped.py` files
+  under `tmp/`) is the only mechanical item left and is gated
+  by the user.
 
 **Applied this phase:**
 - Out-of-band: ingest CLI remediation (R-B1) — `pyproject.toml`
@@ -296,17 +304,53 @@ designed-only — see Phase A.2 design log
   exercised; tracked in the validation log §7. User has
   marked B-8 complete.
 
-**Remaining in Phase B:**
-- B-9 — git commit + push of B-4 / B-5 / B-6 / B-7 / B-8
-  artefacts and these state-doc updates (this turn).
-- B-10 — hand-off note to Phase C.
+**Phase B closure deliverables (2026-06-16):**
+- B-9 — docs sync (CURRENT_STATE / ROADMAP / AMAROLAB_HANDOFF
+  carry B-1..B-8 and the Phase B = CLOSED marker) **done this
+  turn**. Git commit/push of the Phase B artefacts is the only
+  mechanical item left; user-gated.
+- B-10 — hand-off note to Phase C
+  ([`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md))
+  **done this turn**. The closeout log defines the exact
+  Phase C starting point in §6.
 
-### Pending in Phase C (Home Assistant — gated)
-- Create dedicated HA user `assistant`; issue Long-Lived Access Token.
-- Populate `HA_BASE_URL`, `HA_LLAT` in `.env`.
-- Implement `ha_get_state` and `ha_call_service` with the 12-domain
-  allowlist.
-- Run the refusal-test (e.g. `recorder.purge` → polite refusal).
+**Survived closure as best-effort follow-ups** (not blockers):
+- W-4 — `rag_search(guardian_cloud, "recovery flow")` not run.
+- W-5 — `rag_search(myfreetour, …)` → `empty_collection` not
+  run.
+- W-6 — HA refusal probe ("turn on the kitchen light" before
+  Phase C wires HA) not run.
+- W-7 — Phase 1.5 reranker benchmark routed through the Tool
+  path not run; V-C already proved the same numerics off-Tool
+  with 0 pp drift.
+- V-A — next nightly cron observation pending.
+- V-B — live `/api/v1/models` read pending; the SQL probe in
+  the validation log §2 structurally proves the same thing.
+
+Itemised in the closeout log §3 and the validation log §7.
+
+### Phase C (NEXT PHASE — Home Assistant integration; gated by user)
+
+Entrypoint definition:
+[`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md)
+§6. Summary:
+
+1. **User action in HA UI** — create the dedicated `assistant`
+   HA user, issue its Long-Lived Access Token (closes blocker
+   B-07).
+2. **User action on host** — populate `HA_BASE_URL` + `HA_LLAT`
+   in `/home/diego/homelab/ai-stack/.env` (mode 0600).
+3. **C-1 / C-2** — author `tools/ha_get_state.py` (read) and
+   `tools/ha_call_service.py` (write, 12-domain allowlist per
+   D-12); `class Tools` shape (D-24); helper inlined (D-26).
+4. **C-3 / C-4** — install both via `bin/install_tool` (D-25);
+   extend qwen2.5 `meta.toolIds` to add `ha_get_state` and
+   `ha_call_service` (Gate **G-4**), with D-35
+   (`base_model_id = NULL`) preserved.
+5. **C-5 / C-6** — refusal test (`recorder.purge` → polite
+   refusal, `result_code: refused`, `allowed: false`); happy
+   path ("turn on the kitchen light", Gate **G-5**).
+6. **C-7** — docs/commit + Phase D hand-off note.
 
 ### Pending in Phase D
 - `homelab-tools` container + `docker-socket-proxy` (Path A from the
@@ -331,14 +375,16 @@ designed-only — see Phase A.2 design log
 
 ## Latest completed milestone
 
-**Phase B B-4..B-8 — applied 2026-06-16 / 2026-06-17.** Both
-Phase B Tools (`rag_search`, `audit_search`) are authored,
+**Phase B — CLOSED 2026-06-16.** Closeout log:
+[`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md).
+Both Phase B Tools (`rag_search`, `audit_search`) authored,
 committed, installed in `webui.db`, attached to the
 `qwen2.5:7b-instruct` Model entry's `meta.toolIds`, and
 exercised end-to-end on the browser path for `audit_search`
-plus the Tool-runtime path for `rag_search`. Phase B is
-operationally functional; the remaining steps are documentation
-sync (B-9) and the Phase C hand-off note (B-10).
+plus the Tool-runtime path for `rag_search`. Hard-criteria block
+fully met; W-4 / W-5 / W-6 / W-7 + V-A / V-B survive as
+best-effort follow-ups (user-accepted gap, closeout log §3 +
+validation log §7). **Phase C is the next phase.**
 
 What is live (Phase B progress, newest first):
 

@@ -1,6 +1,6 @@
 # ROADMAP — Amarolab Assistant v1
 
-Last updated: 2026-06-17 (Phase B B-4..B-8 applied 2026-06-16/17 — both Tools live in `webui.db`, qwen2.5 `meta.toolIds` extended, browser-path `audit_search` end-to-end PASS; only B-9 docs/commit + B-10 hand-off remain)
+Last updated: 2026-06-16 (Phase B **CLOSED**; closeout log [`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md). Phase C is **NEXT PHASE** — gated by user HA-UI actions (B-07: HA user `assistant` + LLAT). W-4 / W-5 / W-6 / W-7 survive as best-effort follow-ups.)
 
 Phase plan for the Amarolab Assistant v1 sub-project. For the
 homelab-wide roadmap see
@@ -299,30 +299,58 @@ current, what's next, what's blocked, what's decided.
 - Evidence:
   [`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md).
 
+### Phase B — formally CLOSED
+- Date closed: 2026-06-16.
+- Decision + criteria check:
+  [`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md).
+- Outcome: hard-criteria block (install, scope, browser-path
+  Tool invocation OK, no Phase A regression) fully met. B-9
+  (docs sync) and B-10 (Phase C hand-off note — the closeout
+  log) both delivered. Only mechanical git commit/push of the
+  Phase B artefacts remains and is user-gated.
+- One new locked decision issued during Phase B: **D-35**
+  (custom Model entries must set `base_model_id = NULL`; see
+  *Decisions taken* below).
+- **Open evidence items surviving closure as best-effort
+  follow-ups (NOT blockers):** W-4 / W-5 / W-6 / W-7
+  (`rag_search(guardian_cloud)`, `rag_search(myfreetour) →
+  empty_collection`, HA refusal, Phase 1.5 benchmark
+  through-Tool); V-A (next nightly cron observation); V-B
+  (live `/api/v1/models` read — SQL probe structurally proves
+  it). All itemised in the closeout log §3 and the validation
+  log §7.
+
 ---
 
 ## Current phase
 
-### Phase B — Knowledge Tool + audit corpus
+### Phase C — Home Assistant integration (NEXT PHASE)
 
-Phase B implements the `rag_search` and `audit_search` Tools and
-the `infra_audits` Qdrant corpus.
+Phase C implements `ha_get_state` (read) and `ha_call_service`
+(bounded write, 12-domain allowlist per D-12), then proves the
+refusal grammar (D-30) against out-of-allowlist domains.
 
-Execution plan:
-[`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
+Entrypoint and exact starting point:
+[`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md)
+§6.
 
-Status: **B-1..B-8 applied** (2026-06-16 / 2026-06-17). Both
-Phase B Tools (`rag_search` at 11 629 chars, `audit_search` at
-11 231 chars) are present in `webui.db`; qwen2.5
-`meta.toolIds` = `["time_now","rag_search","audit_search"]`;
-`base_model_id` is still `NULL` (D-35); two browser-path
-`audit_search` queries returned `result_code: ok`. Only
-**B-9 (docs sync + git commit/push)** and **B-10 (Phase C
-hand-off note)** remain. The literal W-4 / W-5 / W-6 / W-7 prompts
-from the formal B-8 sweep were not exercised (tracked in
-[`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md)
-§7); user marked B-8 complete, so they are best-effort follow-ups
-rather than Phase B blockers.
+Status: **NOT STARTED.** Gated by user actions in the Home
+Assistant UI:
+
+- **Blocker B-07 — HA Long-Lived Access Token not issued.**
+  Must be created in the HA UI by the user (the dedicated HA
+  user `assistant` + its LLAT). Not automatable.
+- After B-07 is resolved: populate `HA_BASE_URL` + `HA_LLAT`
+  in `/home/diego/homelab/ai-stack/.env` (mode 0600); then
+  the assistant can author C-1 (`ha_get_state.py`) and C-2
+  (`ha_call_service.py`).
+
+Invariants preserved from Phase B:
+- `base_model_id = NULL` on the qwen2.5 row (D-35).
+- Per-model scope D-20: HA Tools attach only to qwen2.5.
+- `webui.db` Tool rows for `time_now`, `rag_search`,
+  `audit_search` are not touched; `meta.toolIds` is extended
+  additively at C-4.
 
 ---
 
@@ -337,64 +365,67 @@ work has actually been sequenced.
 above and the Phase A closeout log
 [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md).)
 
-### Phase B — Knowledge Tool + audit corpus (current — APPLIED B-1..B-8)
+(Phase B is CLOSED — see §"Completed phases" above and the
+Phase B closeout log
+[`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md).
+Best-effort follow-ups W-4 / W-5 / W-6 / W-7 + V-A / V-B
+itemised in the closeout log §3 — not Phase C blockers.)
 
-**Done (2026-06-16 / 2026-06-17):**
-- R-B1 ingest CLI remediation (out-of-band prerequisite for B-2).
-- B-1 — `infra_audits` stanza in `ingest/conf/corpora.yaml`.
-- B-2 — Qdrant `infra_audits` collection + 280-chunk backfill.
-- B-3 — `openwebui` recreated with `/opt/ingest:ro` bind mount
-  (Gate **G-1** approved); `from ingest.embedder import Embedder`
-  and `from ingest.reranker import Reranker` resolve inside the
-  container.
-- V-C readiness pre-empt — `sentence-transformers 5.2.3`
-  reproduces the documented Phase 1.5 reranker benchmark exactly
-  (0 pp drift); R-M1 resolved.
-- B-4 — `tools/rag_search.py` authored, locally validated, and
-  committed (`a7995b3f`).
-- B-5 — `tools/audit_search.py` authored, locally validated, and
-  committed (`a13d5e94`).
-- B-6 — both Tools installed in `webui.db` via `bin/install_tool`
-  (rag_search 11 629 chars; audit_search 11 231 chars; install
-  fidelity vs canonical = trailing-newline only).
-- B-7 — qwen2.5 `meta.toolIds` extended to
-  `["time_now","rag_search","audit_search"]` (Gate **G-2**).
-  D-35 `base_model_id = NULL` invariant preserved.
-- B-8 — partial: two browser-path `audit_search` queries
-  returned `result_code: ok` (20.7 s cold, 12.8 s warm);
-  Tool-runtime probes captured Qdrant + reranker evidence for
-  `rag_search` and `audit_search`. **Gate G-3** approved.
+### Phase C — Home Assistant integration (current — NEXT PHASE)
 
-**Remaining:**
-- **B-9** — docs sync (largely applied this turn: CURRENT_STATE
-  / ROADMAP / AMAROLAB_HANDOFF carry B-4..B-8) + git
-  commit/push of `tools/audit_search.py` history,
-  `09_logs/2026-06-16_phaseB_validation_applied.md`, the
-  `audit_search` design log, and these state-doc updates.
-- **B-10** — hand-off note to Phase C.
-- **W-1..W-8 + V-A / V-B (formal sweep)** — open follow-up.
-  W-1 / W-3 are implicitly covered; W-2 has Tool-runtime
-  evidence on a non-literal `homelab_docs` query; W-4 / W-5 /
-  W-6 / W-7 not yet exercised. Tracked in the validation log
-  §7. The user has marked B-8 complete; these are best-effort
-  reinforcement, not Phase B blockers.
-- Exit: the Phase 1.5 reranker benchmark reproduces when routed
-  through the Tool path (top-6 ≥ 95 % on `guardian_cloud`).
-  V-C reproduced it off-Tool; an on-Tool W-7 run remains an
-  open follow-up.
-- Detailed execution plan:
-  [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
+**Required pre-actions (user, NOT the assistant):**
+- **HA UI:** create dedicated HA user `assistant`; issue
+  Long-Lived Access Token (closes blocker B-07).
+- **Host shell:** populate `HA_BASE_URL` + `HA_LLAT` in
+  `/home/diego/homelab/ai-stack/.env` (mode 0600).
 
-### Phase C — Home Assistant integration
-- Create dedicated HA user `assistant`; issue Long-Lived Access Token
-  in the HA UI.
-- Populate `HA_BASE_URL` and `HA_LLAT` in
-  `/home/diego/homelab/ai-stack/.env`.
-- Implement `ha_get_state` (read) and `ha_call_service` (write,
-  12-domain allowlist).
-- Run the refusal test: a prompt like *"please call recorder.purge"*
-  returns the polite refusal logged with `allowed=false`.
-- Exit: read + bounded write of HA via tools; refusal path tested.
+**Owned by the assistant:**
+- **C-1** — `tools/ha_get_state.py`: `class Tools` Tool (D-24),
+  audit helper inlined (D-26). One LLM-callable
+  `ha_get_state(entity_id)` that GETs
+  `${HA_BASE_URL}/api/states/{entity_id}` with
+  `Authorization: Bearer ${HA_LLAT}`. Result codes:
+  `bad_entity_id` / `unauthorized` / `not_found` /
+  `ha_unreachable` / `ok`.
+- **C-2** — `tools/ha_call_service.py`: `class Tools` Tool with
+  `ha_call_service(domain: Literal[…12 domains…], service,
+  entity_id, service_data)`. `domain` hardcodes the D-12
+  allowlist (`light`, `switch`, `scene`, `cover`, `climate`,
+  `media_player`, `script`, `automation`, `fan`, `vacuum`,
+  `input_boolean`, `input_select`, `input_number`); explicit
+  deny on `homeassistant`, `recorder`, `hassio`, `system_log`,
+  `backup`, `auth`. Out-of-allowlist → `result_code: refused`,
+  `allowed: false`, polite refusal string.
+- **C-3** — install both via `bin/install_tool` (D-25 flow);
+  install-fidelity check (`dump_tools` + `diff` =
+  trailing-newline only).
+- **C-4** — extend qwen2.5 `meta.toolIds` to
+  `["time_now","rag_search","audit_search","ha_get_state","ha_call_service"]`
+  (Gate **G-4**). D-35 (`base_model_id = NULL`) preserved.
+  D-20 per-model scope preserved.
+- **C-5 — Refusal test:** chat `"please call recorder.purge"`
+  → polite refusal; audit-log line `tool: ha_call_service`,
+  `domain: "recorder"`, `allowed: false`,
+  `result_code: "refused"`; no HA call made.
+- **C-6 — Happy-path test:** chat `"turn on the kitchen
+  light"` → `ha_call_service` invokes `light.turn_on`; light
+  state changes; audit-log line `result_code: ok`. Gate
+  **G-5**.
+- **C-7** — docs/commit + Phase D hand-off note.
+
+Exit: read + bounded write of HA via tools; refusal path
+tested; happy path observed.
+
+Entrypoint definition (the exact starting point at the time of
+Phase B closure):
+[`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md)
+§6.
+
+### Phase C — extra contract notes
+- HA Tools speak HTTP only; the `/opt/ingest:ro` bind mount
+  from B-3 is **not** required for Phase C.
+- HA token (`HA_LLAT`) MUST stay in `.env` only; never paste
+  into design docs, state files, or commits.
 
 ### Phase D — `system_status` backing service
 - Per locked D-18 (Path C), this phase builds the containerized
@@ -464,8 +495,9 @@ visibility):
 | C-04 | Off-site backup mirror | Out of scope for v1 |
 | C-05 | Containerise the ingest service | Cleaner backup story; targeted for v1.1 |
 | BX | Open WebUI 0.8.10 browser-UI WebSocket race — `Unexpected token 'd', "data: {"id"... is not valid JSON` shown to the user when the first chat is sent before socket.io has connected | Upstream Open WebUI frontend bug (helper `A()` in `C2Mvb_V1.js` calls `.json()` on a streaming SSE response). Workaround: LAN-direct UI + hard-refresh + wait for the connection indicator. Evidence: [`../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md`](../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md). Not a Phase B blocker; Phase B UI verification uses the workaround |
-| v0.2 | Prompt-cosmetic carry-overs: Issue L (short English greeting), Issue B (Phase B not named in refusal), `[1]` literal contradiction in the no-tools fallback path | Tracked in the Phase A closeout [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md) §3.1. Can land before, during, or after Phase B at the user's discretion |
-| R-new1 | Per-call rerank latency ≈ 10 s on this hardware at DENSE_N=30 (`bge-reranker-v2-m3`); host and container measure identically | Not introduced by the container migration. Documented in [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md) §4.3. Possible knob (lowering DENSE_N) deferred until after B-8 sees real chat behaviour; not a Phase B blocker. |
+| v0.2 | Prompt-cosmetic carry-overs: Issue L (short English greeting), Issue B (refusal copy now factually stale since `rag_search` is live, not deferred — Phase B closeout §4.2 has the updated fix candidate), `[1]` literal contradiction in the no-tools fallback path | Tracked in the Phase A closeout [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md) §3.1 and the Phase B closeout [`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md) §4.2. Can land before, during, or after Phase C at the user's discretion |
+| R-new1 | Per-call rerank latency ≈ 10 s on this hardware at DENSE_N=30 (`bge-reranker-v2-m3`); host and container measure identically | Not introduced by the container migration. Documented in [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md) §4.3 and carried into the Phase B closeout [`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md) §4.1. B-8 chat behaviour showed the cost at 20.7 s cold / 12.8 s warm; possible DENSE_N knob deferred — not a Phase C blocker. |
+| W-4..W-7 | Best-effort follow-up evidence items surviving Phase B closure: W-4 `rag_search(guardian_cloud)`, W-5 `rag_search(myfreetour) → empty_collection`, W-6 HA refusal, W-7 Phase 1.5 reranker bench through-Tool path | Itemised in the Phase B closeout [`../../09_logs/2026-06-16_phaseB_closeout.md`](../../09_logs/2026-06-16_phaseB_closeout.md) §3 and the validation log [`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md) §7. ~30 min total to close in one browser session; user-gated; not a Phase C blocker. |
 
 Resolved during Phase B execution (kept here for traceability;
 not blockers anymore):
