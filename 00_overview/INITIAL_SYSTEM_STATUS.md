@@ -1,13 +1,17 @@
 # Current System Status – Homelab
+# Initial System Status
 
-## Contexto
-
-Este documento define el estado actual del homelab en el momento en que se establece la base del proyecto documentado y versionado en GitHub.
-
-Se ha pasado de una fase inicial de pruebas a una fase estructurada con control mediante Git, documentación y acceso remoto consolidado.
-
----
-
+> Historical snapshot.
+>
+> This document represents the initial documented state of Amarolab when the Git-based documentation process started.
+>
+> It is preserved for historical and architectural reference only.
+>
+> Current operational status is documented in:
+>
+> - CURRENT_STATE.md
+> - ROADMAP.md
+> - AMAROLAB_HANDOFF.md
 ## Infraestructura base
 
 ### Red y acceso
@@ -125,4 +129,3 @@ A partir de aquí, cualquier cambio relevante debe:
 ## Principio operativo
 
 Si no está documentado, no existe.
-
