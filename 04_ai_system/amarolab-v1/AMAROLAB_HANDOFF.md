@@ -1,6 +1,6 @@
 # AMAROLAB_HANDOFF — Amarolab Assistant v1
 
-Last updated: 2026-06-16
+Last updated: 2026-06-17
 
 ## Purpose
 
@@ -67,8 +67,18 @@ Ingest: bare-metal venv, cron 02:30 daily, writes to Qdrant only.
 
 ## Current phase
 
-**Phase B — Knowledge Tool + audit corpus.** Not started; execution
-plan in [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
+**Phase B — Knowledge Tool + audit corpus.** **IN PROGRESS.**
+Sub-steps **B-1 (corpus enrol)**, **B-2 (Qdrant collection + 280-
+chunk backfill)**, **B-3 (openwebui recreated with `/opt/ingest:ro`,
+Gate G-1 approved)** applied 2026-06-16. The **V-C readiness
+pre-empt** is **PASS** as of 2026-06-17 (container's
+`sentence-transformers 5.2.3` reproduces the Phase 1.5 reranker
+benchmark with 0 pp drift). Sub-steps **B-4 (`tools/rag_search.py`),
+B-5 (`tools/audit_search.py`), B-6 (API install), B-7 (`meta.toolIds`
+extension, Gate G-2), B-8 (W-1..W-8, Gate G-3), B-9 (docs + commit),
+B-10 (Phase C hand-off note)** remain. Execution plan in
+[`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md); status
+overlay in [`ROADMAP.md`](ROADMAP.md).
 
 **Phase A is formally CLOSED** as of 2026-06-15. Closure decision +
 criteria check in
@@ -154,7 +164,14 @@ For a future session resuming work, read in this order:
     - [`../../09_logs/2026-06-15_issueT_remediation_plan.md`](../../09_logs/2026-06-15_issueT_remediation_plan.md) — the minimal remediation plan.
     - [`../../09_logs/2026-06-15_issueT_remediation_applied.md`](../../09_logs/2026-06-15_issueT_remediation_applied.md) — the apply log, including browser-equivalent end-to-end validation and the audit-log `+1` proof.
 13. **Phase B execution plan** — [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md). Read before touching anything for Phase B.
-14. Most recent log in [`../../09_logs/`](../../09_logs/) matching `*phase*-applied*.md` (applied work) and `*phase*-design*.md` (design lock-ins).
+14. **Phase B readiness + applied work (2026-06-16 / 2026-06-17) — read in order**:
+    - [`../../09_logs/2026-06-16_phaseB_execution_readiness_review.md`](../../09_logs/2026-06-16_phaseB_execution_readiness_review.md) — readiness verdict that discovered R-B1 and added V-C as a pre-empt for R-M1.
+    - [`../../09_logs/2026-06-16_phaseB_rag_inventory_and_gap_analysis.md`](../../09_logs/2026-06-16_phaseB_rag_inventory_and_gap_analysis.md) — RAG inventory probe.
+    - [`../../09_logs/2026-06-16_ingest_cli_remediation_analysis.md`](../../09_logs/2026-06-16_ingest_cli_remediation_analysis.md) and [`../../09_logs/2026-06-16_ingest_cli_remediation_applied.md`](../../09_logs/2026-06-16_ingest_cli_remediation_applied.md) — R-B1 (ingest CLI) analysis + remediation (`pyproject.toml` + `pip install -e .`).
+    - [`../../09_logs/2026-06-16_phaseB_infra_audits_design.md`](../../09_logs/2026-06-16_phaseB_infra_audits_design.md) and [`../../09_logs/2026-06-16_phaseB_infra_audits_applied.md`](../../09_logs/2026-06-16_phaseB_infra_audits_applied.md) — B-1 + B-2 (`infra_audits` corpus, 280 chunks).
+    - [`../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_plan.md`](../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_plan.md) and [`../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_applied.md`](../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_applied.md) — B-3 (`openwebui` recreate with `/opt/ingest:ro`, Gate G-1 approved, rollback container `openwebui_pre_phaseB_20260615235209` preserved).
+    - [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md) — V-C reranker validation **PASS**, R-M1 resolved.
+15. Most recent log in [`../../09_logs/`](../../09_logs/) matching `*phase*-applied*.md` (applied work) and `*phase*-design*.md` (design lock-ins).
 
 ## Safety rules (Amarolab-specific)
 

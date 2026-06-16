@@ -1,6 +1,6 @@
 # CURRENT_STATE — Amarolab Assistant v1
 
-Last updated: 2026-06-16 (Phase A formally closed; Issue T re-opening REMEDIATED 2026-06-16; Phase B now current)
+Last updated: 2026-06-17 (Phase B IN PROGRESS — ingest CLI remediation + B-1..B-3 applied 2026-06-16; V-C reranker validation PASS 2026-06-17)
 
 Scope: live state of the Amarolab Assistant v1 sub-project. For
 homelab-wide state see
@@ -16,14 +16,32 @@ homelab-wide state see
 | RAG ingest | host cron `02:30 *`, user `diego` | Active | bare-metal venv at `/home/diego/homelab/ai-stack/ingest/venv` |
 | Embedding cache | (no process) | Populated | `/srv/homelab/data/openwebui/cache/embedding/models/` |
 
-From the v1 design, the following is now in place after Phase A.3
-(2026-06-15): one Open WebUI Tool installed in `webui.db`
-(`time_now`), scoped to `qwen2.5:7b-instruct` only via a custom Model
-entry, audit log writing one JSONL line per call to
-`/srv/homelab/data/openwebui/amarolab-audit.log`. Still missing:
-**no** `rag_search` or `audit_search` (Phase B), **no** HA tools
-(Phase C), **no** `homelab-tools` container or `docker-socket-proxy`
-(Phase D), **no** containerized ingest service (deferred).
+From the v1 design, the following is now in place:
+- Phase A.3 (2026-06-15): one Open WebUI Tool installed in `webui.db`
+  (`time_now`), scoped to `qwen2.5:7b-instruct` only via a custom Model
+  entry, audit log writing one JSONL line per call to
+  `/srv/homelab/data/openwebui/amarolab-audit.log`.
+- Phase B B-1 + B-2 (2026-06-16): `infra_audits` corpus populated in
+  Qdrant (280 chunks from 6 markdown files under
+  `/home/diego/server-audit-2026-06-13`).
+- Phase B B-3 (2026-06-16, Gate G-1 approved): `openwebui` container
+  recreated with the read-only bind mount
+  `/home/diego/homelab/ai-stack/ingest:/opt/ingest:ro`; pre-Phase B
+  container preserved as `openwebui_pre_phaseB_20260615235209` as the
+  G-1 rollback target. `from ingest.embedder import Embedder` and
+  `from ingest.reranker import Reranker` both resolve inside the
+  container.
+- Phase B V-C (2026-06-17): the container's
+  `sentence-transformers 5.2.3` reproduces the Phase 1.5 reranker
+  benchmark on `guardian_cloud` exactly (0 pp drift; see
+  [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md)).
+
+Still missing: **no** `rag_search` or `audit_search` source files on
+disk yet (B-4, B-5 not started), **no** Tool rows in `webui.db` for
+either, **no** `meta.toolIds` extension on the qwen2.5 row, **no** HA
+tools (Phase C), **no** `homelab-tools` container or
+`docker-socket-proxy` (Phase D), **no** containerized ingest service
+(deferred).
 
 ## What is implemented
 
@@ -37,14 +55,14 @@ entry, audit log writing one JSONL line per call to
 
 Disk for the models cache: 8.3 GB of /srv/homelab/data/ollama/models.
 
-### Qdrant collections (4 active, 1 pending)
+### Qdrant collections (5 active, 1 placeholder)
 | Collection | Source | Chunks | Files | Status |
 |---|---|---:|---:|---|
 | `homelab_docs` | `/home/diego/homelab` | 86 | 15 | Active |
 | `guardian_cloud` | `/mnt/storage/projects/guardian-cloud` | 872 | 56 | Active |
 | `ensambla2` | `/mnt/storage/projects/ensambla2` | 419 | 48 | Active |
 | `myfreetour` | TBD | 0 | 0 | Placeholder, disabled |
-| `infra_audits` | `/home/diego/server-audit-2026-06-13` | — | — | **Phase B (not created)** |
+| `infra_audits` | `/home/diego/server-audit-2026-06-13` | 280 | 6 | **Active** (created 2026-06-16, Phase B B-1/B-2) |
 
 Dimensionality: 384 (multilingual-e5-small). Distance: cosine.
 Payload indexes on `collection`, `source_kind`, `source_rel`.
@@ -73,6 +91,17 @@ browser path was broken by the qwen2.5 Model entry's
 and Phase A.3 applied log
 ([`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md)).
 
+**Phase B runtime readiness validated 2026-06-17 (V-C).** The
+openwebui container can host `rag_search` from the bind-mounted
+ingest tree; embedder + reranker reproduce the Phase 1.5
+`guardian_cloud` benchmark on the container's `sentence-transformers
+5.2.3` exactly (top-1/3/6 = 15/17/19, identical to the documented
+3.x baseline). Source files (`tools/rag_search.py`,
+`tools/audit_search.py`) are **not yet authored**; B-4 / B-5 are the
+next steps in
+[`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md). Evidence:
+[`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md).
+
 ### Environment / configuration
 | Knob | Value | Where |
 |---|---|---|
@@ -85,6 +114,8 @@ and Phase A.3 applied log
 | Open WebUI workspace `DEFAULT_MODELS` | `"qwen2.5:7b-instruct"` | `config.DEFAULT_MODELS` in `webui.db` (set Phase A.4 v0 apply 2026-06-15) |
 | `qwen2.5:7b-instruct` per-model `params.system` | **v0.1 prompt, 3 342 chars** | `model.params.system` in `webui.db`; persona + tool routing + refusals. Prompt-cosmetic v0.2 carry-overs documented in [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md) §3.1. |
 | `qwen2.5:7b-instruct` Model-entry `base_model_id` | **`NULL`** (was `"qwen2.5:7b-instruct"` until 2026-06-16) | `model.base_model_id` in `webui.db`. Required for OWUI 0.8.10's `get_all_models` to expose `info.meta.toolIds` via `/api/models` — see [`../../09_logs/2026-06-15_issueT_browser_validation_reopened.md`](../../09_logs/2026-06-15_issueT_browser_validation_reopened.md) §2.4 and locked decision **D-35** in [`ROADMAP.md`](ROADMAP.md). |
+| `openwebui` container mounts | `/srv/homelab/data/openwebui:/app/backend/data` (R/W) **+ `/home/diego/homelab/ai-stack/ingest:/opt/ingest:ro` (added Phase B B-3, 2026-06-16)** | `docker inspect openwebui`. Gate G-1 approved. Rollback target preserved as `openwebui_pre_phaseB_20260615235209` (stopped). See [`../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_applied.md`](../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_applied.md). |
+| Ingest package install in `ai-stack/ingest/venv` | Editable (`pip install -e .`) since 2026-06-16; `pyproject.toml` added; `bin/ingest --help` exits 0 from any CWD | Fixes R-B1 from the Phase B readiness review. Nightly 02:30 cron is now unblocked. See [`../../09_logs/2026-06-16_ingest_cli_remediation_applied.md`](../../09_logs/2026-06-16_ingest_cli_remediation_applied.md). |
 
 ## What is validated
 
@@ -100,6 +131,11 @@ and Phase A.3 applied log
 | Ingest scheduling | cron + log file | Daily 02:30 entries in `ingest.log` | 2026-06-14 |
 | Audit-log format and path | **Designed**, not yet written by code | No on-disk validation possible until Phase A.3 | — |
 | Browser-UI chat invokes `time_now` end-to-end | `POST /api/chat/completions` with the post-fix browser body shape (`tool_ids:["time_now"]` auto-attached) | **PASS** — reply contains real wall-clock time; audit-log delta `+1`; `result_code: "ok"`; `duration_ms: 10` | 2026-06-16 |
+| Ingest CLI runnable from any CWD (R-B1 fix) | `bin/ingest --help` + `bin/ingest status` from `/home/diego` | exit 0; status returns the 4 active corpora with documented counts | 2026-06-16 |
+| `infra_audits` corpus created + populated | `bin/ingest sync --collection infra_audits` + Qdrant probe | 280 chunks; test rerank query top-1 0.8809 on `SANITIZATION_REPORT.md`-related chunk | 2026-06-16 |
+| `/opt/ingest` read-only bind mount inside `openwebui` | `docker exec` import smoke test | `from ingest.embedder import Embedder` and `from ingest.reranker import Reranker` resolve; `webui.db` + audit-log md5 unchanged across recreate | 2026-06-16 |
+| Container reranker reproduction (V-C) | 20-question `guardian_cloud` benchmark, `class Tools`-shaped probe run inside container | **PASS** — top-1 / top-3 / top-6 = 15 / 17 / 19 (75 % / 85 % / 95 %); 0 pp drift vs Phase 1.5 baseline; all 20 per-question ranks identical | 2026-06-17 |
+| `sentence-transformers` major-version compatibility | side-by-side host (3.4.1) vs container (5.2.3) on real `guardian_cloud` payloads | accuracy: 0 drift; latency: 11 124 ms vs 11 174 ms / query — within 0.5 % | 2026-06-17 |
 
 ## What is pending
 
@@ -149,14 +185,53 @@ and Phase A.3 applied log
   "Phase B"; `[1]` self-contradiction in the no-tools fallback) are
   tracked for a v0.2 prompt iteration. **Not Phase B blockers.**
 
-### Pending in Phase B (current)
+### Phase B (current — IN PROGRESS)
 - Plan: [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
-- Add `infra_audits` corpus to `ingest/conf/corpora.yaml`.
-- One-shot backfill of `/home/diego/server-audit-2026-06-13/**/*.md`
-  into the new Qdrant collection.
-- Implement `rag_search.py` and `audit_search.py`.
-- Bind-mount `/home/diego/homelab/ai-stack/ingest` read-only into the
-  openwebui container at `/opt/ingest`.
+
+**Applied this phase:**
+- Out-of-band: ingest CLI remediation (R-B1) — `pyproject.toml`
+  added, `pip install -e .` in `install.sh`,
+  `bin/ingest --help` exits 0 from any CWD; nightly 02:30 cron
+  unblocked. See
+  [`../../09_logs/2026-06-16_ingest_cli_remediation_applied.md`](../../09_logs/2026-06-16_ingest_cli_remediation_applied.md).
+- B-1 — added `infra_audits` stanza to
+  `ingest/conf/corpora.yaml`.
+- B-2 — Qdrant collection `infra_audits` created (384 d cosine,
+  payload indexes on `collection` / `source_kind` / `source_rel`);
+  one-shot backfill of `/home/diego/server-audit-2026-06-13/**/*.md`
+  ingested 280 chunks. See
+  [`../../09_logs/2026-06-16_phaseB_infra_audits_applied.md`](../../09_logs/2026-06-16_phaseB_infra_audits_applied.md).
+- B-3 — `openwebui` container recreated with the read-only
+  bind mount `/home/diego/homelab/ai-stack/ingest:/opt/ingest:ro`
+  (Gate **G-1** approved). Pre-Phase B container preserved as
+  `openwebui_pre_phaseB_20260615235209` as the rollback target.
+  See
+  [`../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_applied.md`](../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_applied.md).
+- V-C (readiness pre-empt) — container's
+  `sentence-transformers 5.2.3` reproduces the Phase 1.5
+  reranker benchmark on `guardian_cloud` exactly (0 pp drift on
+  top-1/3/6). **R-M1 resolved.** Side observation: rerank cost
+  is ~10 s / query at DENSE_N = 30 on this hardware; this is
+  the same on host (ST 3.4.1) and container (ST 5.2.3), so it
+  is a property of the locked (`bge-reranker-v2-m3`,
+  DENSE_N=30) tuple — not a regression. See
+  [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md).
+
+**Remaining in Phase B:**
+- B-4 — author `tools/rag_search.py` as a `class Tools` Open
+  WebUI Tool (D-24), with the audit helper inlined per D-26.
+- B-5 — author `tools/audit_search.py` (sugar wrapper over
+  `rag_search(collection="infra_audits", …)`).
+- B-6 — install both Tools via `POST /api/v1/tools/create`
+  using the existing `bin/install_tool` flow (D-25).
+- B-7 — update qwen2.5 Model entry `meta.toolIds` from
+  `["time_now"]` to `["time_now","rag_search","audit_search"]`
+  (Gate **G-2**).
+- B-8 — end-to-end W-1..W-8 validation set (Gate **G-3**),
+  plus the V-A / V-B add-on probes from the readiness review.
+- B-9 — update CURRENT_STATE / ROADMAP / AMAROLAB_HANDOFF +
+  git commit / push closeout.
+- B-10 — hand-off note to Phase C.
 
 ### Pending in Phase C (Home Assistant — gated)
 - Create dedicated HA user `assistant`; issue Long-Lived Access Token.
@@ -188,36 +263,73 @@ and Phase A.3 applied log
 
 ## Latest completed milestone
 
-**Phase A — CLOSED 2026-06-15; Issue T re-opening REMEDIATED 2026-06-16.**
-All sub-phases applied; remaining V-check failures diagnosed and
-reclassified out of the blocker set; the browser-UI tool-calling
-path verified end-to-end after the `base_model_id` fix (see
-[`../../09_logs/2026-06-15_issueT_remediation_applied.md`](../../09_logs/2026-06-15_issueT_remediation_applied.md)).
-See
-[`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md)
-for the closure decision + criteria check.
+**Phase B B-3 (openwebui bind mount) + V-C reranker validation —
+applied 2026-06-16 / 2026-06-17.** With B-1 + B-2 + B-3 in and V-C
+PASS, the runtime substrate for `rag_search` is in place; only
+authoring + install (B-4..B-6) and the qwen2.5 scope update (B-7,
+Gate G-2) stand between the current state and end-to-end Tool
+invocation.
 
-What is live:
+What is live (Phase B progress, newest first):
+
+- **V-C** — container `sentence-transformers 5.2.3` reproduces
+  the Phase 1.5 reranker benchmark on `guardian_cloud` exactly
+  (0 pp drift on top-1/3/6 = 15/17/19; all 20 per-question
+  ranks identical). R-M1 (ST drift) **resolved**. R-M3 (cold
+  load) recalibrated downwards. New observation R-new1
+  (~10 s / query rerank cost) is a property of the locked
+  (`bge-reranker-v2-m3`, DENSE_N=30) tuple, not a regression
+  introduced by the container migration — host and container
+  measured identically (11.12 s vs 11.17 s / query). Evidence:
+  [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md).
+- **B-3** — `/opt/ingest:ro` bind mount on `openwebui`;
+  rollback target preserved as
+  `openwebui_pre_phaseB_20260615235209`; `webui.db` +
+  `amarolab-audit.log` md5s unchanged across recreate; Gate
+  **G-1** approved.
+- **B-2** — `infra_audits` Qdrant collection populated with
+  280 chunks from `/home/diego/server-audit-2026-06-13/**/*.md`.
+- **B-1** — `infra_audits` stanza added to
+  `ingest/conf/corpora.yaml`.
+- **R-B1 remediation** (out-of-band, prerequisite for B-2) —
+  ingest package now editable-installed in its own venv;
+  `bin/ingest --help` exits 0 from any CWD; nightly 02:30
+  cron unblocked.
+
+What is live (Phase A — for reference):
 
 - A.1 — `qwen2.5:7b-instruct` resident in Ollama (ID
-  `845dbda0ea48`, ~4.6 GB warm); native `tool_calls` confirmed via
-  direct-Ollama probes A–D in
+  `845dbda0ea48`, ~4.6 GB warm); native `tool_calls` confirmed
+  via direct-Ollama probes A–D in
   [`../../09_logs/2026-06-15_issueT_root_cause_analysis.md`](../../09_logs/2026-06-15_issueT_root_cause_analysis.md).
 - A.2 — three-tool design locked (D-18..D-22).
-- A.3 — `time_now` Tool installed in `webui.db`; per-model scoping;
-  audit log writing. Full end-to-end run via Probe E in the Issue T
-  analysis (audit log delta +1; reply contains the real time).
+- A.3 — `time_now` Tool installed in `webui.db`; per-model
+  scoping; audit log writing. Full end-to-end run via Probe E
+  in the Issue T analysis (audit log delta +1; reply contains
+  the real time).
 - A.4 v0 — `DEFAULT_MODELS = "qwen2.5:7b-instruct"`.
-- A.4 v0.1 — system prompt (3 342 chars) attached to qwen2.5 Model
-  entry; D-32 / D-33 / D-34 added.
+- A.4 v0.1 — system prompt (3 342 chars) attached to qwen2.5
+  Model entry; D-32 / D-33 / D-34 added.
+- Issue T re-opening (2026-06-16) — **REMEDIATED** the same
+  day with a one-row SQL UPDATE setting `base_model_id = NULL`;
+  browser-UI tool-calling path verified end-to-end. See
+  [`../../09_logs/2026-06-15_issueT_remediation_applied.md`](../../09_logs/2026-06-15_issueT_remediation_applied.md);
+  rule captured in **D-35**.
 
 Open carry-overs (non-blocking):
 
-- **v0.2 prompt iteration** for Issue L (short English greeting),
-  Issue B (refusal phase pointer), and the `[1]` self-contradiction
-  in the no-tools fallback. Tracked in the closeout log §3.1.
-- **BX — browser-UI WebSocket race.** Open WebUI 0.8.10 frontend
-  bug. Workaround in
+- **R-new1 — per-call rerank latency ≈ 10 s** on this hardware
+  at DENSE_N=30. Tracked for Phase B B-4 design consideration;
+  not a Phase B blocker (W-7 exit is correctness, not UX).
+  Detail in
+  [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md)
+  §4.3.
+- **v0.2 prompt iteration** for Issue L (short English
+  greeting), Issue B (refusal phase pointer), and the `[1]`
+  self-contradiction in the no-tools fallback. Tracked in the
+  closeout log §3.1.
+- **BX — browser-UI WebSocket race.** Open WebUI 0.8.10
+  frontend bug. Workaround in
   [`../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md`](../../09_logs/2026-06-15_openwebui_json_parse_error_analysis.md)
   §7.1.
 
@@ -226,3 +338,5 @@ Pre-flight backups retained:
 - `/tmp/amarolab-phaseA4-backup/webui.db.pre-A4` (pre-A.4 state)
 - `/tmp/amarolab-phaseA4-v0_1-backup/webui.db.pre-v0_1` (post-v0,
   pre-v0.1 state)
+- `openwebui_pre_phaseB_20260615235209` (stopped container,
+  pre-B.3 state, Gate G-1 rollback target)
