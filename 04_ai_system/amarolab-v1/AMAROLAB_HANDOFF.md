@@ -67,18 +67,21 @@ Ingest: bare-metal venv, cron 02:30 daily, writes to Qdrant only.
 
 ## Current phase
 
-**Phase B — Knowledge Tool + audit corpus.** **IN PROGRESS.**
-Sub-steps **B-1 (corpus enrol)**, **B-2 (Qdrant collection + 280-
-chunk backfill)**, **B-3 (openwebui recreated with `/opt/ingest:ro`,
-Gate G-1 approved)** applied 2026-06-16. The **V-C readiness
-pre-empt** is **PASS** as of 2026-06-17 (container's
-`sentence-transformers 5.2.3` reproduces the Phase 1.5 reranker
-benchmark with 0 pp drift). Sub-steps **B-4 (`tools/rag_search.py`),
-B-5 (`tools/audit_search.py`), B-6 (API install), B-7 (`meta.toolIds`
-extension, Gate G-2), B-8 (W-1..W-8, Gate G-3), B-9 (docs + commit),
-B-10 (Phase C hand-off note)** remain. Execution plan in
-[`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md); status
-overlay in [`ROADMAP.md`](ROADMAP.md).
+**Phase B — Knowledge Tool + audit corpus.** **B-1..B-8
+applied.** As of 2026-06-17, both Phase B Tools (`rag_search`,
+`audit_search`) are authored, committed, installed in
+`webui.db`, and attached to the `qwen2.5:7b-instruct` Model
+entry's `meta.toolIds`. Browser-path end-to-end was exercised
+by the user on `audit_search` with two `result_code: ok` runs;
+Tool-runtime evidence for `rag_search` end-to-end was captured
+via a read-only probe against the installed source. **Gates
+G-1, G-2, G-3 all approved.** Only **B-9 (docs sync + git
+commit/push)** and **B-10 (Phase C hand-off note)** remain.
+The literal W-4 / W-5 / W-6 / W-7 prompts from the formal B-8
+plan exit were not exercised; tracked in the validation log
+§7 as best-effort follow-ups. Execution plan in
+[`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md);
+status overlay in [`ROADMAP.md`](ROADMAP.md).
 
 **Phase A is formally CLOSED** as of 2026-06-15. Closure decision +
 criteria check in
@@ -171,6 +174,9 @@ For a future session resuming work, read in this order:
     - [`../../09_logs/2026-06-16_phaseB_infra_audits_design.md`](../../09_logs/2026-06-16_phaseB_infra_audits_design.md) and [`../../09_logs/2026-06-16_phaseB_infra_audits_applied.md`](../../09_logs/2026-06-16_phaseB_infra_audits_applied.md) — B-1 + B-2 (`infra_audits` corpus, 280 chunks).
     - [`../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_plan.md`](../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_plan.md) and [`../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_applied.md`](../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_applied.md) — B-3 (`openwebui` recreate with `/opt/ingest:ro`, Gate G-1 approved, rollback container `openwebui_pre_phaseB_20260615235209` preserved).
     - [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md) — V-C reranker validation **PASS**, R-M1 resolved.
+    - [`../../09_logs/2026-06-17_phaseB_rag_search_design.md`](../../09_logs/2026-06-17_phaseB_rag_search_design.md) — B-4 design + local validation of `tools/rag_search.py`.
+    - [`../../09_logs/2026-06-17_phaseB_audit_search_design.md`](../../09_logs/2026-06-17_phaseB_audit_search_design.md) — B-5 design + local validation of `tools/audit_search.py`.
+    - [`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md) — B-6 install + B-7 `meta.toolIds` extension + B-8 browser/Tool-runtime validation evidence (with the W-4/W-5/W-6/W-7 follow-up gap explicitly documented in §7).
 15. Most recent log in [`../../09_logs/`](../../09_logs/) matching `*phase*-applied*.md` (applied work) and `*phase*-design*.md` (design lock-ins).
 
 ## Safety rules (Amarolab-specific)
@@ -189,13 +195,17 @@ apply. The following are **sub-project additions**:
   file-level Python constants. No `eval`, no `subprocess`, no
   path-from-arg, no shell building from arguments.
 - **No new Open WebUI Tools are created** in `webui.db` until the
-  user explicitly approves each sub-phase. As of 2026-06-15 the only
-  Amarolab Tool installed is `time_now` (Phase A.3); canonical source
-  at `/home/diego/homelab/ai-stack/openwebui-tools/tools/time_now.py`.
-  `rag_search`, `audit_search`, `system_status`, `ha_get_state`,
-  `ha_call_service` are designed only — not on disk as Tool files,
-  not in `webui.db`. (Note: the v1 design package uses "Functions"
-  loosely — Open WebUI 0.8.10's runtime term is **Tools**; see
+  user explicitly approves each sub-phase. As of 2026-06-16 the
+  Amarolab Tools installed are: `time_now` (Phase A.3, 2026-06-15),
+  `rag_search` (Phase B B-6, 2026-06-16), and `audit_search`
+  (Phase B B-6, 2026-06-16). Canonical sources at
+  `/home/diego/homelab/ai-stack/openwebui-tools/tools/`
+  (`time_now.py`, `rag_search.py` @ `a7995b3f`,
+  `audit_search.py` @ `a13d5e94`). `system_status`, `ha_get_state`,
+  `ha_call_service` remain designed only — not on disk as Tool
+  files, not in `webui.db`. (Note: the v1 design package uses
+  "Functions" loosely — Open WebUI 0.8.10's runtime term is
+  **Tools**; see
   [`../../FUNCTIONS_COMPATIBILITY_REPORT.md`](../../FUNCTIONS_COMPATIBILITY_REPORT.md).)
 - **Default model in Open WebUI must not be changed** without explicit
   user approval. Phase A.1 pulled `qwen2.5:7b-instruct` but did not

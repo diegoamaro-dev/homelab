@@ -1,6 +1,6 @@
 # ROADMAP — Amarolab Assistant v1
 
-Last updated: 2026-06-17 (Phase B IN PROGRESS — B-1 + B-2 + B-3 applied 2026-06-16; V-C reranker validation PASS 2026-06-17; R-M1 + R-B1 resolved; B-4..B-10 remaining)
+Last updated: 2026-06-17 (Phase B B-4..B-8 applied 2026-06-16/17 — both Tools live in `webui.db`, qwen2.5 `meta.toolIds` extended, browser-path `audit_search` end-to-end PASS; only B-9 docs/commit + B-10 hand-off remain)
 
 Phase plan for the Amarolab Assistant v1 sub-project. For the
 homelab-wide roadmap see
@@ -212,6 +212,93 @@ current, what's next, what's blocked, what's decided.
 - Evidence:
   [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md).
 
+### Phase B B-4 — `rag_search` Tool source — APPLIED
+- Date applied: 2026-06-17.
+- Outcome: `ai-stack/openwebui-tools/tools/rag_search.py`
+  authored as a `class Tools` Open WebUI Tool (D-24) with the
+  audit helper inlined via the
+  `# @@AMAROLAB_INLINE:audit_helper@@` marker (D-26). Lazy
+  `_init()` over `Embedder` / `Reranker` / `QdrantClient`;
+  `collection: Literal[…5 corpora…]`; DENSE_N=30,
+  TOP_K_DEFAULT=6, CONTENT_CAP=600 (D-08, D-22). Eight result
+  codes covering `bad_query` / `bad_k` / `rate_limited` /
+  `init_error` / `qdrant_unreachable` / `empty_collection` /
+  `rerank_error` / `ok`.
+- Local validation: pre/post inline `py_compile` PASS; AST
+  shape PASS (single LLM-callable method, Valves nested class,
+  Literal annotation); in-container module load + `bad_query`
+  probe PASS (no `_init()` invoked).
+- Commit: `a7995b3f`.
+- Evidence:
+  [`../../09_logs/2026-06-17_phaseB_rag_search_design.md`](../../09_logs/2026-06-17_phaseB_rag_search_design.md).
+
+### Phase B B-5 — `audit_search` Tool source — APPLIED
+- Date applied: 2026-06-17.
+- Outcome:
+  `ai-stack/openwebui-tools/tools/audit_search.py` authored as
+  a mirror of `rag_search.py`, with the `collection` parameter
+  dropped and `_COLLECTION = "infra_audits"` hardcoded
+  (03-tools.md §"Tool 2"). Same lazy `_init()` pipeline,
+  same DENSE_N / TOP_K / CONTENT_CAP constants, same inlined
+  audit helper, same error matrix. Per D-26, the body is
+  duplicated rather than cross-imported.
+- Local validation: pre/post inline `py_compile` PASS; AST
+  shape PASS (`audit_search` args = `[self, query, k]` — no
+  `collection`); in-container module load + `bad_query` +
+  `bad_k` probes PASS.
+- Commit: `a13d5e94`.
+- Evidence:
+  [`../../09_logs/2026-06-17_phaseB_audit_search_design.md`](../../09_logs/2026-06-17_phaseB_audit_search_design.md).
+
+### Phase B B-6 — Tool install (both Tools) — APPLIED
+- Date applied: 2026-06-16.
+- Outcome: `bin/install_tool tools/rag_search.py` and
+  `bin/install_tool tools/audit_search.py` (D-25 workflow)
+  POSTed both inlined sources to `/api/v1/tools/create`. Rows
+  present in `webui.db`: `rag_search` (11 629 chars, 1 spec)
+  and `audit_search` (11 231 chars, 1 spec); owner `diego`
+  admin; `created_at` one second apart.
+- Validation: `bin/dump_tools` round-trip + `diff` shows
+  install fidelity vs canonical disk source = trailing-newline
+  only. Both Tools' JSON specs build correctly under Open
+  WebUI 0.8.10 (Literal → enum, docstring → description).
+- Evidence:
+  [`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md)
+  §1.
+
+### Phase B B-7 — qwen2.5 `meta.toolIds` extension (Gate G-2) — APPLIED
+- Date applied: 2026-06-16.
+- Outcome: Gate **G-2** approved. qwen2.5 Model entry
+  `meta.toolIds` extended from `["time_now"]` to
+  `["time_now","rag_search","audit_search"]`. The
+  `base_model_id = NULL` rule (D-35, from the Issue T
+  re-investigation) is preserved unchanged, so the OWUI 0.8.10
+  browser-UI tool-attach path continues to work. Per-model
+  scope (D-20) preserved — Tools remain attached only to the
+  qwen2.5 row.
+- Evidence:
+  [`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md)
+  §2.
+
+### Phase B B-8 — End-to-end validation (Gate G-3) — APPLIED (partial)
+- Date applied: 2026-06-16.
+- Outcome: Gate **G-3** approved. Two browser-path
+  `audit_search` queries by the user returned
+  `result_code: ok` with realistic timing — a Spanish R-12
+  query at 20 694 ms (cold) and `SANITIZATION_REPORT` at
+  12 788 ms (warm). This-log probes against the installed Tool
+  source dumped from `webui.db` produced additional evidence
+  for `rag_search` end-to-end (22.5 s, 6 hits) and replayed
+  the `audit_search` queries with matching durations and
+  concrete top-3 hits (DOCUMENTATION_SYNC_PLAN / CONSOLIDATION
+  for the R-12 query; SANITIZATION_REPORT.md top-1 score
+  0.9638 for the literal-term query). **The literal W-1..W-8 +
+  V-A / V-B sweep was not fully run**; W-4 / W-5 / W-6 / W-7
+  remain open. User marked B-8 complete; gaps tracked in the
+  validation log §7.
+- Evidence:
+  [`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md).
+
 ---
 
 ## Current phase
@@ -224,16 +311,18 @@ the `infra_audits` Qdrant corpus.
 Execution plan:
 [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
 
-Status: **IN PROGRESS.** Sub-steps **B-1 (corpus enrol)**,
-**B-2 (Qdrant collection + backfill)**, **B-3 (openwebui bind
-mount, Gate G-1)** are **applied** (2026-06-16). The **V-C
-readiness pre-empt** is **PASS** (2026-06-17). Sub-steps **B-4
-(`tools/rag_search.py`)**, **B-5 (`tools/audit_search.py`)**,
-**B-6 (install both via API)**, **B-7 (`meta.toolIds` extension,
-Gate G-2)**, **B-8 (W-1..W-8 + V-A/V-B, Gate G-3)**, **B-9 (docs
-+ commit)**, **B-10 (Phase C hand-off note)** remain. None of the
-remaining steps is irreversible beyond `webui.db` writes; the
-container-mutating step (B-3) is already behind us.
+Status: **B-1..B-8 applied** (2026-06-16 / 2026-06-17). Both
+Phase B Tools (`rag_search` at 11 629 chars, `audit_search` at
+11 231 chars) are present in `webui.db`; qwen2.5
+`meta.toolIds` = `["time_now","rag_search","audit_search"]`;
+`base_model_id` is still `NULL` (D-35); two browser-path
+`audit_search` queries returned `result_code: ok`. Only
+**B-9 (docs sync + git commit/push)** and **B-10 (Phase C
+hand-off note)** remain. The literal W-4 / W-5 / W-6 / W-7 prompts
+from the formal B-8 sweep were not exercised (tracked in
+[`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md)
+§7); user marked B-8 complete, so they are best-effort follow-ups
+rather than Phase B blockers.
 
 ---
 
@@ -248,7 +337,7 @@ work has actually been sequenced.
 above and the Phase A closeout log
 [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md).)
 
-### Phase B — Knowledge Tool + audit corpus (current — IN PROGRESS)
+### Phase B — Knowledge Tool + audit corpus (current — APPLIED B-1..B-8)
 
 **Done (2026-06-16 / 2026-06-17):**
 - R-B1 ingest CLI remediation (out-of-band prerequisite for B-2).
@@ -261,31 +350,38 @@ above and the Phase A closeout log
 - V-C readiness pre-empt — `sentence-transformers 5.2.3`
   reproduces the documented Phase 1.5 reranker benchmark exactly
   (0 pp drift); R-M1 resolved.
+- B-4 — `tools/rag_search.py` authored, locally validated, and
+  committed (`a7995b3f`).
+- B-5 — `tools/audit_search.py` authored, locally validated, and
+  committed (`a13d5e94`).
+- B-6 — both Tools installed in `webui.db` via `bin/install_tool`
+  (rag_search 11 629 chars; audit_search 11 231 chars; install
+  fidelity vs canonical = trailing-newline only).
+- B-7 — qwen2.5 `meta.toolIds` extended to
+  `["time_now","rag_search","audit_search"]` (Gate **G-2**).
+  D-35 `base_model_id = NULL` invariant preserved.
+- B-8 — partial: two browser-path `audit_search` queries
+  returned `result_code: ok` (20.7 s cold, 12.8 s warm);
+  Tool-runtime probes captured Qdrant + reranker evidence for
+  `rag_search` and `audit_search`. **Gate G-3** approved.
 
 **Remaining:**
-- B-4 — write `tools/rag_search.py` as a `class Tools` Open
-  WebUI Tool (D-24); same shape as `time_now`; helper inlined
-  (D-26); `collection` parameter is a `Literal[…5 corpora…]`;
-  DENSE_N = 30, TOP_K = 6.
-- B-5 — write `tools/audit_search.py` as a separate Tool that
-  internally calls `rag_search(collection="infra_audits", …)`.
-- B-6 — install both via the supported API/UI flow into
-  `webui.db` (D-25) using the existing `bin/install_tool`
-  helper.
-- B-7 — update qwen2.5 Model entry `meta.toolIds` to
-  `["time_now","rag_search","audit_search"]` (D-20). Gate
-  **G-2**.
-- B-8 — end-to-end W-1..W-8 validation set + the V-A / V-B
-  add-on probes from the readiness review. Gate **G-3**.
-- B-9 — docs update (CURRENT_STATE / ROADMAP / AMAROLAB_HANDOFF)
-  + git commit / push.
-- B-10 — hand-off note to Phase C.
+- **B-9** — docs sync (largely applied this turn: CURRENT_STATE
+  / ROADMAP / AMAROLAB_HANDOFF carry B-4..B-8) + git
+  commit/push of `tools/audit_search.py` history,
+  `09_logs/2026-06-16_phaseB_validation_applied.md`, the
+  `audit_search` design log, and these state-doc updates.
+- **B-10** — hand-off note to Phase C.
+- **W-1..W-8 + V-A / V-B (formal sweep)** — open follow-up.
+  W-1 / W-3 are implicitly covered; W-2 has Tool-runtime
+  evidence on a non-literal `homelab_docs` query; W-4 / W-5 /
+  W-6 / W-7 not yet exercised. Tracked in the validation log
+  §7. The user has marked B-8 complete; these are best-effort
+  reinforcement, not Phase B blockers.
 - Exit: the Phase 1.5 reranker benchmark reproduces when routed
   through the Tool path (top-6 ≥ 95 % on `guardian_cloud`).
-  V-C has already shown the underlying retrieval + rerank
-  pipeline reproduces exactly inside the container; the
-  remaining work is wiring it through the `class Tools` shape
-  and the `tool_ids` auto-attach path.
+  V-C reproduced it off-Tool; an on-Tool W-7 run remains an
+  open follow-up.
 - Detailed execution plan:
   [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
 

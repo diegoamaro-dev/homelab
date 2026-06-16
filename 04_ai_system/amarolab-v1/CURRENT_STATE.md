@@ -1,6 +1,6 @@
 # CURRENT_STATE — Amarolab Assistant v1
 
-Last updated: 2026-06-17 (Phase B IN PROGRESS — ingest CLI remediation + B-1..B-3 applied 2026-06-16; V-C reranker validation PASS 2026-06-17)
+Last updated: 2026-06-17 (Phase B B-4..B-8 applied 2026-06-16; `rag_search` + `audit_search` installed in `webui.db`, qwen2.5 `meta.toolIds = ["time_now","rag_search","audit_search"]`, two browser-path `audit_search` runs `result_code: ok`; only B-9 docs/commit + B-10 hand-off remaining)
 
 Scope: live state of the Amarolab Assistant v1 sub-project. For
 homelab-wide state see
@@ -36,12 +36,30 @@ From the v1 design, the following is now in place:
   benchmark on `guardian_cloud` exactly (0 pp drift; see
   [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md)).
 
-Still missing: **no** `rag_search` or `audit_search` source files on
-disk yet (B-4, B-5 not started), **no** Tool rows in `webui.db` for
-either, **no** `meta.toolIds` extension on the qwen2.5 row, **no** HA
-tools (Phase C), **no** `homelab-tools` container or
-`docker-socket-proxy` (Phase D), **no** containerized ingest service
-(deferred).
+- Phase B B-4 + B-5 (2026-06-17): canonical Tool source authored —
+  `ai-stack/openwebui-tools/tools/rag_search.py` (committed
+  `a7995b3f`) and `ai-stack/openwebui-tools/tools/audit_search.py`
+  (committed `a13d5e94`).
+- Phase B B-6 (2026-06-16, applied by user via `bin/install_tool`):
+  both Tools installed into `webui.db` (`rag_search`: 11 629 chars,
+  1 spec; `audit_search`: 11 231 chars, 1 spec); install fidelity
+  byte-identical to canonical source modulo a trailing newline.
+- Phase B B-7 (2026-06-16, Gate G-2 approved): qwen2.5 Model entry
+  `meta.toolIds` extended from `["time_now"]` to
+  `["time_now","rag_search","audit_search"]`. `base_model_id` still
+  `NULL` (D-35 invariant preserved).
+- Phase B B-8 (2026-06-16, user-driven browser path): two real-world
+  `audit_search` queries logged `result_code: ok` with realistic
+  durations (20 694 ms cold, 12 788 ms warm) — see
+  [`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md).
+  Tool-runtime evidence for `rag_search` end-to-end gathered via a
+  read-only probe against the installed source (22.5 s, 6 hits).
+
+Still missing: **the full literal W-1..W-8 sweep** (only W-3-shaped
+queries were exercised; W-4, W-5, W-6, W-7 are pending — see the
+validation log §7), **no** HA tools (Phase C), **no** `homelab-tools`
+container or `docker-socket-proxy` (Phase D), **no** containerized
+ingest service (deferred).
 
 ## What is implemented
 
@@ -85,8 +103,10 @@ browser path was broken by the qwen2.5 Model entry's
 *Environment / configuration* below and **D-35** in
 [`ROADMAP.md`](ROADMAP.md)).
 
-`rag_search`, `audit_search`, `system_status`, `ha_get_state`,
-`ha_call_service` are designed only — see Phase A.2 design log
+Phase A.2 designed tools status, refreshed at end of B-7:
+`rag_search` + `audit_search` are **live** (B-6 install + B-7
+scope). `system_status`, `ha_get_state`, `ha_call_service` are
+**designed only** — see Phase A.2 design log
 ([`../../09_logs/2026-06-15_phaseA2-tool-layer-design.md`](../../09_logs/2026-06-15_phaseA2-tool-layer-design.md))
 and Phase A.3 applied log
 ([`../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md`](../../09_logs/2026-06-15_phaseA3-tool-canary-applied.md)).
@@ -96,11 +116,27 @@ openwebui container can host `rag_search` from the bind-mounted
 ingest tree; embedder + reranker reproduce the Phase 1.5
 `guardian_cloud` benchmark on the container's `sentence-transformers
 5.2.3` exactly (top-1/3/6 = 15/17/19, identical to the documented
-3.x baseline). Source files (`tools/rag_search.py`,
-`tools/audit_search.py`) are **not yet authored**; B-4 / B-5 are the
-next steps in
-[`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md). Evidence:
+3.x baseline). Evidence:
 [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md).
+
+**`rag_search` + `audit_search` installed 2026-06-16 (B-6) and
+visible to qwen2.5 (B-7).** Source files
+`tools/rag_search.py` (committed `a7995b3f`) and
+`tools/audit_search.py` (committed `a13d5e94`) inlined and POSTed
+to `/api/v1/tools/create`; rows present in `webui.db` with the
+expected post-inline byte counts. `meta.toolIds` on the qwen2.5
+Model entry now
+`["time_now","rag_search","audit_search"]`. Browser-path
+end-to-end exercised for `audit_search` (Spanish R-12 query +
+English `SANITIZATION_REPORT` query, both `result_code: ok`);
+runtime evidence for `rag_search` gathered via a read-only probe
+against the installed source. Evidence:
+[`../../09_logs/2026-06-17_phaseB_rag_search_design.md`](../../09_logs/2026-06-17_phaseB_rag_search_design.md),
+[`../../09_logs/2026-06-17_phaseB_audit_search_design.md`](../../09_logs/2026-06-17_phaseB_audit_search_design.md),
+[`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md).
+`ha_get_state`, `ha_call_service`, `system_status` remain
+designed-only — see Phase A.2 design log
+([`../../09_logs/2026-06-15_phaseA2-tool-layer-design.md`](../../09_logs/2026-06-15_phaseA2-tool-layer-design.md)).
 
 ### Environment / configuration
 | Knob | Value | Where |
@@ -113,6 +149,7 @@ next steps in
 | `AMAROLAB_AUDIT_LOG` | **set** (live since Phase A.3) | inlined in each Tool; on host at `/srv/homelab/data/openwebui/amarolab-audit.log` |
 | Open WebUI workspace `DEFAULT_MODELS` | `"qwen2.5:7b-instruct"` | `config.DEFAULT_MODELS` in `webui.db` (set Phase A.4 v0 apply 2026-06-15) |
 | `qwen2.5:7b-instruct` per-model `params.system` | **v0.1 prompt, 3 342 chars** | `model.params.system` in `webui.db`; persona + tool routing + refusals. Prompt-cosmetic v0.2 carry-overs documented in [`../../09_logs/2026-06-15_phaseA_closeout.md`](../../09_logs/2026-06-15_phaseA_closeout.md) §3.1. |
+| `qwen2.5:7b-instruct` `meta.toolIds` | **`["time_now","rag_search","audit_search"]`** (was `["time_now"]` until 2026-06-16) | `model.meta` in `webui.db`. Gate G-2 approved. D-20 per-model scope preserved (the three Tools remain attached only to qwen2.5). See [`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md) §2. |
 | `qwen2.5:7b-instruct` Model-entry `base_model_id` | **`NULL`** (was `"qwen2.5:7b-instruct"` until 2026-06-16) | `model.base_model_id` in `webui.db`. Required for OWUI 0.8.10's `get_all_models` to expose `info.meta.toolIds` via `/api/models` — see [`../../09_logs/2026-06-15_issueT_browser_validation_reopened.md`](../../09_logs/2026-06-15_issueT_browser_validation_reopened.md) §2.4 and locked decision **D-35** in [`ROADMAP.md`](ROADMAP.md). |
 | `openwebui` container mounts | `/srv/homelab/data/openwebui:/app/backend/data` (R/W) **+ `/home/diego/homelab/ai-stack/ingest:/opt/ingest:ro` (added Phase B B-3, 2026-06-16)** | `docker inspect openwebui`. Gate G-1 approved. Rollback target preserved as `openwebui_pre_phaseB_20260615235209` (stopped). See [`../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_applied.md`](../../09_logs/2026-06-16_phaseB_openwebui_bind_mount_applied.md). |
 | Ingest package install in `ai-stack/ingest/venv` | Editable (`pip install -e .`) since 2026-06-16; `pyproject.toml` added; `bin/ingest --help` exits 0 from any CWD | Fixes R-B1 from the Phase B readiness review. Nightly 02:30 cron is now unblocked. See [`../../09_logs/2026-06-16_ingest_cli_remediation_applied.md`](../../09_logs/2026-06-16_ingest_cli_remediation_applied.md). |
@@ -136,6 +173,10 @@ next steps in
 | `/opt/ingest` read-only bind mount inside `openwebui` | `docker exec` import smoke test | `from ingest.embedder import Embedder` and `from ingest.reranker import Reranker` resolve; `webui.db` + audit-log md5 unchanged across recreate | 2026-06-16 |
 | Container reranker reproduction (V-C) | 20-question `guardian_cloud` benchmark, `class Tools`-shaped probe run inside container | **PASS** — top-1 / top-3 / top-6 = 15 / 17 / 19 (75 % / 85 % / 95 %); 0 pp drift vs Phase 1.5 baseline; all 20 per-question ranks identical | 2026-06-17 |
 | `sentence-transformers` major-version compatibility | side-by-side host (3.4.1) vs container (5.2.3) on real `guardian_cloud` payloads | accuracy: 0 drift; latency: 11 124 ms vs 11 174 ms / query — within 0.5 % | 2026-06-17 |
+| `rag_search` + `audit_search` installed in `webui.db` (B-6) | `sqlite3 webui.db "SELECT id, length(content), json_array_length(specs) FROM tool"` | both rows present; content 11 629 / 11 231 chars; 1 spec each; install-fidelity diff vs canonical = trailing-newline only | 2026-06-16 |
+| qwen2.5 `meta.toolIds` extended (B-7, Gate G-2) | SQL probe of `model.meta` | `["time_now","rag_search","audit_search"]`; `base_model_id` still `NULL` (D-35 preserved) | 2026-06-16 |
+| Browser-path `audit_search` end-to-end (B-8, user-driven) | Browser chat → audit-log delta | two `result_code: ok` lines: Spanish R-12 query `duration_ms = 20 694`, `SANITIZATION_REPORT` `duration_ms = 12 788` | 2026-06-16 |
+| `rag_search` Tool-runtime end-to-end | this-log probe vs installed source dumped from `webui.db` | `result_code: ok`; 6 hits; top-1 score 0.2941 on `09_logs/2026-06-15_phaseA3-tool-canary-design.md`; `duration_ms = 22 509` (cold) | 2026-06-16 |
 
 ## What is pending
 
@@ -185,8 +226,15 @@ next steps in
   "Phase B"; `[1]` self-contradiction in the no-tools fallback) are
   tracked for a v0.2 prompt iteration. **Not Phase B blockers.**
 
-### Phase B (current — IN PROGRESS)
+### Phase B (current — B-1..B-8 applied; B-9/B-10 remaining)
 - Plan: [`PHASE_B_EXECUTION_PLAN.md`](PHASE_B_EXECUTION_PLAN.md).
+- Status: **operationally functional** (both Tools live in
+  `webui.db`, qwen2.5 sees them, browser-path `audit_search`
+  end-to-end PASS), **not formally closed** — B-9 (this docs
+  sync + commit/push) and B-10 (Phase C hand-off note) still
+  pending; the literal W-4 / W-5 / W-6 / W-7 prompts from the
+  formal B-8 sweep remain open follow-ups (see the validation
+  log §7).
 
 **Applied this phase:**
 - Out-of-band: ingest CLI remediation (R-B1) — `pyproject.toml`
@@ -217,20 +265,40 @@ next steps in
   DENSE_N=30) tuple — not a regression. See
   [`../../09_logs/2026-06-17_phaseB_vc_validation.md`](../../09_logs/2026-06-17_phaseB_vc_validation.md).
 
+**Applied (cont.):**
+- B-4 (2026-06-17) — authored `tools/rag_search.py`
+  (committed `a7995b3f`); `class Tools`, lazy `_init()`,
+  inlined audit helper per D-26. Local validation: pre/post
+  inline `py_compile`, AST shape, in-container module load
+  + bad_query probe. See
+  [`../../09_logs/2026-06-17_phaseB_rag_search_design.md`](../../09_logs/2026-06-17_phaseB_rag_search_design.md).
+- B-5 (2026-06-17) — authored `tools/audit_search.py`
+  (committed `a13d5e94`); mirrors `rag_search.py` with
+  `collection = "infra_audits"` hardcoded. Same local
+  validation battery. See
+  [`../../09_logs/2026-06-17_phaseB_audit_search_design.md`](../../09_logs/2026-06-17_phaseB_audit_search_design.md).
+- B-6 (2026-06-16) — both Tools installed via
+  `bin/install_tool` → `POST /api/v1/tools/create`. Rows
+  present in `webui.db` with the expected content lengths;
+  install-fidelity diff vs canonical = trailing-newline only.
+- B-7 (2026-06-16, Gate **G-2** approved) — qwen2.5
+  `meta.toolIds` extended to
+  `["time_now","rag_search","audit_search"]`. D-35
+  invariant (`base_model_id = NULL`) preserved.
+- B-8 (2026-06-16, partial — Gate **G-3** approved) — two
+  user-issued browser queries against `audit_search`
+  returned `result_code: ok` (durations 20.7 s cold,
+  12.8 s warm); this-log probes captured Qdrant + rerank
+  evidence for `rag_search` end-to-end. See
+  [`../../09_logs/2026-06-16_phaseB_validation_applied.md`](../../09_logs/2026-06-16_phaseB_validation_applied.md).
+  **Open items vs the formal W-1..W-8 + V-A/V-B sweep**:
+  the literal W-2 / W-4 / W-5 / W-6 / W-7 prompts were not
+  exercised; tracked in the validation log §7. User has
+  marked B-8 complete.
+
 **Remaining in Phase B:**
-- B-4 — author `tools/rag_search.py` as a `class Tools` Open
-  WebUI Tool (D-24), with the audit helper inlined per D-26.
-- B-5 — author `tools/audit_search.py` (sugar wrapper over
-  `rag_search(collection="infra_audits", …)`).
-- B-6 — install both Tools via `POST /api/v1/tools/create`
-  using the existing `bin/install_tool` flow (D-25).
-- B-7 — update qwen2.5 Model entry `meta.toolIds` from
-  `["time_now"]` to `["time_now","rag_search","audit_search"]`
-  (Gate **G-2**).
-- B-8 — end-to-end W-1..W-8 validation set (Gate **G-3**),
-  plus the V-A / V-B add-on probes from the readiness review.
-- B-9 — update CURRENT_STATE / ROADMAP / AMAROLAB_HANDOFF +
-  git commit / push closeout.
+- B-9 — git commit + push of B-4 / B-5 / B-6 / B-7 / B-8
+  artefacts and these state-doc updates (this turn).
 - B-10 — hand-off note to Phase C.
 
 ### Pending in Phase C (Home Assistant — gated)
@@ -263,15 +331,32 @@ next steps in
 
 ## Latest completed milestone
 
-**Phase B B-3 (openwebui bind mount) + V-C reranker validation —
-applied 2026-06-16 / 2026-06-17.** With B-1 + B-2 + B-3 in and V-C
-PASS, the runtime substrate for `rag_search` is in place; only
-authoring + install (B-4..B-6) and the qwen2.5 scope update (B-7,
-Gate G-2) stand between the current state and end-to-end Tool
-invocation.
+**Phase B B-4..B-8 — applied 2026-06-16 / 2026-06-17.** Both
+Phase B Tools (`rag_search`, `audit_search`) are authored,
+committed, installed in `webui.db`, attached to the
+`qwen2.5:7b-instruct` Model entry's `meta.toolIds`, and
+exercised end-to-end on the browser path for `audit_search`
+plus the Tool-runtime path for `rag_search`. Phase B is
+operationally functional; the remaining steps are documentation
+sync (B-9) and the Phase C hand-off note (B-10).
 
 What is live (Phase B progress, newest first):
 
+- **B-8 (partial — user marked complete)** — browser-path
+  `audit_search` returned `result_code: ok` for two
+  real-world queries (Spanish R-12, English
+  `SANITIZATION_REPORT`); Tool-runtime `rag_search` probe
+  PASS. Formal W-2 / W-4 / W-5 / W-6 / W-7 sweep not exercised;
+  tracked in the validation log §7.
+- **B-7 (Gate G-2)** — qwen2.5 `meta.toolIds` =
+  `["time_now","rag_search","audit_search"]`. D-35
+  `base_model_id = NULL` invariant preserved.
+- **B-6** — `rag_search` (11 629 chars, 1 spec) and
+  `audit_search` (11 231 chars, 1 spec) installed in
+  `webui.db` via `bin/install_tool`. Install fidelity diff vs
+  canonical disk source = trailing-newline only.
+- **B-5** — `tools/audit_search.py` committed (`a13d5e94`).
+- **B-4** — `tools/rag_search.py` committed (`a7995b3f`).
 - **V-C** — container `sentence-transformers 5.2.3` reproduces
   the Phase 1.5 reranker benchmark on `guardian_cloud` exactly
   (0 pp drift on top-1/3/6 = 15/17/19; all 20 per-question
