@@ -68,7 +68,7 @@ Assistant can retrieve knowledge.
 
 ## Phase C
 
-Completed
+Completed (2026-06-17 — Gate G-5)
 
 ### Goal
 
@@ -79,10 +79,13 @@ Tasks:
 * ha_get_state() — installed, attached to qwen2.5,
   validated against real HA read (`sun.sun` →
   `result_code = "ok"`).
-* ha_call_service() — installed, attached to qwen2.5,
+* ha_call_service() — installed, attached to qwen2.5.
   Tool-level refusal path validated against
-  `recorder.purge`. 
-[x] Validate first real ha_call_service execution (G-5 completed 2026-06-17)
+  `recorder.purge` (C-5). First real happy-path write
+  validated against `switch.impresora_3d` (Gate G-5 —
+  full sequence `off` → `turn_on` → `on` → `turn_off`
+  → `off`, all `result_code="ok"`, baseline restored).
+
 Security:
 
 Allowlist only (D-12 enforced at the Tool boundary).
@@ -93,19 +96,21 @@ Never allow:
 * hassio.*
 * recorder.*
 
-Success criteria:
+Success criteria met:
 
-Read and limited control of the house.
+* Read criterion — met.
+* Limited-control criterion — met.
 
-Status:
-
-Read criterion met.
-Limited-control criterion met.
-Phase C completed on 2026-06-17 (Gate G-5).
+Phase C closeout:
+`09_logs/2026-06-17_phaseC_closeout.md`.
 
 ---
 
 ## Phase D
+
+Next active phase (not yet started)
+
+### Goal
 
 Voice
 
@@ -114,6 +119,11 @@ Tasks:
 * Whisper
 * Piper
 * Home Assistant Assist
+
+Pre-Phase-D blocker:
+
+* Mosquitto authentication hardening (`allow_anonymous
+  true` → authenticated users + ACLs).
 
 Success criteria:
 

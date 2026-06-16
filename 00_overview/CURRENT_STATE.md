@@ -27,7 +27,7 @@ Closeout reference:
 
 ### Phase C — Home Assistant integration
 
-Status: In progress
+Status: **Completed** (2026-06-17 — Gate G-5)
 
 Read path:
 
@@ -45,15 +45,28 @@ Write path:
 - Tool-level refusal path validated against the
   out-of-allowlist canonical probe `recorder.purge`
   (`result_code = "refused"`, no HA call issued)
-- Closeout:
+- Refusal closeout:
   [`09_logs/2026-06-17_phaseC_refusal_validation_applied.md`](../09_logs/2026-06-17_phaseC_refusal_validation_applied.md)
-- **Gate G-5 — first real `ha_call_service` happy path on a
-  controllable entity — PENDING**
+- **Gate G-5 — first real happy path executed against
+  `switch.impresora_3d` (Sonoff S60ZBTPF). Sequence
+  pre-read (`off`) → `turn_on` → verify (`on`) →
+  `turn_off` → restore-verify (`off`). All 5 audit
+  lines: `allowed=true`, `result_code="ok"`. HA
+  observed both state transitions via Z2M MQTT
+  round-trip. Plug restored to baseline `off`.**
+- Gate G-5 closeout:
+  [`09_logs/2026-06-17_phaseC_gate_g5_applied.md`](../09_logs/2026-06-17_phaseC_gate_g5_applied.md)
+- Phase C closeout:
+  [`09_logs/2026-06-17_phaseC_closeout.md`](../09_logs/2026-06-17_phaseC_closeout.md)
 
 Allowlist (D-12) is enforced at the Tool boundary.
 
 Denied domains include `homeassistant.*`, `hassio.*`,
 `recorder.*`.
+
+### Phase D — Voice
+
+Status: Next active phase (not yet started).
 
 ---
 
@@ -220,6 +233,10 @@ Recent work landed on `main`:
 - C-5 — Tool-level refusal validation
 - C-6a — first real Home Assistant read against `sun.sun`
 - Zigbee2MQTT first devices imported into Home Assistant
+- Phase C documentation sync (tag `v0.3-phase-c-doc-sync`)
+- Gate G-5 — first real `ha_call_service` happy path
+  against `switch.impresora_3d`
+- Phase C closeout
 
 ---
 
@@ -241,56 +258,11 @@ Authoritative location for live values: `ai-stack/.env`
 
 ## Known pending items
 
-1. **Phase C Gate G-5** — first real `ha_call_service`
-   happy path on a controllable entity
-2. **Phase C C-7** — Phase C closeout + Phase D handoff note
-3. **Mosquitto hardening** — move off `allow_anonymous true`
-   to authenticated users + ACLs
-4. **Cloudflare Tunnel token rotation** (R-01)
-5. **Dedicated NAS** — procurement and data migration
-6. **MyFreeTour** RAG collection (Phase E)
-7. **Voice interface** — Whisper + Piper + HA Assist
-   (Phase D)
-## 2026-06-17 — Phase C Completed
-
-### Gate G-5 Validated
-
-Status: COMPLETED
-
-First successful end-to-end execution of Home Assistant service calls from Open WebUI.
-
-Validated path:
-
-Open WebUI
-→ Tool Runtime
-→ Home Assistant REST API
-→ MQTT
-→ Zigbee2MQTT
-→ Sonoff S60ZBTPF
-
-Test entity:
-
-switch.impresora_3d
-
-Execution:
-
-1. Read state (OFF)
-2. switch.turn_on
-3. Verify state (ON)
-4. switch.turn_off
-5. Verify state (OFF)
-
-Results:
-
-- ha_call_service operational
-- audit logging operational
-- no secret leakage detected
-- no Open WebUI restart required
-- webui.db unchanged
-- model/tool invariants preserved
-
-Impact:
-
-Amarolab can now perform verified physical actions through Home Assistant.
-
-Phase C status: COMPLETE
+1. **Mosquitto hardening** — move off `allow_anonymous true`
+   to authenticated users + ACLs (blocker for broader
+   device onboarding and Phase D)
+2. **Cloudflare Tunnel token rotation** (R-01)
+3. **Phase D** — Voice interface (Whisper + Piper + HA
+   Assist) — next active phase
+4. **Dedicated NAS** — procurement and data migration
+5. **MyFreeTour** RAG collection (Phase E)

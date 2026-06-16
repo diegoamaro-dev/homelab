@@ -177,7 +177,7 @@ Build Amarolab Assistant v1.
 
 Current phase:
 
-Phase C — Home Assistant integration.
+Phase D — Voice (next active phase, not yet started).
 
 Phase status:
 
@@ -185,17 +185,17 @@ Phase status:
   primary tool-calling model.
 * Phase B — Completed. Tool layer delivered:
   `time_now`, `rag_search`, `audit_search`.
-* Phase C — Active. `ha_get_state` installed, attached to
-  qwen2.5, and validated end-to-end with a real Home
-  Assistant read against `sun.sun`. `ha_call_service`
-  installed, attached to qwen2.5, and validated at the
-  Tool-level refusal path. Gate G-5 (first real
-  `ha_call_service` happy path on a controllable entity)
-  is the next validation milestone.
+* Phase C — Completed (2026-06-17). `ha_get_state` and
+  `ha_call_service` installed, attached to qwen2.5, and
+  validated end-to-end. Refusal path proven against
+  `recorder.purge`; read path proven against `sun.sun`;
+  Gate G-5 happy-path write proven against
+  `switch.impresora_3d` with full Z2M MQTT round-trip and
+  baseline restore.
+* Phase D — Next. Voice interaction.
 
 Not yet:
 
-* Voice
 * Whisper
 * Piper
 * Home Assistant Assist
@@ -204,11 +204,18 @@ Not yet:
 
 ## Next Immediate Task
 
-Phase C Gate G-5 — execute the first real
-`ha_call_service` happy path against a controllable
-allowlisted entity (e.g. `light.turn_on` /
-`switch.toggle`), observe the physical state change, and
-confirm the audit-log delta with `result_code = "ok"`.
+Start Phase D — Voice. Scoping work:
 
-Then close Phase C (C-7 — sync CURRENT_STATE / ROADMAP /
-AMAROLAB_HANDOFF + Phase D handoff note).
+1. Decide between locally-hosted (Whisper + Piper running
+   on the same host as Open WebUI / Home Assistant) and
+   HA-Assist integrated pipelines.
+2. Validate microphone hardware path (USB / network
+   audio).
+3. Choose initial wake word + Piper voice.
+
+Pre-Phase-D blocker still open:
+
+* Mosquitto authentication hardening — move off
+  `allow_anonymous true`, add authenticated users + ACLs.
+  This is a precondition before voice work touches MQTT
+  in any new way.
