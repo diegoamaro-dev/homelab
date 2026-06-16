@@ -68,7 +68,7 @@ Assistant can retrieve knowledge.
 
 ## Phase C
 
-Active / in progress
+Completed
 
 ### Goal
 
@@ -81,9 +81,8 @@ Tasks:
   `result_code = "ok"`).
 * ha_call_service() — installed, attached to qwen2.5,
   Tool-level refusal path validated against
-  `recorder.purge`. **Gate G-5 (first real happy path on
-  a controllable entity) — PENDING.**
-
+  `recorder.purge`. 
+[x] Validate first real ha_call_service execution (G-5 completed 2026-06-17)
 Security:
 
 Allowlist only (D-12 enforced at the Tool boundary).
@@ -100,8 +99,9 @@ Read and limited control of the house.
 
 Status:
 
-Read criterion met. Limited-control criterion pending
-Gate G-5.
+Read criterion met.
+Limited-control criterion met.
+Phase C completed on 2026-06-17 (Gate G-5).
 
 ---
 

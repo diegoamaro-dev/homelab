@@ -102,6 +102,26 @@ Future:
 * myfreetour
 
 ---
+## Current Operational Status
+
+The Home Assistant integration is now operational.
+
+Validated capabilities:
+
+- ha_get_state
+- ha_call_service
+- audit logging
+- allowlist enforcement
+- runtime secret loading
+- Zigbee device control
+
+Verified device:
+
+switch.impresora_3d
+
+The first real-world state change was executed successfully on 2026-06-17.
+
+Future assistants should treat Home Assistant tool integration as PRODUCTION READY.
 
 ## Documentation Status
 

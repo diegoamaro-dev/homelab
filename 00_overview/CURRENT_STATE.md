@@ -251,3 +251,46 @@ Authoritative location for live values: `ai-stack/.env`
 6. **MyFreeTour** RAG collection (Phase E)
 7. **Voice interface** — Whisper + Piper + HA Assist
    (Phase D)
+## 2026-06-17 — Phase C Completed
+
+### Gate G-5 Validated
+
+Status: COMPLETED
+
+First successful end-to-end execution of Home Assistant service calls from Open WebUI.
+
+Validated path:
+
+Open WebUI
+→ Tool Runtime
+→ Home Assistant REST API
+→ MQTT
+→ Zigbee2MQTT
+→ Sonoff S60ZBTPF
+
+Test entity:
+
+switch.impresora_3d
+
+Execution:
+
+1. Read state (OFF)
+2. switch.turn_on
+3. Verify state (ON)
+4. switch.turn_off
+5. Verify state (OFF)
+
+Results:
+
+- ha_call_service operational
+- audit logging operational
+- no secret leakage detected
+- no Open WebUI restart required
+- webui.db unchanged
+- model/tool invariants preserved
+
+Impact:
+
+Amarolab can now perform verified physical actions through Home Assistant.
+
+Phase C status: COMPLETE
