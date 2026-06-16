@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-06-15
+Last updated: 2026-06-17
 
 ## Purpose
 
@@ -95,6 +95,7 @@ Collections:
 * homelab_docs
 * guardian_cloud
 * ensambla2
+* infra_audits
 
 Future:
 
@@ -126,12 +127,17 @@ GitHub synchronized.
 
 Completed:
 
-* R-04 Mosquitto
+* R-04 Mosquitto crash-loop (resolved 2026-06-13)
 * R-12 Backups
 
 Pending:
 
 * R-01 Cloudflare Tunnel Token Rotation
+* Mosquitto authentication hardening — currently
+  `allow_anonymous true` as a temporary validation posture
+  for the Zigbee2MQTT bring-up; authenticated users + ACLs
+  to be added before broader device onboarding and before
+  Phase D voice work
 
 ---
 
@@ -151,27 +157,38 @@ Build Amarolab Assistant v1.
 
 Current phase:
 
-Phase A.
+Phase C — Home Assistant integration.
 
-Focus:
+Phase status:
 
-Brain layer only.
+* Phase A — Completed. `qwen2.5:7b-instruct` selected as the
+  primary tool-calling model.
+* Phase B — Completed. Tool layer delivered:
+  `time_now`, `rag_search`, `audit_search`.
+* Phase C — Active. `ha_get_state` installed, attached to
+  qwen2.5, and validated end-to-end with a real Home
+  Assistant read against `sun.sun`. `ha_call_service`
+  installed, attached to qwen2.5, and validated at the
+  Tool-level refusal path. Gate G-5 (first real
+  `ha_call_service` happy path on a controllable entity)
+  is the next validation milestone.
 
 Not yet:
 
 * Voice
 * Whisper
 * Piper
-* Home Assistant tool execution
-* Open WebUI Functions
-* Tool Calling
+* Home Assistant Assist
 
 ---
 
 ## Next Immediate Task
 
-Evaluate qwen2.5:7b against llama3.
+Phase C Gate G-5 — execute the first real
+`ha_call_service` happy path against a controllable
+allowlisted entity (e.g. `light.turn_on` /
+`switch.toggle`), observe the physical state change, and
+confirm the audit-log delta with `result_code = "ok"`.
 
-Choose the primary assistant model.
-
-Then continue with Amarolab Assistant Phase A.
+Then close Phase C (C-7 — sync CURRENT_STATE / ROADMAP /
+AMAROLAB_HANDOFF + Phase D handoff note).

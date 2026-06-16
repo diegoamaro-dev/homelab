@@ -1,7 +1,6 @@
-# Current System Status – Homelab
 # Initial System Status
 
-> Historical snapshot.
+> **Historical snapshot — DO NOT use as current state.**
 >
 > This document represents the initial documented state of Amarolab when the Git-based documentation process started.
 >

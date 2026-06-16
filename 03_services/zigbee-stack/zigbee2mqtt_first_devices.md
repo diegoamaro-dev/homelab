@@ -15,7 +15,7 @@ Initial Zigbee network deployment using Sonoff Zigbee Dongle Plus.
 
 ### Roller Shutter
 
-- Device: Sonoff MINI-ZBRS
+- Device: Sonoff MINI-ZBRBS
 - Friendly Name: Toldo
 - Protocol: Zigbee
 - Integration: Zigbee2MQTT → MQTT → Home Assistant

@@ -15,7 +15,7 @@ Completed
 
 ## Phase A
 
-Current
+Completed
 
 ### Goal
 
@@ -28,7 +28,12 @@ Tasks:
 * Select default model
 * Document findings
 
-Success criteria:
+Outcome:
+
+`qwen2.5:7b-instruct` selected as the primary tool-calling
+model (`base_model_id = NULL`, D-35 preserved).
+
+Success criteria met:
 
 Stable local model selected.
 
@@ -36,15 +41,26 @@ Stable local model selected.
 
 ## Phase B
 
-Tool Layer
+Completed
+
+### Goal
+
+Tool layer
 
 Tasks:
 
-* rag_search()
 * time_now()
-* system_status()
+* rag_search()
+* audit_search()
 
-Success criteria:
+Outcome:
+
+All three tools installed in `webui.db.tool`, attached to
+`qwen2.5:7b-instruct` via `meta.toolIds`, and validated
+end-to-end. Per-model scope D-20 preserved (legacy
+Jarvis tools remain scoped to `llama3*`).
+
+Success criteria met:
 
 Assistant can retrieve knowledge.
 
@@ -52,16 +68,25 @@ Assistant can retrieve knowledge.
 
 ## Phase C
 
-Home Assistant Integration
+Active / in progress
+
+### Goal
+
+Home Assistant integration
 
 Tasks:
 
-* ha_get_state()
-* ha_call_service()
+* ha_get_state() — installed, attached to qwen2.5,
+  validated against real HA read (`sun.sun` →
+  `result_code = "ok"`).
+* ha_call_service() — installed, attached to qwen2.5,
+  Tool-level refusal path validated against
+  `recorder.purge`. **Gate G-5 (first real happy path on
+  a controllable entity) — PENDING.**
 
 Security:
 
-Allowlist only.
+Allowlist only (D-12 enforced at the Tool boundary).
 
 Never allow:
 
@@ -72,6 +97,11 @@ Never allow:
 Success criteria:
 
 Read and limited control of the house.
+
+Status:
+
+Read criterion met. Limited-control criterion pending
+Gate G-5.
 
 ---
 
