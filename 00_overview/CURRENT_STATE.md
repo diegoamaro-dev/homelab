@@ -10,7 +10,20 @@ Last updated: 2026-06-17
 
 ---
 
-## Phase status
+## Scope
+
+This document captures the current state of the
+**AMAROLAB** ecosystem and the build state of
+**AURORA** (the AMAROLAB Personal AI Assistant).
+
+**Guardian Cloud** is an independent project currently
+hosted on AMAROLAB infrastructure; its internal state
+is tracked by the Guardian Cloud project, not in this
+document.
+
+---
+
+## AURORA — phase status
 
 ### Phase B — Tool layer
 
@@ -66,7 +79,40 @@ Denied domains include `homeassistant.*`, `hassio.*`,
 
 ### Phase D — Voice
 
-Status: Next active phase (not yet started).
+Status: **In progress.**
+
+- **D-1.1 (documentation skeleton)** — closed.
+- **D-1.2 (Whisper standup)** — closed (2026-06-17).
+  - `aurora-whisper` container running on
+    `ai-local_default`.
+  - Image: `rhasspy/wyoming-whisper:3.2.0` (digest
+    `sha256:966e1b…`).
+  - Model: `base-int8`. Language: auto-detect.
+  - Wyoming endpoint reachable at
+    `aurora-whisper:10300` (internal-only; no host
+    port).
+  - Bind mount: `/srv/homelab/data/whisper/wyoming`
+    → `/data` (76 MB model cache after first load).
+  - **Gate G-D1 (Wyoming path) passed.** WER 0.000
+    against the canonical openai/whisper smoke-test
+    clip; total latency 609 ms on 11.00 s of audio;
+    real-time factor 0.055 on UM790 CPU.
+  - G-D1 HTTP-shim path deferred to D-1.7 (no
+    consumer until Open WebUI Audio integration);
+    HTTP-shim image pre-pulled.
+  - Apply log:
+    [`09_logs/2026-06-17_phaseD_whisper_installed.md`](../09_logs/2026-06-17_phaseD_whisper_installed.md)
+
+Not yet:
+
+- D-1.3 — Piper (`aurora-piper`)
+- D-1.4 — openWakeWord (`aurora-wakeword`)
+- D-1.5 — HA Assist pipeline (`AURORA v1`)
+- D-1.6 — Real-device end-to-end (G-D5)
+- D-1.7 — Open WebUI Audio integration (also closes
+  G-D1 HTTP-shim path)
+- D-1.8 — Failure-mode rehearsal (G-D6)
+- D-1.9 — Phase D-1 closeout
 
 ---
 
@@ -166,6 +212,40 @@ Status: Operational
 - Home Assistant discovery: **enabled**
 - First devices joined and exposed to Home Assistant
   (see Home Assistant section above)
+
+---
+
+## Voice stack
+
+Status: **Operational — STT only** (D-1.2 closed
+2026-06-17).
+
+`aurora-whisper` (Wyoming STT) is running on
+`ai-local_default`.
+
+- Container: `aurora-whisper`
+- Image: `rhasspy/wyoming-whisper:3.2.0`
+- Endpoint: `tcp://aurora-whisper:10300` (internal)
+- Model: `base-int8`
+- Real-time factor on UM790 CPU: **0.055** on the
+  G-D1 reference clip (~18× faster than real time)
+- Bind mount: `/srv/homelab/data/whisper/wyoming`
+  (76 MB cached)
+- No host port published
+
+Not yet deployed (Phase D-1 remainder):
+
+- `aurora-piper` (TTS) — D-1.3
+- `aurora-wakeword` (openWakeWord) — D-1.4
+- HA Assist pipeline (`AURORA v1`) — D-1.5
+- HTTP shim for Open WebUI integration — D-1.7
+
+Reference architecture:
+[`03_services/voice-stack/README.md`](../03_services/voice-stack/README.md).
+Whisper deployment plan:
+[`03_services/voice-stack/whisper/faster-whisper-deployment.md`](../03_services/voice-stack/whisper/faster-whisper-deployment.md).
+Apply log:
+[`09_logs/2026-06-17_phaseD_whisper_installed.md`](../09_logs/2026-06-17_phaseD_whisper_installed.md).
 
 ---
 
@@ -270,7 +350,8 @@ Authoritative location for live values: `ai-stack/.env`
 ## Known pending items
 
 1. **Cloudflare Tunnel token rotation** (R-01)
-2. **Phase D** — Voice interface (Whisper + Piper + HA
-   Assist) — next active phase (now unblocked)
+2. **Phase D** — Voice interface — **in progress.**
+   D-1.2 closed (Whisper). **D-1.3 (Piper)** is the
+   next active step.
 3. **Dedicated NAS** — procurement and data migration
 4. **MyFreeTour** RAG collection (Phase E)

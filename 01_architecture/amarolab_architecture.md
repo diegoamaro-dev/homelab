@@ -6,11 +6,42 @@ Last updated: 2026-06-17
 
 # Purpose
 
-This document describes the current architecture of Amarolab.
+This document describes the current architecture of
+the **AMAROLAB** ecosystem.
 
-It provides a high-level view of infrastructure, services, security, AI systems, storage and future expansion plans.
+**AMAROLAB** — Personal Innovation Lab and Digital
+Infrastructure Ecosystem — provides infrastructure,
+automation, knowledge systems, AI services and
+documentation. It hosts **AURORA** (the AMAROLAB
+Personal AI Assistant) and independent projects such
+as **Guardian Cloud**.
 
-This file is intended to be the primary architectural reference for future maintenance, onboarding and portfolio presentation.
+This document is the primary architectural reference
+for AMAROLAB infrastructure and the services that run
+on it, including AURORA. It does **not** describe
+Guardian Cloud's internal architecture; that project
+maintains its own documentation.
+
+This file is intended for future maintenance,
+onboarding and portfolio presentation.
+
+---
+
+# Naming
+
+**AMAROLAB**
+
+Personal Innovation Lab and Digital Infrastructure
+Ecosystem.
+
+**AURORA**
+
+Personal AI Assistant for the AMAROLAB ecosystem.
+
+**Guardian Cloud**
+
+Independent project currently hosted on AMAROLAB
+infrastructure.
 
 ---
 
@@ -266,7 +297,10 @@ Multi-location backups
 
 # Guardian Cloud
 
-Guardian Cloud is considered a production service.
+**Guardian Cloud** is an **independent project
+currently hosted on AMAROLAB infrastructure**.
+
+It is considered production.
 
 ```text
 DO NOT MODIFY
@@ -276,8 +310,12 @@ WITHOUT EXPLICIT APPROVAL
 Current hosting:
 
 ```text
-UM790 Pro
+UM790 Pro (AMAROLAB infrastructure)
 ```
+
+Guardian Cloud is not part of AURORA. Its internal
+architecture and roadmap are tracked by the Guardian
+Cloud project, not in this document.
 
 ---
 

@@ -1,5 +1,21 @@
 # ROADMAP
 
+This document tracks the build phases of **AURORA** —
+the Personal AI Assistant for the **AMAROLAB**
+ecosystem.
+
+**AMAROLAB** — Personal Innovation Lab and Digital
+Infrastructure Ecosystem — provides infrastructure,
+automation, knowledge systems, AI services and
+documentation.
+
+**Guardian Cloud** is an independent project currently
+hosted on AMAROLAB infrastructure; its roadmap is
+tracked by the Guardian Cloud project, not in this
+document.
+
+---
+
 ## Phase 0
 
 Completed
@@ -108,7 +124,7 @@ Phase C closeout:
 
 ## Phase D
 
-Next active phase (not yet started). Pre-Phase-D
+**In progress** (started 2026-06-17). Pre-Phase-D
 blockers: **none open** — Mosquitto auth hardening
 landed 2026-06-17 and Gate G-5 was re-executed
 end-to-end through the hardened broker.
@@ -117,15 +133,32 @@ end-to-end through the hardened broker.
 
 Voice
 
-Tasks:
+Tasks and status:
 
-* Whisper
-* Piper
-* Home Assistant Assist
+* **Whisper** — **DONE** (D-1.2, 2026-06-17).
+  `aurora-whisper` operational
+  (`rhasspy/wyoming-whisper:3.2.0`, `base-int8`).
+  Gate G-D1 Wyoming path passed (WER 0.000, RTF
+  0.055 on UM790 CPU). HTTP-shim path of G-D1
+  deferred to D-1.7. Apply log:
+  `09_logs/2026-06-17_phaseD_whisper_installed.md`.
+* **Piper** — open. D-1.3 is the next step.
+* **openWakeWord** — open. D-1.4.
+* **Home Assistant Assist pipeline (`AURORA v1`)**
+  — open. D-1.5 (configuration) through D-1.8
+  (failure-mode rehearsal).
+* **Open WebUI Audio integration** — open. D-1.7
+  (also closes the G-D1 HTTP-shim path deferred
+  from D-1.2).
 
 Success criteria:
 
 Voice interaction through the house.
+
+Phase D-1 closeout will land at **D-1.9** once
+Gates G-D1 through G-D6 are all documented and
+`switch.impresora_3d` is restored to its baseline
+after G-D5.
 
 ---
 
@@ -147,7 +180,7 @@ Single assistant with access to all project knowledge.
 
 ## Long-Term Vision
 
-One assistant.
+One assistant — **AURORA**.
 
 Two front doors:
 
@@ -158,10 +191,14 @@ Shared brain:
 
 * Ollama
 * Qdrant
-* Amarolab knowledge base
+* AMAROLAB knowledge base
 
 Everything local.
 
 Everything documented.
 
 Everything recoverable.
+
+AURORA is delivered as part of the **AMAROLAB**
+ecosystem. **Guardian Cloud** remains an independent
+project hosted on AMAROLAB infrastructure.

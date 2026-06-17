@@ -15,17 +15,43 @@ This document allows any future AI session to rebuild project context quickly an
 
 ## Project
 
-Amarolab Homelab
+**AMAROLAB** — Personal Innovation Lab and Digital
+Infrastructure Ecosystem.
 
-Personal infrastructure focused on:
+AMAROLAB provides infrastructure, automation,
+knowledge systems, AI services and documentation. It
+hosts **AURORA** (the personal AI assistant for the
+AMAROLAB ecosystem) and independent projects such as
+**Guardian Cloud**.
+
+Focus areas:
 
 * Local AI
 * Home automation
 * Learning infrastructure
 * Documentation
 * Portfolio development
-* Guardian Cloud backend hosting
-* Future Amarolab Assistant
+* Hosting of independent projects (e.g., Guardian Cloud)
+* AURORA — the AMAROLAB Personal AI Assistant
+
+---
+
+## Naming
+
+**AMAROLAB**
+
+Personal Innovation Lab and Digital Infrastructure
+Ecosystem. Provides infrastructure, automation,
+knowledge systems, AI services and documentation.
+
+**AURORA**
+
+Personal AI Assistant for the AMAROLAB ecosystem.
+
+**Guardian Cloud**
+
+Independent project currently hosted on AMAROLAB
+infrastructure.
 
 ---
 
@@ -55,6 +81,11 @@ Personal infrastructure focused on:
 * Ollama
 * Qdrant
 
+### Voice (Phase D — in progress)
+
+* `aurora-whisper` (Wyoming STT, D-1.2 closed
+  2026-06-17)
+
 ### Home Automation
 
 * Home Assistant
@@ -68,9 +99,10 @@ Personal infrastructure focused on:
 * Cloudflared
 * Restic Backups
 
-### Production Service
+### Hosted independent project
 
-Guardian Cloud backend
+**Guardian Cloud** — independent project currently
+hosted on AMAROLAB infrastructure.
 
 IMPORTANT:
 
@@ -122,6 +154,19 @@ switch.impresora_3d
 The first real-world state change was executed successfully on 2026-06-17.
 
 Future assistants should treat Home Assistant tool integration as PRODUCTION READY.
+
+The voice STT layer (`aurora-whisper`) is operational
+as of 2026-06-17 (D-1.2 closed). Gate G-D1 Wyoming
+path passed: WER 0.000 against the canonical
+openai/whisper smoke-test clip, real-time factor
+0.055 on UM790 CPU. End-to-end voice control is
+**not** yet operational — Piper, openWakeWord, the
+HA Assist pipeline, and the Open WebUI Audio
+integration are still to be installed in D-1.3
+through D-1.7.
+
+Apply log:
+`09_logs/2026-06-17_phaseD_whisper_installed.md`.
 
 ## Documentation Status
 
@@ -176,11 +221,13 @@ Pending:
 
 ## Current Goal
 
-Build Amarolab Assistant v1.
+Build **AURORA v1** — the AMAROLAB Personal AI
+Assistant.
 
 Current phase:
 
-Phase D — Voice (next active phase, not yet started).
+Phase D — Voice (**in progress**; D-1.2 closed
+2026-06-17).
 
 Phase status:
 
@@ -195,29 +242,44 @@ Phase status:
   Gate G-5 happy-path write proven against
   `switch.impresora_3d` with full Z2M MQTT round-trip and
   baseline restore.
-* Phase D — Next. Voice interaction.
+* Phase D — **In progress.**
+  * D-1.1 (documentation skeleton) — closed.
+  * D-1.2 (Whisper standup) — **closed 2026-06-17.**
+    `aurora-whisper` (`rhasspy/wyoming-whisper:3.2.0`,
+    `base-int8`) operational; Gate G-D1 Wyoming path
+    passed (WER 0.000, RTF 0.055). HTTP-shim path of
+    G-D1 deferred to D-1.7. Apply log:
+    `09_logs/2026-06-17_phaseD_whisper_installed.md`.
+  * D-1.3 through D-1.9 — open.
 
 Not yet:
 
-* Whisper
-* Piper
-* Home Assistant Assist
+* Piper (`aurora-piper`)
+* openWakeWord (`aurora-wakeword`)
+* Home Assistant Assist pipeline (`AURORA v1`)
+* Open WebUI Audio integration
 
 ---
 
 ## Next Immediate Task
 
-Start Phase D — Voice. Scoping work:
+Continue Phase D — Voice. D-1.2 (Whisper) is closed;
+the next step is **D-1.3 — Piper standup**.
 
-1. Decide between locally-hosted (Whisper + Piper running
-   on the same host as Open WebUI / Home Assistant) and
-   HA-Assist integrated pipelines.
-2. Validate microphone hardware path (USB / network
-   audio).
-3. Choose initial wake word + Piper voice.
+Per the approved spec in
+`04_ai_system/amarolab-v1/phase-d/03-component-spec.md`
+and the deployment plan in
+`03_services/voice-stack/piper/piper-deployment.md`:
 
-Pre-Phase-D blockers: **none open.** Mosquitto auth
-hardening landed 2026-06-17 (`allow_anonymous false`,
-`homeassistant` + `zigbee2mqtt` users + ACLs) and Gate
-G-5 was re-executed end-to-end through the hardened
-broker.
+1. Pull `rhasspy/wyoming-piper:<pinned tag>` and
+   document the `docker run` recipe.
+2. Create `aurora-piper` on `ai-local_default` with
+   bind mount `/srv/homelab/data/piper/`, voice
+   `es_ES-davefx-medium`, Wyoming port `10200/tcp`
+   (internal-only).
+3. Run Gate G-D2 (Piper TTS canary).
+4. Write `09_logs/2026-MM-DD_phaseD_piper_installed.md`
+   and close decisions C-D-02 and C-D-06.
+
+Pre-Phase-D blockers: **none open.**
+Pre-D-1.3 blockers: **none open.**
