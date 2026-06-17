@@ -25,7 +25,7 @@
 | Wake word | openWakeWord (Wyoming) | `aurora-wakeword:10400` | `ok_nabu` |
 | STT | faster-whisper (Wyoming) | `aurora-whisper:10300` | `base-int8` |
 | Conversation | HA Ollama integration | `http://ollama:11434` | `qwen2.5:7b-instruct` |
-| TTS | Piper (Wyoming) | `aurora-piper:10200` | `es_ES-davefx-medium` |
+| TTS | Piper (Wyoming) | `aurora-piper:10200` | **`es_ES-sharvard-medium` speaker `F`** *(AURORA voice identity — C-D-08 closed 2026-06-17; see [`../../../09_logs/2026-06-17_phaseD_piper_installed.md`](../../../09_logs/2026-06-17_phaseD_piper_installed.md) §2.7)* |
 
 Note on the conversation slot: HA's **native Ollama
 integration** is used (not Open WebUI). This keeps

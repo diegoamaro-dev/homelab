@@ -4,10 +4,20 @@
   Assistant).
 - **Status:** **DEPLOYED (Wyoming path) 2026-06-17**
   at D-1.3. `aurora-piper` running
-  (`rhasspy/wyoming-piper:2.2.2`, voice
-  `es_ES-davefx-medium`). Gate G-D2 Wyoming path
-  passed (synthesis RTF 0.31, first chunk 332 ms).
-  HTTP-shim path deferred to D-1.7.
+  (`rhasspy/wyoming-piper:2.2.2`, startup-default
+  voice `es_ES-davefx-medium`). Gate G-D2 Wyoming
+  path passed (synthesis RTF 0.31, first chunk
+  332 ms). HTTP-shim path deferred to D-1.7 — and
+  will require a **separate** OpenAI-compatible TTS
+  container (the `rhasspy/wyoming-piper:2.2.2` image
+  is a pure Wyoming server with no built-in HTTP
+  mode; C-D-06 closed at D-1.3 verification, image
+  candidate is C-D-09). **AURORA voice identity
+  decided post-G-D2 (C-D-08 closed 2026-06-17):
+  `es_ES-sharvard-medium` speaker `F`** —
+  operative through HA Assist TTS slot at D-1.5;
+  container `--voice`/`--speaker` reconciliation is
+  D-D3-VOICE-SWAP.
 - **Phase D step:** D-1.3 (Wyoming) + D-1.7 (HTTP).
 
 ---
@@ -15,13 +25,15 @@
 ## 1. Purpose
 
 Run Piper as a Wyoming endpoint (for HA Assist) and
-as an OpenAI-compatible HTTP endpoint (for Open
-WebUI), sharing one voice cache.
+front the same voice files with a separate
+OpenAI-compatible HTTP shim (for Open WebUI). The
+two containers share one voice cache on the host.
 
 ```
-HA Assist  ──► Wyoming :10200 ──┐
-                                ├── Piper voice files
-Open WebUI ──► HTTP    :8001 ───┘     (/srv/homelab/data/piper/)
+HA Assist  ──► aurora-piper (Wyoming :10200) ─────┐
+                                                  ├── Piper voice files
+Open WebUI ──► aurora-piper-http (HTTP :8001) ────┘     (/srv/homelab/data/piper/)
+                ^ separate container, image TBD at D-1.7 (C-D-09)
 ```
 
 ---
@@ -31,30 +43,55 @@ Open WebUI ──► HTTP    :8001 ───┘     (/srv/homelab/data/piper/)
 | Container | Image | Purpose | Status |
 |---|---|---|---|
 | `aurora-piper` | `rhasspy/wyoming-piper:2.2.2` *(digest `sha256:c874e4…`)* | Wyoming TTS on `10200/tcp` (internal) | **deployed 2026-06-17 at D-1.3** |
-| HTTP shim | **built-in OpenAI-compatible HTTP mode** on the same `rhasspy/wyoming-piper:2.2.2` image (`--http-port 8001`) | OpenAI-compatible TTS on `8001/tcp` (internal) | deferred to D-1.7 (no consumer until Open WebUI Audio) |
+| `aurora-piper-http` *(planned)* | **separate OpenAI-compatible TTS image** — TBD at D-1.7 prep (**C-D-09**) | OpenAI-compatible TTS on `8001/tcp` (internal), consuming the same voice cache at `/srv/homelab/data/piper/` | deferred to D-1.7 |
 
 C-D-02 closed at D-1.3 — Wyoming image pinned to
 `rhasspy/wyoming-piper:2.2.2`.
-C-D-06 closed at D-1.3 — built-in HTTP mode on the
-same image; no separate shim container.
+
+C-D-06 closed at D-1.3 — **the HTTP shim is a
+separate container, not a built-in mode.** The
+D-1.1 skeleton hypothesised a `--http-port`-style
+flag on the Wyoming image; verification against
+`rhasspy/wyoming-piper:2.2.2` showed that flag does
+not exist. The image is a pure Wyoming server.
+Image candidate selection for the separate shim is
+C-D-09, deferred to D-1.7 prep.
 
 ---
 
 ## 3. Voice plan
 
-| Voice | Locale | Quality | Size | Use |
-|---|---|---|---|---|
-| `es_ES-davefx-medium` | Spanish (Spain) | medium | ≈ 60 MB | Primary |
-| `en_US-libritts_r-medium` | English (US) | medium | ≈ 70 MB | Secondary / English replies |
+| Voice | Locale | Quality | Speakers | Size | Use |
+|---|---|---|---|---|---|
+| **`es_ES-sharvard-medium` (speaker `F`)** | **Spanish (Spain)** | **medium** | **2 (M/F)** | **≈ 73 MB** | **AURORA voice identity — approved 2026-06-17 (C-D-08)** |
+| `es_ES-davefx-medium` | Spanish (Spain) | medium | 1 (M) | ≈ 60 MB | Startup default on `aurora-piper` (G-D2 baseline); to be reconciled at D-1.5 (D-D3-VOICE-SWAP) |
+| `en_US-libritts_r-medium` | English (US) | medium | many | ≈ 70 MB | Secondary / English replies — not pre-loaded in D-1 |
 
-Alternative Spanish voices (to evaluate later, not in
-D-1):
+Voice candidates evaluated post-G-D2 (2026-06-17,
+recorded in
+[`../../../09_logs/2026-06-17_phaseD_piper_installed.md`](../../../09_logs/2026-06-17_phaseD_piper_installed.md)
+§2.7):
 
-- `es_ES-sharvard-medium`
-- `es_MX-claude-high`
-- `es_ES-mls_10246-low`
+| Voice | Disposition |
+|---|---|
+| `es_ES-sharvard-medium` speaker `F` | **APPROVED** — AURORA voice identity |
+| `es_ES-sharvard-medium` speaker `M` | considered for sanity-check, not chosen |
+| `es_ES-mls_10246-low` | not recommended — low quality + over-length on `¿…?` |
+| `es_ES-mls_9972-low` | not recommended — same anomaly |
+| `es_ES-carlfm-x_low` | not evaluated — male + x_low tier |
 
-Decision tracked as C-D-03; closes during G-D2 review.
+Non-Spain options (`es_AR-daniela-high`,
+`es_MX-claude-high`) are out of scope for AURORA's
+Spain-locale identity; revisit only if the Spain
+constraint relaxes.
+
+C-D-03 in this file referred historically to the
+"voice alternative" decision and is **superseded by
+C-D-08** in
+[`../../../04_ai_system/amarolab-v1/phase-d/03-component-spec.md`](../../../04_ai_system/amarolab-v1/phase-d/03-component-spec.md).
+A separate doc-cleanup commit will reconcile the
+C-D-03 ID collision (component-spec §9 uses it for
+"openWakeWord image pinned tag").
 
 ---
 
@@ -65,7 +102,7 @@ Decision tracked as C-D-03; closes during G-D2 review.
 | Network | `ai-local_default` |
 | Wyoming port | `10200/tcp` (internal) — active at D-1.3 |
 | HTTP port | `8001/tcp` (internal) — **deferred to D-1.7** (no consumer until Open WebUI Audio) |
-| Voice (primary) | `es_ES-davefx-medium` |
+| Voice (startup default at D-1.3) | `es_ES-davefx-medium` *(G-D2 baseline; AURORA voice identity is `es_ES-sharvard-medium` speaker `F` per C-D-08 — reconciled operationally at D-1.5 via HA Assist TTS slot, D-D3-VOICE-SWAP)* |
 | Length scale | `1.0` (natural pacing) |
 | Bind mount | `/srv/homelab/data/piper/` → voice cache |
 | Resource caps | `--cpus 1 --memory 1g` |

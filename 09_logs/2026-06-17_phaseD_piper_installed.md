@@ -116,15 +116,38 @@ the canary WAV produced in §2.3.
 
 C-D-02 is closed by this selection.
 
-C-D-06 is closed in favour of **Wyoming-only in D-1.3**
-— the OpenAI-compatible HTTP shim has no consumer
-until D-1.7 (Open WebUI Audio integration). The image
-does have a built-in HTTP mode (`--http-port`), but
-standing it up prematurely would create a TTS surface
-with no consumer — same anti-pattern that D-1.2
-avoided for the Whisper shim. The HTTP shim half of
-G-D2 (audio playback via `POST /v1/audio/speech`)
-moves to D-1.7 alongside G-D1's deferred HTTP half.
+**C-D-06 is closed in favour of a separate
+OpenAI-compatible TTS container at D-1.7** (not the
+built-in mode originally sketched in the D-1.1
+skeleton). Verified by inspecting the running image:
+
+```
+$ docker run --rm --entrypoint /usr/src/.venv/bin/python3 \
+    rhasspy/wyoming-piper:2.2.2 -m wyoming_piper --help
+```
+
+The CLI exposes `--voice`, `--uri`, `--zeroconf`,
+`--data-dir`, `--download-dir`, `--speaker`,
+`--noise-scale`, `--length-scale`, `--noise-w-scale`,
+`--auto-punctuation`, `--samples-per-chunk`,
+`--no-streaming`, `--update-voices`, `--use-cuda`,
+`--debug`, `--log-format`, `--version` — and
+**no `--http-port` or equivalent flag.**
+`rhasspy/wyoming-piper:2.2.2` is a pure Wyoming
+server. The "built-in OpenAI-compatible HTTP mode"
+referenced in the D-1.1 skeleton does not exist on
+this image.
+
+Consequence: D-1.7 must add a **separate
+OpenAI-compatible TTS shim container** that fronts
+the same voice files (mounted from
+`/srv/homelab/data/piper/`). Image selection for
+that shim is a new open decision: **C-D-09**
+(tracked in §6 below and in `03-component-spec.md`
+§9), to close at D-1.7 prep. The Wyoming-only
+posture for D-1.3 is unchanged — the HTTP shim
+half of G-D2 still defers to D-1.7, and Phase D-1
+closeout still requires that half to be exercised.
 
 ---
 
@@ -236,15 +259,16 @@ Two minor harness fixes during execution:
 
 | Field | Value |
 |---|---|
-| Plays audibly on workstation | _to be filled in by operator_ |
-| Voice timbre matches `es_ES-davefx-medium` | _to be filled in by operator_ |
-| Notes | _to be filled in by operator_ |
+| Plays audibly on workstation | **PASS** |
+| Intelligibility ("AURORA activada" understandable) | **PASS** |
+| Voice timbre matches `es_ES-davefx-medium` | **PASS** — synthesized timbre matches the requested voice |
+| Notes | Voice is technically PASS on all three dimensions. **Voice identity** (whether `es_ES-davefx-medium` is the right voice for AURORA) was raised as a separate question and resolved in §2.7 — operator approved `es_ES-sharvard-medium` speaker `F` as the AURORA voice identity. G-D2 Wyoming-path acceptance is met by this PASS; the voice swap is a forward action, not a G-D2 re-run. |
 
 The Wyoming-side acceptance criteria from
 `05-validation-gates.md` §3 (Wyoming probe succeeds,
 no errors in `aurora-piper` logs) are met; the
-audibility criterion is gated on the operator's
-listening test of the WAV produced in §2.3.
+audibility criterion is closed by the PASS verdict
+above.
 
 ### 2.6 HTTP-shim path of G-D2
 
@@ -254,15 +278,127 @@ listening test of the WAV produced in §2.3.
   `rhasspy/wyoming-piper`.
 - The HTTP shim half of G-D2 has no consumer until
   D-1.7 (Open WebUI Audio integration).
-- The rhasspy image carries a built-in OpenAI-compatible
-  HTTP mode (`--http-port`); enabling it in D-1.7
-  alongside the OpenAI-compatible faster-whisper-server
-  shim closes both deferred HTTP halves at once
-  without adding a separate container.
+- The HTTP shim for D-1.7 will be a **separate
+  OpenAI-compatible TTS container** (image candidate
+  is C-D-09, evaluated at D-1.7 prep) — per the
+  C-D-06 closure above, the rhasspy image is a pure
+  Wyoming server and has no built-in HTTP mode. The
+  Piper shim joins the existing OpenAI-compatible
+  faster-whisper-server shim at D-1.7 to close both
+  deferred HTTP halves at once.
 - G-D2 status is therefore **partial — Wyoming path
   validated; HTTP path deferred to D-1.7.** Phase D-1
   closeout will only be possible once the deferred
   path is exercised.
+
+### 2.7 Voice identity exercise — outcome
+
+**Trigger.** §2.5 PASS-ed `es_ES-davefx-medium`
+technically (audibility / intelligibility / timbre
+all PASS), but the operator flagged a separate
+question: davefx is **male**, and AURORA's intended
+voice identity is **female Spain**. This subsection
+records the voice-selection exercise that ran
+post-G-D2, on 2026-06-17, without redeploying or
+reconfiguring `aurora-piper`.
+
+**Method.** The running container's startup `--voice`
+flag was left at `es_ES-davefx-medium`. Per-request
+voice selection via the Wyoming `SynthesizeVoice`
+field was used to synthesize a single reference
+phrase across five (voice, speaker) combinations:
+
+| Sample | Voice | Speaker | Note |
+|---|---|---|---|
+| `baseline_davefx_M.wav` | `es_ES-davefx-medium` | — | Current, baseline for A/B |
+| `sharvard_F.wav` | `es_ES-sharvard-medium` | `F` | Catalog-verified female (Hispania) |
+| `sharvard_M.wav` | `es_ES-sharvard-medium` | `M` | Same model, male — speaker-map sanity check |
+| `mls_10246.wav` | `es_ES-mls_10246-low` | — | MLS LibriVox, gender unknown ex-ante |
+| `mls_9972.wav` | `es_ES-mls_9972-low` | — | MLS LibriVox, gender unknown ex-ante |
+
+Reference phrase used for all five:
+
+> *"Hola, soy AURORA. ¿En qué puedo ayudarte hoy?"*
+
+**Authoritative source for the candidate list.**
+`https://huggingface.co/rhasspy/piper-voices/resolve/main/voices.json`
+(230 709 bytes). The dual-speaker disposition of
+`es_ES-sharvard-medium` is from its
+`speaker_id_map = {"M": 0, "F": 1}` entry — no
+listening needed to confirm female availability.
+
+**Output location.**
+`/srv/homelab/data/piper/gd2/voice-compare/` —
+five WAVs (~1.4 MB total) plus
+`comparison_summary.json` with per-sample latency
+and format metadata.
+
+**Cache delta from the exercise.** Voice cache grew
+from 61 MB to **256 MB** — three first-touch ONNX
+downloads (`sharvard` 73 MB, `mls_10246` 60 MB,
+`mls_9972` 60 MB) into the existing
+`/srv/homelab/data/piper` bind mount. No new bind
+mount, no container recreate.
+
+**Observed anomalies.** The two MLS voices produced
+audio that was **4.9× to 7.7× over-length** for the
+reference phrase (`mls_10246` 19 760 ms,
+`mls_9972` 12 704 ms vs ~2.5 s expected). They
+were ruled out as production candidates regardless
+of gender — low-quality MLS models mishandle the
+Spanish `¿…?` punctuation in interactive prompts.
+
+**Operator verdict (2026-06-17).** Approved:
+
+> **AURORA voice identity:** `es_ES-sharvard-medium`
+> with `speaker = "F"`.
+
+Audibility PASS, intelligibility PASS, timbre PASS
+on the sharvard_F sample.
+
+**Container state at decision time.**
+`aurora-piper` is still running with startup
+`--voice es_ES-davefx-medium`. G-D2's Wyoming-path
+acceptance was completed against davefx (§2.3,
+§2.5) and is **not re-run** — it remains the
+authoritative G-D2 evidence. The voice identity
+decision is a **forward action**, deferred to the
+HA Assist pipeline configuration at D-1.5.
+
+**Two viable mechanisms for D-D3-VOICE-SWAP** (to
+be chosen at D-1.5 prep — both are confirmed
+supported by the running image):
+
+| Mechanism | How | Pros | Cons |
+|---|---|---|---|
+| **Startup default** *(fallback / safer)* | Recreate `aurora-piper` with `--voice es_ES-sharvard-medium --speaker F` as startup defaults — both flags confirmed present in `python -m wyoming_piper --help`. Bind mount and voice cache preserved across recreate (~ seconds of downtime). | Works regardless of how HA Assist's TTS slot exposes per-request overrides; guaranteed default for any consumer (HA + future Open WebUI HTTP shim). | One container recreate. |
+| **Per-request via HA Assist TTS slot** | Configure HA's Wyoming TTS integration with `voice = es_ES-sharvard-medium` and `speaker = F` per request, no container change. | No container recreate. | **Not yet verified** — HA Wyoming integration's UI must actually expose `speaker` as a configurable per-request field. To verify at D-1.5 prep against the live HA UI; if the field is not exposed, fall back to the startup-default mechanism. |
+
+The original apply log wording — *"no container
+recreate is strictly required"* — is **conditional
+on the per-request mechanism being verified at
+D-1.5 prep**. If the HA integration does not
+expose `speaker` as a per-request field, the
+startup-default mechanism applies and one
+recreate is required.
+
+**Decisions closed by this subsection.**
+
+| ID | Outcome |
+|---|---|
+| C-D-08 *(new)* | **CLOSED 2026-06-17** — AURORA voice identity is `es_ES-sharvard-medium` speaker `F`. Recorded in `04_ai_system/amarolab-v1/phase-d/03-component-spec.md` §3 + §9. |
+
+**Doc-cleanup item flagged.** The decision-ID `C-D-03`
+is used in two different senses across the current
+docs: (a) `03-component-spec.md` §9 has C-D-03 =
+"openWakeWord image pinned tag" (open, planned for
+D-1.4); (b) `piper-deployment.md` §3 and the §6 of
+this apply log have C-D-03 = "voice alternative
+evaluation". This collision was inherited from the
+D-1.1 / D-1.3 skeleton work and is not corrected
+here — flagged as a doc-cleanup item for a separate
+small commit so this apply log's history stays
+single-purpose.
 
 ---
 
@@ -290,7 +426,7 @@ listening test of the WAV produced in §2.3.
 | `webui.db` md5 | `928319020cdb2e1a43769ebea9a6580c` — changed by concurrent operator activity, see §3.3 |
 | `amarolab-audit.log` md5 | `b6c1af2e479e14588d4928fdae2e7d97` — changed by concurrent operator activity, see §3.3 |
 | `audit.log` line count | 141 (delta: +1 line — chat-side `time_now` call) |
-| Bind-mount disk usage | **61 MB** (60.3 MB ONNX + 5 KB JSON + 52 KB G-D2 WAV) |
+| Bind-mount disk usage | **61 MB** (60.3 MB ONNX + 5 KB JSON + 52 KB G-D2 WAV) *— **point-in-time at 09:27 UTC**; cache subsequently grew to **256 MB** after the C-D-08 voice-identity exercise downloaded `sharvard` (73 MB), `mls_10246` (60 MB) and `mls_9972` (60 MB). See §2.7. Current-state cache size is the 256 MB figure.* |
 | `ai-local_default` attachments | 5 containers (`aurora-piper` added) |
 | Open WebUI | healthy |
 | Home Assistant | running (unchanged) |
@@ -405,16 +541,28 @@ is published by `aurora-piper`.
 | Decision ID | Closes at | Outcome |
 |---|---|---|
 | C-D-02 (Piper Wyoming image pinned tag) | this log | `rhasspy/wyoming-piper:2.2.2` (digest `sha256:c874e4…`, `last_updated 2026-02-05`, same SHA as `:latest`) |
-| C-D-06 (Piper HTTP shim — built-in mode or separate container) | this log | **Wyoming-only in D-1.3.** Built-in OpenAI-compatible HTTP mode (`--http-port`) is the preferred path when it lands in D-1.7; no separate shim container required. |
+| C-D-06 (Piper HTTP shim — built-in mode or separate container) | this log | **Separate OpenAI-compatible TTS container.** Built-in HTTP mode was evaluated against the running `rhasspy/wyoming-piper:2.2.2` image at D-1.3 verification (CLI help inspected via `python -m wyoming_piper --help`) and **does not exist** — the image is a pure Wyoming server. D-1.7 must therefore add a separate shim container. **Image selection is C-D-09**, deferred to D-1.7 prep. |
 
 The component-spec doc
 [`../04_ai_system/amarolab-v1/phase-d/03-component-spec.md`](../04_ai_system/amarolab-v1/phase-d/03-component-spec.md)
 is updated alongside this log to reflect both
 closures and the deferred HTTP-shim path.
 
-C-D-03 (voice alternative) remains open and is
-explicitly *not* exercised in D-1.3 — only the
-primary voice `es_ES-davefx-medium` is deployed.
+**C-D-03 supersession.** The original D-1.3
+closeout text said *"C-D-03 (voice alternative)
+remains open and is explicitly not exercised in
+D-1.3 — only the primary voice
+`es_ES-davefx-medium` is deployed."* That was
+accurate at D-1.3 apply time. **It is now
+superseded** by §2.7 — the post-G-D2 voice
+identity exercise closed the voice-alternative
+question via the new decision ID **C-D-08**
+(`es_ES-sharvard-medium` speaker `F`). The §6
+table reflects the current state; the `C-D-03` ID
+itself is also collided with `03-component-spec.md`
+§9 (where C-D-03 is used for the openWakeWord
+image), and that collision is flagged for a
+separate doc-cleanup commit.
 
 ---
 
@@ -422,12 +570,14 @@ primary voice `es_ES-davefx-medium` is deployed.
 
 | ID | Item | Carried to |
 |---|---|---|
-| C-D-03 | Voice alternative evaluation (`es_ES-sharvard-medium`, `es_MX-claude-high`, `es_ES-mls_10246-low`) | post-Phase-D — primary `es_ES-davefx-medium` only in D-1 |
+| C-D-03 | Voice alternative evaluation — **superseded by §2.7 C-D-08 closure (`es_ES-sharvard-medium` speaker `F` approved).** ID-collision with `03-component-spec.md` C-D-03 flagged in §2.7 for doc cleanup. | doc cleanup (separate commit) |
 | C-D-05 | HA Assist pipeline timeout | D-1.5 / G-D5 prep |
 | C-D-07 | Open WebUI Audio surface default for `qwen2.5` | D-1.7 |
-| **(new)** D-D2-HTTP | HTTP-shim path of G-D2 (audio playback via `POST /v1/audio/speech`) | D-1.7 |
+| **(new)** D-D2-HTTP | HTTP-shim path of G-D2 (audio playback via `POST /v1/audio/speech`). Requires a **separate** OpenAI-compatible TTS container per C-D-06 closure — image candidate selection is C-D-09. | D-1.7 |
+| **(new)** C-D-09 | Image candidate for the separate Piper OpenAI-compatible TTS shim container. Must speak the OpenAI `POST /v1/audio/speech` shape and consume the existing voice files at `/srv/homelab/data/piper/`. Parallel to the `fedirz/faster-whisper-server` posture for STT (R-D-13). | D-1.7 prep |
 | **(carried)** D-D1-HTTP | HTTP-shim path of G-D1 (transcription via `POST /v1/audio/transcriptions`) | D-1.7 |
 | **(carried)** Q-D-05 | Voice-originated entity actions are not currently written to `amarolab-audit.log` | D-2 |
+| **(new)** D-D3-VOICE-SWAP | Reconcile `aurora-piper`'s startup `--voice` flag (currently `es_ES-davefx-medium`) with the AURORA voice identity (`es_ES-sharvard-medium` speaker `F`). Two viable mechanisms (see §2.7): (i) startup defaults via `--voice es_ES-sharvard-medium --speaker F` + container recreate (safer fallback, both flags confirmed present in wyoming-piper CLI); or (ii) per-request via HA Assist TTS slot (no recreate, **but requires verifying that HA's Wyoming integration exposes `speaker` as a per-request field — to confirm at D-1.5 prep**). | D-1.5 (HA Assist pipeline configuration) |
 
 ---
 
