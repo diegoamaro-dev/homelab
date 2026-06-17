@@ -130,19 +130,30 @@ Reference:
 
 ## Mosquitto
 
-Status: Operational
+Status: Operational — **hardened** (2026-06-17)
 
-Current authentication posture: **anonymous local access**
-(`allow_anonymous true`).
+Current authentication posture: **authenticated MQTT
+users + ACLs**.
 
-This is the **validation posture** for bringing up the
-Zigbee2MQTT ↔ Mosquitto ↔ Home Assistant chain.
+- `allow_anonymous false`
+- `password_file /mosquitto/config/passwords`
+- `acl_file /mosquitto/config/acls`
+- Users: `homeassistant`, `zigbee2mqtt` (passwords
+  hashed in `passwords`; plaintext in
+  `/home/diego/.secrets/mqtt-credentials.env`, never
+  in repo)
+- Per-user ACLs scope each principal to its required
+  topic namespaces (default-deny)
+- Anonymous `mosquitto_sub` is refused with
+  `Connection Refused: not authorised`
+- Gate G-5 re-executed end-to-end through the hardened
+  broker — 5 audit lines, all
+  `allowed=true, result_code="ok"`, baseline restored
 
-It is **not** the final hardened posture.
-
-Hardening (authenticated MQTT users + ACLs) is planned
-before broader device onboarding and before Phase D voice
-work.
+Reference:
+[`03_services/zigbee-stack/mosquitto/auth-hardening.md`](../03_services/zigbee-stack/mosquitto/auth-hardening.md).
+Apply log:
+[`09_logs/2026-06-17_mosquitto_auth_hardening_applied.md`](../09_logs/2026-06-17_mosquitto_auth_hardening_applied.md).
 
 ---
 
@@ -258,11 +269,8 @@ Authoritative location for live values: `ai-stack/.env`
 
 ## Known pending items
 
-1. **Mosquitto hardening** — move off `allow_anonymous true`
-   to authenticated users + ACLs (blocker for broader
-   device onboarding and Phase D)
-2. **Cloudflare Tunnel token rotation** (R-01)
-3. **Phase D** — Voice interface (Whisper + Piper + HA
-   Assist) — next active phase
-4. **Dedicated NAS** — procurement and data migration
-5. **MyFreeTour** RAG collection (Phase E)
+1. **Cloudflare Tunnel token rotation** (R-01)
+2. **Phase D** — Voice interface (Whisper + Piper + HA
+   Assist) — next active phase (now unblocked)
+3. **Dedicated NAS** — procurement and data migration
+4. **MyFreeTour** RAG collection (Phase E)

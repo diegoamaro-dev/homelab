@@ -1,0 +1,11 @@
+# Mosquitto ACL — Amarolab — 2026-06-17
+# Default: deny all; per-user rules below grant only what is needed.
+
+user homeassistant
+topic readwrite homeassistant/#
+topic readwrite zigbee2mqtt/#
+
+user zigbee2mqtt
+topic readwrite zigbee2mqtt/#
+topic write homeassistant/#
+topic read homeassistant/status
