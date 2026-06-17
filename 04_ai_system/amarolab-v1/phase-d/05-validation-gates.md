@@ -99,26 +99,82 @@ browser; G-D3 only confirms the configuration surface
 so that D-2 hardware satellites can plug in
 unchanged.
 
-**Pre-condition.** `aurora-wakeword` deployed per
-[`../../../03_services/voice-stack/wakeword/openwakeword-deployment.md`](../../../03_services/voice-stack/wakeword/openwakeword-deployment.md);
-Wyoming integration added to HA.
+**D-1.4 / D-1.5 split (decided 2026-06-17).** G-D3 is
+exercised in two halves at different phase steps,
+because the container deployment (D-1.4) and the HA
+Wyoming integration wiring (D-1.5) are owned by
+different steps:
 
-**Procedure.**
+| G-D3 half | Owned by | Status |
+|---|---|---|
+| **Container/probe half** — `aurora-wakeword` deployed; Wyoming `Describe` advertises `okay_nabu`; synthetic-detection probe receives a `Detection` event; no errors in container logs | **D-1.4** | **CLOSED 2026-06-17** — see `09_logs/2026-06-17_phaseD_wakeword_installed.md` |
+| **HA-UI half** — HA Settings → Voice assistants lists openWakeWord; `okay_nabu` selectable in the HA Assist pipeline editor | **D-1.5** | **Open** — carried as **D-D4-G-D3-HA-UI** in the D-1.4 apply log §6 |
+
+**Pre-condition (container/probe half — D-1.4).**
+`aurora-wakeword` deployed per
+[`../../../03_services/voice-stack/wakeword/openwakeword-deployment.md`](../../../03_services/voice-stack/wakeword/openwakeword-deployment.md).
+
+**Pre-condition (HA-UI half — D-1.5).**
+Container/probe half closed; HA Wyoming integration
+added to HA.
+
+**Procedure (container/probe half — D-1.4).**
+
+1. Send a Wyoming `Describe` probe to
+   `tcp://aurora-wakeword:10400` from a transient
+   container on `ai-local_default`. Confirm
+   `okay_nabu` is in the advertised model list.
+2. Operator records a short WAV of "Okay Nabu"
+   (16 kHz mono 16-bit PCM, ~1.5–5 s, clear
+   enunciation with small silence head/tail) and
+   places it under `/srv/homelab/data/wakeword/gd3/`.
+3. Stream the WAV through Wyoming `Detect →
+   AudioStart → AudioChunk* → AudioStop` and read
+   server-emitted events.
+4. Scan container logs for errors.
+
+**Procedure (HA-UI half — D-1.5).**
 
 1. In HA Settings → Voice assistants, confirm
    `openWakeWord` appears as a wake-word provider.
-2. Confirm `ok_nabu` is selectable.
-3. Send a synthetic wake-word probe via `wyoming-cli`
-   (a known clip of "ok nabu") to `aurora-wakeword`.
-4. Inspect container logs for the detection event.
+2. Confirm `okay_nabu` is selectable in the HA Assist
+   pipeline editor (`AURORA v1`).
 
-**Acceptance.**
+**Acceptance (container/probe half — D-1.4).**
+
+- Wyoming `Info` payload includes `okay_nabu` as an
+  advertised model with phrase "Okay Nabu".
+- Server publishes a `Detection(name="okay_nabu", …)`
+  event for the canary clip. **This Wyoming event is
+  the authoritative server-side signal** — the
+  rhasspy/wyoming-openwakeword image emits
+  detection-side log lines only with `--debug`, which
+  the running container does not carry; INFO-level
+  container logs are therefore expected to remain
+  quiet during a successful detection. (Decided
+  2026-06-17 at D-1.4; alternative would have been
+  to recreate the container with `--debug` purely to
+  satisfy a literal log-line reading of the
+  acceptance criterion. The Wyoming wire event is
+  what HA Assist and any future client consume in
+  production, so the wire event is the production
+  signal.)
+- No errors in `aurora-wakeword` logs during the
+  probe window (verified by `grep -iE
+  "ERROR|Traceback|CRITICAL|Exception"` returning
+  empty).
+
+**Acceptance (HA-UI half — D-1.5).**
 
 - HA UI lists openWakeWord as available.
-- `ok_nabu` is selectable in the pipeline editor.
-- `aurora-wakeword` logs a detection for the probe clip.
+- `okay_nabu` is selectable in the pipeline editor.
 
-**Evidence.** `09_logs/2026-MM-DD_phaseD_gate_gd3_applied.md`
+**Evidence (container/probe half).**
+[`../../../09_logs/2026-06-17_phaseD_wakeword_installed.md`](../../../09_logs/2026-06-17_phaseD_wakeword_installed.md).
+
+**Evidence (HA-UI half).**
+`09_logs/2026-MM-DD_phaseD_ha_assist_pipeline_applied.md`
+(to be created at D-1.5).
 
 ---
 

@@ -91,18 +91,23 @@ Apply log:
 | Field | Value |
 |---|---|
 | Container | `aurora-wakeword` |
-| Image | `rhasspy/wyoming-openwakeword:<TBD pinned tag>` |
-| Wyoming port | `10400/tcp` (internal) |
-| Wake word (D-1) | `ok_nabu` (built-in; effectively unused in D-1 push-to-talk validation, deployed for plug-and-play with D-2 hardware satellites) |
+| Image | `rhasspy/wyoming-openwakeword:2.1.0` *(C-D-03 closed at D-1.4, local manifest digest `sha256:52cb1168…`, Docker Hub `last_updated 2025-10-28`, same SHA as `:latest`)* |
+| Wyoming port | `10400/tcp` (internal, not host-published). Matches the image `EXPOSE` directive — verified at D-1.4 (unlike `rhasspy/wyoming-piper:2.2.2`, this image's `EXPOSE` is accurate). |
+| Wake word (D-1) | **`okay_nabu`** *(reality wins — D-1.1 sketch said `ok_nabu`; the image bundles `okay_nabu.tflite` and the Wyoming `Info` payload advertises `okay_nabu` with phrase "Okay Nabu". Corrected at D-1.4 alongside the apply log.)* Built-in; effectively unused in D-1 push-to-talk validation, deployed so D-2 hardware satellites plug in unchanged. |
 | Wake word (D-2 candidate) | `hey_aurora` (custom — out of scope for D-1) |
 | CPU cap | `--cpus 1` |
 | Memory cap | `--memory 512m` |
 | Restart policy | `--restart unless-stopped` |
-| Env (decided) | `WAKEWORD_MODELS=ok_nabu`, `WAKEWORD_THRESHOLD=0.5` |
-| Healthcheck | TCP probe on `10400` |
+| CLI args (Wyoming, decided) | `--custom-model-dir /custom_models --threshold 0.5 --trigger-level 1`. Image entrypoint prepends `--uri tcp://0.0.0.0:10400` via `/usr/src/docker_run.sh`. Configuration is by **CLI flag**, not env var — the rhasspy image does not consume `WAKEWORD_*` env vars. Same Lesson-003 finding as D-1.3 made for `rhasspy/wyoming-piper`'s `PIPER_*` env vars. |
+| Bind mount | `/srv/homelab/data/wakeword` → `/custom_models` (rw). Mounted at `/custom_models` (not `/data`) because the image has **no `--data-dir` flag** — built-in models ship inside the image read-only. The mount's role is to expose custom-trained `.tflite` files (D-2 plug-in point for `hey_aurora.tflite`); empty in D-1, which is harmless. |
+| Healthcheck | Validation-time TCP probe on `10400` (mirrors D-1.2 / D-1.3 — no custom Docker `HEALTHCHECK` directive added). |
+| Ready signal | `INFO:root:Ready` (logger name is `root`, not `__main__` as in D-1.2 / D-1.3 — recorded so future operators don't grep for the wrong string) |
 
 Full deployment doc:
 [`../../../03_services/voice-stack/wakeword/openwakeword-deployment.md`](../../../03_services/voice-stack/wakeword/openwakeword-deployment.md).
+
+Apply log:
+[`../../../09_logs/2026-06-17_phaseD_wakeword_installed.md`](../../../09_logs/2026-06-17_phaseD_wakeword_installed.md).
 
 ---
 
@@ -112,7 +117,7 @@ Full deployment doc:
 |---|---|
 | Pipeline name | `AURORA v1` |
 | Default language | `es-ES` (revisit during G-D5 prep) |
-| Wake word | `ok_nabu` via Wyoming openWakeWord (push-to-talk in D-1; always-on in D-2 with hardware satellite) |
+| Wake word | `okay_nabu` via Wyoming openWakeWord (push-to-talk in D-1; always-on in D-2 with hardware satellite). *Name corrected at D-1.4 (image reality: `okay_nabu`, not `ok_nabu`).* |
 | STT | Wyoming `aurora-whisper:10300` |
 | Conversation agent | **HA Ollama integration** → `ollama:11434` → `qwen2.5:7b-instruct` |
 | TTS | Wyoming `aurora-piper:10200`, voice `es_ES-sharvard-medium` speaker `F` *(AURORA voice identity — C-D-08 closed 2026-06-17)* |
@@ -173,7 +178,7 @@ Future hardware options enumerated in
 |---|---|---|---|
 | C-D-01 | Whisper image pinned tag | D-1.2 prep | **CLOSED 2026-06-17** — `rhasspy/wyoming-whisper:3.2.0` |
 | C-D-02 | Piper image pinned tag | D-1.3 prep | **CLOSED 2026-06-17** — `rhasspy/wyoming-piper:2.2.2` (digest `sha256:c874e4…`, same SHA as `:latest`) |
-| C-D-03 | openWakeWord image pinned tag | D-1.4 prep | open |
+| C-D-03 | openWakeWord image pinned tag | D-1.4 prep | **CLOSED 2026-06-17** — `rhasspy/wyoming-openwakeword:2.1.0` (local manifest digest `sha256:52cb1168…`, Docker Hub `last_updated 2025-10-28`, same SHA as `:latest`). See `09_logs/2026-06-17_phaseD_wakeword_installed.md`. |
 | C-D-04 | Whisper model size after G-D1 latency | G-D1 | **CLOSED 2026-06-17** — `base-int8` (RTF 0.055) |
 | C-D-05 | Pipeline timeout value | G-D5 prep | open |
 | C-D-06 | Piper HTTP shim — built-in mode or separate container | D-1.3 | **CLOSED 2026-06-17** — **separate OpenAI-compatible TTS container**. The original D-1.1 "built-in HTTP mode" hypothesis was evaluated against the running `rhasspy/wyoming-piper:2.2.2` image at D-1.3 verification (`python -m wyoming_piper --help`) and **does not exist** — the image is a pure Wyoming server. Image candidate selection for the separate shim is **C-D-09**. |
