@@ -149,15 +149,18 @@ Completed:
 
 * R-04 Mosquitto crash-loop (resolved 2026-06-13)
 * R-12 Backups
+* Mosquitto authentication hardening (2026-06-17) —
+  moved off `allow_anonymous true` to authenticated
+  `homeassistant` + `zigbee2mqtt` users with per-user
+  ACLs; Gate G-5 re-executed end-to-end through the
+  hardened broker. See
+  `03_services/zigbee-stack/mosquitto/auth-hardening.md`
+  and
+  `09_logs/2026-06-17_mosquitto_auth_hardening_applied.md`
 
 Pending:
 
 * R-01 Cloudflare Tunnel Token Rotation
-* Mosquitto authentication hardening — currently
-  `allow_anonymous true` as a temporary validation posture
-  for the Zigbee2MQTT bring-up; authenticated users + ACLs
-  to be added before broader device onboarding and before
-  Phase D voice work
 
 ---
 
@@ -213,9 +216,8 @@ Start Phase D — Voice. Scoping work:
    audio).
 3. Choose initial wake word + Piper voice.
 
-Pre-Phase-D blocker still open:
-
-* Mosquitto authentication hardening — move off
-  `allow_anonymous true`, add authenticated users + ACLs.
-  This is a precondition before voice work touches MQTT
-  in any new way.
+Pre-Phase-D blockers: **none open.** Mosquitto auth
+hardening landed 2026-06-17 (`allow_anonymous false`,
+`homeassistant` + `zigbee2mqtt` users + ACLs) and Gate
+G-5 was re-executed end-to-end through the hardened
+broker.

@@ -108,7 +108,10 @@ Phase C closeout:
 
 ## Phase D
 
-Next active phase (not yet started)
+Next active phase (not yet started). Pre-Phase-D
+blockers: **none open** — Mosquitto auth hardening
+landed 2026-06-17 and Gate G-5 was re-executed
+end-to-end through the hardened broker.
 
 ### Goal
 
@@ -119,11 +122,6 @@ Tasks:
 * Whisper
 * Piper
 * Home Assistant Assist
-
-Pre-Phase-D blocker:
-
-* Mosquitto authentication hardening (`allow_anonymous
-  true` → authenticated users + ACLs).
 
 Success criteria:
 

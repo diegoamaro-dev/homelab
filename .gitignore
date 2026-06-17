@@ -58,3 +58,7 @@ ai-stack/ingest/.env
 .env
 .env.*
 __pycache__/
+
+passwords
+
+secret.yaml
