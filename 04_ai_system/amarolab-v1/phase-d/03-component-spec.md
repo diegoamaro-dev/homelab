@@ -62,21 +62,25 @@ Apply log:
 | Field | Value |
 |---|---|
 | Container | `aurora-piper` |
-| Image (Wyoming) | `rhasspy/wyoming-piper:<TBD pinned tag>` |
-| HTTP shim | Built-in OpenAI-compatible mode on Wyoming image, or separate `:8001` shim (TBD at deploy time) |
-| Wyoming port | `10200/tcp` (internal) |
-| HTTP shim port | `8001/tcp` (internal) |
-| Voice (primary) | `es_ES-davefx-medium` |
-| Voice (secondary) | `en_US-libritts_r-medium` |
+| Image (Wyoming) | `rhasspy/wyoming-piper:2.2.2` *(C-D-02 closed at D-1.3, digest `sha256:c874e4…`)* |
+| Image `EXPOSE` (stale) | `10400/tcp` shown by `docker ps` is an upstream artifact; the actual listener is `10200/tcp` per the entrypoint script. Verified inside the container at D-1.3. |
+| HTTP shim | **Built-in OpenAI-compatible HTTP mode on the Wyoming image** (`--http-port 8001`) when D-1.7 lands. *(C-D-06 closed at D-1.3 — no separate shim container.)* Not enabled in D-1.3; no consumer until D-1.7. |
+| Wyoming port | `10200/tcp` (internal, not host-published) |
+| HTTP shim port | `8001/tcp` (internal) — enabled in D-1.7 |
+| Voice (primary, decided) | `es_ES-davefx-medium` *(deployed at D-1.3 — 60.3 MB ONNX + 5 KB JSON in `/srv/homelab/data/piper/`)* |
+| Voice (secondary) | `en_US-libritts_r-medium` *(not pre-loaded in D-1.3; evaluation deferred to post-Phase-D)* |
 | CPU cap | `--cpus 1` |
 | Memory cap | `--memory 1g` |
-| Bind mount | `/srv/homelab/data/piper/` → voice files |
+| Bind mount | `/srv/homelab/data/piper` → `/data` (voice cache) |
 | Restart policy | `--restart unless-stopped` |
-| Env (decided) | `PIPER_VOICE=es_ES-davefx-medium`, `PIPER_LENGTH_SCALE=1.0` |
-| Healthcheck | TCP probe on `10200` |
+| CLI args (Wyoming, decided) | `--voice es_ES-davefx-medium --length-scale 1.0`. Image entrypoint prepends `--uri tcp://0.0.0.0:10200 --data-dir /data`. Configuration is by CLI flag, not env var — the rhasspy image does not consume `PIPER_*` env vars. |
+| Healthcheck | Validation-time TCP probe on `10200` (mirrors D-1.2 — no custom Docker `HEALTHCHECK` directive added). |
 
 Full deployment doc:
 [`../../../03_services/voice-stack/piper/piper-deployment.md`](../../../03_services/voice-stack/piper/piper-deployment.md).
+
+Apply log:
+[`../../../09_logs/2026-06-17_phaseD_piper_installed.md`](../../../09_logs/2026-06-17_phaseD_piper_installed.md).
 
 ---
 
@@ -166,10 +170,10 @@ Future hardware options enumerated in
 | ID | Decision | Closes at | Status |
 |---|---|---|---|
 | C-D-01 | Whisper image pinned tag | D-1.2 prep | **CLOSED 2026-06-17** — `rhasspy/wyoming-whisper:3.2.0` |
-| C-D-02 | Piper image pinned tag | D-1.3 prep | open |
+| C-D-02 | Piper image pinned tag | D-1.3 prep | **CLOSED 2026-06-17** — `rhasspy/wyoming-piper:2.2.2` (digest `sha256:c874e4…`, same SHA as `:latest`) |
 | C-D-03 | openWakeWord image pinned tag | D-1.4 prep | open |
 | C-D-04 | Whisper model size after G-D1 latency | G-D1 | **CLOSED 2026-06-17** — `base-int8` (RTF 0.055) |
 | C-D-05 | Pipeline timeout value | G-D5 prep | open |
-| C-D-06 | Piper HTTP shim — built-in mode or separate container | D-1.3 | open |
+| C-D-06 | Piper HTTP shim — built-in mode or separate container | D-1.3 | **CLOSED 2026-06-17** — built-in OpenAI-compatible HTTP mode on the Wyoming image (`--http-port 8001`); no separate shim container. **Not enabled in D-1.3** — deferred to D-1.7 (Open WebUI Audio integration) since no HTTP consumer exists until then. |
 | C-D-07 | Open WebUI audio surface enabled by default for `qwen2.5`? | D-1.7 | open |
 | R-D-13 | Migrate HTTP shim off `fedirz/faster-whisper-server` (last build 2025-01-07) to a maintained successor | post-Phase-D maintenance | open |
