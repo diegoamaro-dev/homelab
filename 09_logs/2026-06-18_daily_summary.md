@@ -37,6 +37,13 @@ Date: 2026-06-18
   with validated state
 - Phase D-1 closeout document landed at
   `09_logs/2026-06-18_phaseD1_closeout.md`
+- Phase RTX-1 (Torre GPU node) local validation
+  recorded; overview triad + `lessons_learned.md`
+  synchronized after review and committed
+  (`d50aa207`, pushed to `origin/main`). Secrets
+  review passed; private node IPs retained by
+  decision — repo-wide IP-hygiene pass deferred to
+  ROADMAP.
 
 ## Result
 
@@ -59,10 +66,13 @@ Phase D-1 — Voice: **CLOSED.**
 
 ## Next
 
-No new phase started. Pending post-D-1 follow-ups
-(documented in the closeout):
+Phase RTX-1 (Torre GPU node) — local validation
+complete; remote exposure (RTX-1.4) pending; node not
+yet consumed by the UM790. Other pending post-D-1
+follow-ups (documented in the closeout):
 
-- RTX 5070 AI-node bridge (LLM acceleration)
+- RTX-1.4 — secure remote exposure (Tailscale-only)
+  + UM790 endpoint swap (security delta doc required)
 - STT model-size bump candidate
 - Streaming TTS in Open WebUI
 - System-prompt trim
