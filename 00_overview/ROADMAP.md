@@ -14,7 +14,9 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-06-18 (Phase D-1 closed).
+Last updated: 2026-06-18 (Phase D-1 closed; Phase RTX-1
+local validation complete — RTX node provisioned, not
+yet consumed by the UM790).
 
 ---
 
@@ -198,6 +200,8 @@ Tracked in the closeout document and in
 * LLM 6 tok/s ceiling on UM790 CPU — deferred to
   RTX 5070 AI-node work (see
   [`04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md`](../04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md)).
+  RTX-1 local validation done 2026-06-18; see
+  **Phase RTX-1** below.
 * STT fidelity — `base-int8` produces sub-canonical
   Spanish on short utterances; model-size bump
   candidate.
@@ -218,6 +222,31 @@ Tracked in the closeout document and in
 
 ---
 
+## Phase RTX-1
+
+**Status:** Local validation complete (2026-06-18).
+Remote exposure (RTX-1.4) pending. RTX node provisioned
+but **not yet consumed by the UM790**.
+
+**Outcome:** Torre (Windows + RTX 5070, 12 GB VRAM) runs
+`qwen2.5:7b-instruct` GPU-accelerated — ≈17.6× the UM790
+CPU baseline. No production service moved; the UM790
+stays the 24/7 node.
+
+**Next steps:** RTX-1.4 (secure remote exposure,
+Tailscale-only) → security delta doc
+`06_security/rtx_node_security.md` → UM790 `ollama`
+endpoint swap; then merge the architecture amendment
+([DRAFT](../01_architecture/amarolab_architecture_rtx_amendment_DRAFT.md))
+at RTX-1 closeout.
+
+Full status, benchmark and sub-steps:
+[`04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md`](../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md)
+·
+[`09_logs/2026-06-18_phaseRTX1_local_validation.md`](../09_logs/2026-06-18_phaseRTX1_local_validation.md).
+
+---
+
 ## Phase E
 
 Unified Knowledge — **NOT STARTED**.
@@ -231,6 +260,25 @@ Tasks:
 Success criteria:
 
 Single assistant with access to all project knowledge.
+
+---
+
+## Documentation Hygiene — Follow-up
+
+Not a phase. Future repo-wide maintenance pass.
+
+* **Review and optionally sanitize private LAN / Tailscale node IPs across AMAROLAB documentation.**
+  Private (RFC 1918) and Tailscale (CGNAT) addresses are
+  not credentials, but they are operational network
+  detail already committed in several docs — e.g.
+  [`CURRENT_STATE.md`](CURRENT_STATE.md),
+  [`../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md`](../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md),
+  [`../01_architecture/amarolab_architecture_rtx_amendment_DRAFT.md`](../01_architecture/amarolab_architecture_rtx_amendment_DRAFT.md).
+  Decide repo-wide: accept as non-secret, or sanitize
+  consistently (note: values already exist in git
+  history). Deferred from the RTX-1 triad update
+  (2026-06-18) by explicit decision — secrets review
+  passed; sanitizing one file only would be inconsistent.
 
 ---
 

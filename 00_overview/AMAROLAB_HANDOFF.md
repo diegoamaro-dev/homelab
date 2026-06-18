@@ -65,6 +65,13 @@ infrastructure.
 * 512 GB SSD
 * Linux
 
+### AI Compute Node (Torre) — provisioned 2026-06-18, local-only
+
+* Windows tower + NVIDIA RTX 5070 (12 GB VRAM)
+* On-demand GPU compute (not 24/7)
+* Runs Ollama on GPU; **not yet consumed by the UM790**
+  (loopback-only — RTX-1.4 pending)
+
 ### Network
 
 * FRITZ!Box 5690 Pro
@@ -289,6 +296,11 @@ Current phase:
 
 **Phase D-1 — Voice — CLOSED 2026-06-18.**
 
+Active follow-on: **Phase RTX-1 — Torre GPU node —
+local validation complete 2026-06-18 (≈17.6× the UM790
+CPU); remote exposure (RTX-1.4) pending; node not yet
+consumed by the UM790.**
+
 Phase status:
 
 * Phase A — Completed. `qwen2.5:7b-instruct` selected as the
@@ -326,8 +338,16 @@ Closeout document:
 
 ## Next Immediate Task
 
-**No new phase started.** Phase D-1 is closed; the
-documentation triad is up to date as of 2026-06-18.
+Phase D-1 is closed; **Phase RTX-1 local validation is
+complete (2026-06-18).** Next concrete step toward
+consuming the RTX node: **RTX-1.4 — secure remote
+exposure (Tailscale-only) — planned, not yet executed.**
+
+This triad and `07_operations/lessons_learned.md`
+reflect RTX-1 local validation; the live architecture
+doc and security posture are **intentionally not yet
+amended** (RTX architecture amendment stays a DRAFT
+until RTX-1 closeout).
 
 Pending post-D-1 follow-ups (tracked in
 [`CURRENT_STATE.md`](CURRENT_STATE.md) and the closeout
@@ -337,9 +357,11 @@ document — none of these are mandatory next steps):
 * DNS / Cloudflare architecture doc amendments to
   record the separate-tunnel decision and the
   `ai.amarolab.es` binding.
-* RTX 5070 AI-node bridge — LLM acceleration for the
-  voice pipeline. Defined in
-  [`../04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md`](../04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md).
+* **RTX-1.4** — secure remote exposure of Torre's
+  Ollama (Tailscale-only), then the UM790 endpoint
+  swap. Gated on the security delta doc
+  `06_security/rtx_node_security.md`. Details:
+  [`../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md`](../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md).
 * STT model-size bump candidate (`small` or
   `medium-int8`).
 * Streaming TTS in Open WebUI.

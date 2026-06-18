@@ -1,6 +1,6 @@
 # Lessons Learned
 
-Last updated: 2026-06-17
+Last updated: 2026-06-18
 
 ---
 
@@ -397,6 +397,90 @@ Critical infrastructure
 ```
 
 without explicit approval.
+
+---
+
+# RTX Node (Torre)
+
+## Lesson L-RTX-1
+
+### A GUI-launched Ollama server does not inherit a later-set OLLAMA_MODELS
+
+Date:
+
+```text
+2026-06-18
+```
+
+Problem:
+
+The first `qwen2.5:7b-instruct` pull on Torre landed on
+the `C:` system drive instead of the intended
+`D:\ai\ollama\models`.
+
+Assumption:
+
+```text
+Setting OLLAMA_MODELS makes the running server use D:.
+```
+
+Reality:
+
+```text
+The installer-launched Ollama server had already started
+without OLLAMA_MODELS in its environment, so it kept
+writing to the default C: location.
+```
+
+Solution:
+
+```text
+Move the store to D: and restart the server with
+OLLAMA_MODELS set in the server's own environment;
+confirm the startup log shows OLLAMA_MODELS:D:\ai\ollama\models.
+```
+
+Echoes Lesson 001: a process keeps the environment it
+was started with. Verify env on the running process,
+not just in the shell.
+
+---
+
+## Lesson L-RTX-2
+
+### A 12 GB GPU needs VRAM headroom; GUI apps can starve the model
+
+Date:
+
+```text
+2026-06-18
+```
+
+Problem:
+
+With desktop / browser GUI apps consuming ~10.7 GB of
+the RTX 5070's 12 GB VRAM (~1.2 GB free), the 7B model
+offloaded only 2/29 layers and `llama-server` crashed
+in a CUDA flash-attention kernel (`0xc0000409`).
+
+Reality:
+
+```text
+With VRAM free (~11 GB) the same model loads 29/29
+layers and runs at ~105 tok/s.
+```
+
+Rule:
+
+```text
+A dedicated GPU compute node must run lean / headless.
+Do not run VRAM-heavy GUI apps while serving.
+```
+
+Implication:
+
+Reinforces headless persistence (RTX-1.5) and a
+"run lean while serving" operational discipline.
 
 ---
 
