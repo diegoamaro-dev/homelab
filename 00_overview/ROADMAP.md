@@ -14,6 +14,8 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
+Last updated: 2026-06-18 (Phase D-1 closed).
+
 ---
 
 ## Phase 0
@@ -124,47 +126,101 @@ Phase C closeout:
 
 ## Phase D
 
-**In progress** (started 2026-06-17). Pre-Phase-D
-blockers: **none open** — Mosquitto auth hardening
-landed 2026-06-17 and Gate G-5 was re-executed
-end-to-end through the hardened broker.
+**Phase D-1 — Voice — CLOSED 2026-06-18** (D-1.9
+closeout). Pre-Phase-D blockers cleared 2026-06-17
+(Mosquitto auth hardening + Gate G-5 re-execution).
 
 ### Goal
 
-Voice
-
-Tasks and status:
-
-* **Whisper** — **DONE** (D-1.2, 2026-06-17).
-  `aurora-whisper` operational
-  (`rhasspy/wyoming-whisper:3.2.0`, `base-int8`).
-  Gate G-D1 Wyoming path passed (WER 0.000, RTF
-  0.055 on UM790 CPU). HTTP-shim path of G-D1
-  deferred to D-1.7. Apply log:
-  `09_logs/2026-06-17_phaseD_whisper_installed.md`.
-* **Piper** — open. D-1.3 is the next step.
-* **openWakeWord** — open. D-1.4.
-* **Home Assistant Assist pipeline (`AURORA v1`)**
-  — open. D-1.5 (configuration) through D-1.8
-  (failure-mode rehearsal).
-* **Open WebUI Audio integration** — open. D-1.7
-  (also closes the G-D1 HTTP-shim path deferred
-  from D-1.2).
-
-Success criteria:
-
 Voice interaction through the house.
 
-Phase D-1 closeout will land at **D-1.9** once
-Gates G-D1 through G-D6 are all documented and
-`switch.impresora_3d` is restored to its baseline
-after G-D5.
+### Phase D-1 outcome
+
+Aurora v1 voice pipeline operational on both front
+doors:
+
+* **Home Assistant voice** — `https://ha.amarolab.es`
+  → Assist pipeline `AURORA v1` (Wyoming chain
+  Whisper / Piper / openWakeWord + HA Ollama
+  integration on `qwen2.5:7b-instruct`).
+* **Open WebUI voice** — `https://ai.amarolab.es`
+  → browser mic into OpenAI-API-compatible STT/TTS
+  HTTP shims (`aurora-whisper-http`,
+  `aurora-piper-http`).
+
+All six Phase D-1 gates landed with dated apply logs:
+
+| Gate | Half | Apply log | Status |
+|---|---|---|---|
+| G-D1 | Wyoming | [`09_logs/2026-06-17_phaseD_whisper_installed.md`](../09_logs/2026-06-17_phaseD_whisper_installed.md) | Closed (D-1.2) |
+| G-D1 | HTTP shim | [`09_logs/2026-06-18_phaseD_openwebui_audio_applied.md`](../09_logs/2026-06-18_phaseD_openwebui_audio_applied.md) | Closed (D-1.7) |
+| G-D2 | Wyoming | [`09_logs/2026-06-17_phaseD_piper_installed.md`](../09_logs/2026-06-17_phaseD_piper_installed.md) | Closed (D-1.3) |
+| G-D2 | HTTP shim | [`09_logs/2026-06-18_phaseD_openwebui_audio_applied.md`](../09_logs/2026-06-18_phaseD_openwebui_audio_applied.md) | Closed (D-1.7) |
+| G-D3 | Container / probe | [`09_logs/2026-06-17_phaseD_wakeword_installed.md`](../09_logs/2026-06-17_phaseD_wakeword_installed.md) | Closed (D-1.4) |
+| G-D3 | HA UI | [`09_logs/2026-06-17_phaseD_voice_pipeline.md`](../09_logs/2026-06-17_phaseD_voice_pipeline.md) | Closed (D-1.5) |
+| G-D4 | Canary end-to-end | [`09_logs/2026-06-17_phaseD_gate_gd4_applied.md`](../09_logs/2026-06-17_phaseD_gate_gd4_applied.md) | **PASSED 2026-06-17** |
+| G-D5 | Real-device voice (printer) | [`09_logs/2026-06-18_phaseD_gate_gd5_applied.md`](../09_logs/2026-06-18_phaseD_gate_gd5_applied.md) | **PASSED 2026-06-18** (Write→Restore scope; baseline restored) |
+| G-D6 | Failure-mode rehearsal | [`09_logs/2026-06-18_phaseD_gate_gd6_applied.md`](../09_logs/2026-06-18_phaseD_gate_gd6_applied.md) | **PASSED 2026-06-18** (one acceptance partial on HA TTS-failure log granularity, functional behaviour PASS) |
+
+### Phase D-1 sub-step ledger
+
+| Step | Status |
+|---|---|
+| D-1.1 documentation skeleton | Closed |
+| D-1.2 Whisper standup | **Closed 2026-06-17** |
+| D-1.3 Piper standup | **Closed 2026-06-17** |
+| D-1.4 openWakeWord standup | **Closed 2026-06-17** |
+| D-1.5 AURORA v1 Assist pipeline + voice canary + voice-exposure lockdown | **Closed 2026-06-17** |
+| HA reverse-proxy trust patch | Closed 2026-06-17 (supplement to D-1.5) |
+| D-1.6 Real-device voice end-to-end / G-D5 | **Closed 2026-06-18** |
+| D-1.7 Open WebUI Audio integration (+ closes G-D1 HTTP-shim half, G-D2 HTTP-shim half, C-D-07, C-D-09) | **Closed 2026-06-18** |
+| D-1.8 Failure-mode rehearsal / G-D6 | **Closed 2026-06-18** |
+| D-1.9 Phase D-1 closeout | **Closed 2026-06-18** |
+
+Closeout document:
+[`09_logs/2026-06-18_phaseD1_closeout.md`](../09_logs/2026-06-18_phaseD1_closeout.md).
+
+### Success criteria
+
+Voice interaction through the house — **met**.
+
+* Canary Read / Write / Verify / Restore — G-D4.
+* Real Zigbee plug Write / Restore (Sonoff S60ZBTPF)
+  via voice — G-D5; baseline `off` restored.
+* Failure-mode safety story (Whisper down /
+  Piper down / Ollama unreachable) — G-D6.
+
+### Post-D-1 follow-ups (NOT new phases)
+
+Tracked in the closeout document and in
+[`00_overview/CURRENT_STATE.md`](CURRENT_STATE.md):
+
+* LLM 6 tok/s ceiling on UM790 CPU — deferred to
+  RTX 5070 AI-node work (see
+  [`04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md`](../04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md)).
+* STT fidelity — `base-int8` produces sub-canonical
+  Spanish on short utterances; model-size bump
+  candidate.
+* HA voice-pipeline intent-matching variability
+  (`HA-VOICE-001`).
+* HA TTS-failure log granularity (G-D6 §7.2 partial).
+* Streaming TTS in Open WebUI.
+* System prompt size (3 342 chars / 822 tokens) →
+  cold-cache trim candidate.
+* `cloudflared-amarolab` standalone apply log.
+* DNS / Cloudflare architecture doc amendments
+  (separate-tunnel decision +
+  `ai.amarolab.es` binding).
+* R-D-13 — migrate Open WebUI STT HTTP shim away
+  from the unmaintained `fedirz/faster-whisper-server`.
+* R-01 — Cloudflare Tunnel token rotation (existing
+  Guardian-Cloud tunnel).
 
 ---
 
 ## Phase E
 
-Unified Knowledge
+Unified Knowledge — **NOT STARTED**.
 
 Tasks:
 
@@ -184,12 +240,12 @@ One assistant — **AURORA**.
 
 Two front doors:
 
-* Open WebUI (chat)
-* Home Assistant (voice)
+* Open WebUI (chat + voice) — `https://ai.amarolab.es`
+* Home Assistant (voice) — `https://ha.amarolab.es`
 
 Shared brain:
 
-* Ollama
+* Ollama (`qwen2.5:7b-instruct`)
 * Qdrant
 * AMAROLAB knowledge base
 

@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-06-17
+Last updated: 2026-06-18
 
 ## Purpose
 
@@ -77,26 +77,46 @@ infrastructure.
 
 ### AI
 
-* Open WebUI
-* Ollama
+* Open WebUI (chat + voice — `https://ai.amarolab.es`)
+* Ollama (`qwen2.5:7b-instruct` shared by both front doors)
 * Qdrant
 
-### Voice (Phase D — in progress)
+### Voice (Phase D-1 — closed 2026-06-18)
 
-* `aurora-whisper` (Wyoming STT, D-1.2 closed
-  2026-06-17)
+Wyoming chain (HA Assist):
+
+* `aurora-whisper` (STT, `base-int8`, D-1.2)
+* `aurora-piper` (TTS, `es_ES-davefx-medium`, D-1.3)
+* `aurora-wakeword` (`okay_nabu`, D-1.4)
+
+Open WebUI HTTP shims (D-1.7):
+
+* `aurora-whisper-http`
+  (`fedirz/faster-whisper-server:0.6.0-rc.3-cpu`)
+* `aurora-piper-http`
+  (`ghcr.io/matatonic/openedai-speech:0.18.2`,
+  voice mapped to `es_ES-sharvard-medium` speaker F)
+
+HA Assist pipeline `AURORA v1` is the default /
+preferred pipeline (language `es-ES`); voice surface
+is exposed via `https://ha.amarolab.es`.
 
 ### Home Automation
 
-* Home Assistant
-* Mosquitto
+* Home Assistant (HTTPS via `ha.amarolab.es`;
+  reverse-proxy trust patch applied 2026-06-17)
+* Mosquitto (authenticated + ACLs, hardened 2026-06-17)
 * Zigbee2MQTT
 
 ### Infrastructure
 
 * Docker
 * PM2
-* Cloudflared
+* Cloudflared (**two separate tunnels**: existing
+  `cloudflared` for Guardian Cloud; new
+  `cloudflared-amarolab` on `ai-local_default` for
+  AMAROLAB infrastructure surfaces — `ha.amarolab.es`,
+  `ai.amarolab.es`)
 * Restic Backups
 
 ### Hosted independent project
@@ -114,13 +134,19 @@ Do not modify Guardian Cloud without explicit approval.
 
 ## Current AI Architecture
 
-Open WebUI
+Open WebUI (chat + voice)
 ↓
-Ollama
+Ollama (`qwen2.5:7b-instruct`)
 ↓
 Qdrant
 ↓
 RAG Collections
+
+In parallel:
+
+Home Assistant Assist (`AURORA v1`)
+↓
+HA Ollama integration → same `qwen2.5:7b-instruct`
 
 Collections:
 
@@ -136,7 +162,7 @@ Future:
 ---
 ## Current Operational Status
 
-The Home Assistant integration is now operational.
+The Home Assistant integration is operational.
 
 Validated capabilities:
 
@@ -146,27 +172,47 @@ Validated capabilities:
 - allowlist enforcement
 - runtime secret loading
 - Zigbee device control
+- **voice control** through Aurora v1 Assist pipeline
 
 Verified device:
 
-switch.impresora_3d
+`switch.impresora_3d`
 
-The first real-world state change was executed successfully on 2026-06-17.
+Real-world state changes have been executed via:
 
-Future assistants should treat Home Assistant tool integration as PRODUCTION READY.
+* Open WebUI chat → `ha_call_service` (2026-06-17, Gate G-5)
+* Home Assistant voice → `AURORA v1` pipeline →
+  Mosquitto → Z2M → Sonoff S60ZBTPF (2026-06-18, Gate G-D5)
 
-The voice STT layer (`aurora-whisper`) is operational
-as of 2026-06-17 (D-1.2 closed). Gate G-D1 Wyoming
-path passed: WER 0.000 against the canonical
-openai/whisper smoke-test clip, real-time factor
-0.055 on UM790 CPU. End-to-end voice control is
-**not** yet operational — Piper, openWakeWord, the
-HA Assist pipeline, and the Open WebUI Audio
-integration are still to be installed in D-1.3
-through D-1.7.
+Both paths restore the printer to its `off` baseline
+after every gate.
 
-Apply log:
-`09_logs/2026-06-17_phaseD_whisper_installed.md`.
+Future assistants should treat Home Assistant tool
+integration and the Aurora v1 voice pipeline as
+**PRODUCTION READY**.
+
+### Phase D-1 closure (2026-06-18)
+
+Aurora v1 voice pipeline operational on both front
+doors:
+
+* `https://ha.amarolab.es` — Home Assistant Assist
+  push-to-talk over the Wyoming chain.
+* `https://ai.amarolab.es` — Open WebUI browser mic
+  over the OpenAI-API-compatible HTTP shims.
+
+All six Phase D-1 gates landed with dated apply logs
+(G-D1 through G-D6). Failure-mode rehearsal (G-D6)
+confirmed the voice surface fails predictably when
+each of its critical dependencies fails (STT, TTS,
+LLM). Closeout document:
+[`../09_logs/2026-06-18_phaseD1_closeout.md`](../09_logs/2026-06-18_phaseD1_closeout.md).
+
+Voice exposure ACL: exactly one entity exposed —
+`input_boolean.aurora_voice_canary`. The printer
+(`switch.impresora_3d`) is exposed only for the
+duration of a voice gate and reverted to
+`should_expose = false` immediately afterwards.
 
 ## Documentation Status
 
@@ -202,10 +248,25 @@ Completed:
   `03_services/zigbee-stack/mosquitto/auth-hardening.md`
   and
   `09_logs/2026-06-17_mosquitto_auth_hardening_applied.md`
+* HA reverse-proxy trust (2026-06-17) — `cloudflared-amarolab`
+  bridge subnet trusted; LAN intentionally not trusted
+  broadly. See
+  `09_logs/2026-06-17_phaseD_ha_trusted_proxies_applied.md`
+* Voice-exposure default-deny posture (2026-06-17)
+  — only `input_boolean.aurora_voice_canary` is
+  exposed to voice assistants; `homeassistant.*`,
+  `hassio.*`, `recorder.*`, and any Guardian Cloud
+  entity are permanent denies. Maintained through
+  G-D4 / G-D5 / G-D6.
+* Voice failure-mode safety story (2026-06-18, G-D6)
+  — Whisper down / Piper down / Ollama unreachable
+  scenarios validated; each fails predictably with no
+  partial action and baseline restored.
 
 Pending:
 
-* R-01 Cloudflare Tunnel Token Rotation
+* R-01 Cloudflare Tunnel Token Rotation (existing
+  Guardian-Cloud tunnel)
 
 ---
 
@@ -226,8 +287,7 @@ Assistant.
 
 Current phase:
 
-Phase D — Voice (**in progress**; D-1.2 closed
-2026-06-17).
+**Phase D-1 — Voice — CLOSED 2026-06-18.**
 
 Phase status:
 
@@ -242,44 +302,49 @@ Phase status:
   Gate G-5 happy-path write proven against
   `switch.impresora_3d` with full Z2M MQTT round-trip and
   baseline restore.
-* Phase D — **In progress.**
+* **Phase D-1 — Voice — Closed 2026-06-18.**
   * D-1.1 (documentation skeleton) — closed.
-  * D-1.2 (Whisper standup) — **closed 2026-06-17.**
-    `aurora-whisper` (`rhasspy/wyoming-whisper:3.2.0`,
-    `base-int8`) operational; Gate G-D1 Wyoming path
-    passed (WER 0.000, RTF 0.055). HTTP-shim path of
-    G-D1 deferred to D-1.7. Apply log:
-    `09_logs/2026-06-17_phaseD_whisper_installed.md`.
-  * D-1.3 through D-1.9 — open.
+  * **D-1.2 (Whisper) — closed 2026-06-17.**
+  * **D-1.3 (Piper) — closed 2026-06-17.**
+  * **D-1.4 (openWakeWord) — closed 2026-06-17.**
+  * **D-1.5 (AURORA v1 pipeline + voice canary +
+    exposure lockdown) — closed 2026-06-17.**
+  * HA reverse-proxy trust patch — closed 2026-06-17.
+  * **G-D4 (canary end-to-end) — PASSED 2026-06-17.**
+  * **D-1.6 / G-D5 (real-device voice round-trip on
+    `switch.impresora_3d`) — closed / PASSED 2026-06-18.**
+  * **D-1.7 (Open WebUI Audio shims + audio surface)
+    — closed 2026-06-18.**
+  * **D-1.8 / G-D6 (failure-mode rehearsal) —
+    closed / PASSED 2026-06-18.**
+  * **D-1.9 (Phase D-1 closeout) — closed 2026-06-18.**
 
-Not yet:
-
-* Piper (`aurora-piper`)
-* openWakeWord (`aurora-wakeword`)
-* Home Assistant Assist pipeline (`AURORA v1`)
-* Open WebUI Audio integration
+Closeout document:
+[`../09_logs/2026-06-18_phaseD1_closeout.md`](../09_logs/2026-06-18_phaseD1_closeout.md).
 
 ---
 
 ## Next Immediate Task
 
-Continue Phase D — Voice. D-1.2 (Whisper) is closed;
-the next step is **D-1.3 — Piper standup**.
+**No new phase started.** Phase D-1 is closed; the
+documentation triad is up to date as of 2026-06-18.
 
-Per the approved spec in
-`04_ai_system/amarolab-v1/phase-d/03-component-spec.md`
-and the deployment plan in
-`03_services/voice-stack/piper/piper-deployment.md`:
+Pending post-D-1 follow-ups (tracked in
+[`CURRENT_STATE.md`](CURRENT_STATE.md) and the closeout
+document — none of these are mandatory next steps):
 
-1. Pull `rhasspy/wyoming-piper:<pinned tag>` and
-   document the `docker run` recipe.
-2. Create `aurora-piper` on `ai-local_default` with
-   bind mount `/srv/homelab/data/piper/`, voice
-   `es_ES-davefx-medium`, Wyoming port `10200/tcp`
-   (internal-only).
-3. Run Gate G-D2 (Piper TTS canary).
-4. Write `09_logs/2026-MM-DD_phaseD_piper_installed.md`
-   and close decisions C-D-02 and C-D-06.
+* `cloudflared-amarolab` standalone apply log.
+* DNS / Cloudflare architecture doc amendments to
+  record the separate-tunnel decision and the
+  `ai.amarolab.es` binding.
+* RTX 5070 AI-node bridge — LLM acceleration for the
+  voice pipeline. Defined in
+  [`../04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md`](../04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md).
+* STT model-size bump candidate (`small` or
+  `medium-int8`).
+* Streaming TTS in Open WebUI.
+* System-prompt trim (3 342 chars → cold-cache cost).
+* R-01 Cloudflare Tunnel token rotation (Guardian
+  Cloud tunnel).
 
-Pre-Phase-D blockers: **none open.**
-Pre-D-1.3 blockers: **none open.**
+Pre-Phase-E blockers: **none open.**
