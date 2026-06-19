@@ -3,7 +3,9 @@
 - **Assistant:** **AURORA** — Personal AI Assistant for the AMAROLAB ecosystem.
 - **Node:** **Torre** — Windows + RTX workstation (AI compute node).
 - **Date:** 2026-06-18
-- **Status:** **Local validation complete. Remote exposure pending (RTX-1.4).**
+- **Status:** **RTX-1.4 complete (2026-06-19) — Ollama reachable from the UM790
+  over Tailscale only, LAN blocked. Headless persistence (RTX-1.5) and the UM790
+  endpoint swap (RTX-1.6) pending.**
 - **One-line:** `qwen2.5:7b-instruct` runs on Torre's RTX 5070 at
   **105.3 tok/s** from `D:\ai\ollama\models` — **17.6×** the UM790 CPU
   baseline — but is **not yet reachable by the UM790**.
@@ -36,7 +38,7 @@ Guardian Cloud, or infrastructure changes.
 | RTX-1.1 | Install Ollama; pre-stage `D:\ai\ollama\models` | **Done** |
 | RTX-1.2 | GPU validation (pull, placement, VRAM, benchmark) | **Done** |
 | RTX-1.3 | Storage remediation (model store C: → D:) | **Done** |
-| RTX-1.4 | Secure remote exposure (OLLAMA_HOST + firewall, Tailscale-only) | **Planned — not executed** |
+| RTX-1.4 | Secure remote exposure (OLLAMA_HOST + firewall, Tailscale-only) | **Completed (2026-06-19)** — [log](../../../09_logs/2026-06-19_phaseRTX1_4_remote_exposure.md) |
 | RTX-1.5 | Headless persistence (Windows service) | Not started |
 | RTX-1.6 | Security delta doc + UM790 endpoint swap | Not started |
 
@@ -103,24 +105,27 @@ to avoid running VRAM-heavy GUI apps while serving.
 | Aspect | State |
 |---|---|
 | Ollama runtime | RTX 5070, 105 tok/s, model on D: — **working locally** |
-| Bind address | `127.0.0.1:11434` — **loopback only** |
-| `OLLAMA_MODELS` | User scope = D:; **Machine scope unset** |
-| `OLLAMA_HOST` | unset (default loopback) |
-| Firewall | unchanged — no Ollama rule |
+| Bind address | `0.0.0.0:11434` — Tailscale-reachable; **LAN firewall-blocked** |
+| `OLLAMA_MODELS` | Machine + User scope = `D:\ai\ollama\models` |
+| `OLLAMA_HOST` | `0.0.0.0:11434` (Machine scope) |
+| Firewall | 2 scoped inbound rules — allow `100.68.180.69/32`; block `192.168.178.0/24` |
 | Persistence | none — manual start |
 
 Blockers before the UM790 can consume Torre (all addressed by RTX-1.4 /
 RTX-1.5):
 
-1. Loopback-only bind → bind Tailscale interface via `OLLAMA_HOST`. *(1.4)*
-2. No firewall rule scoping 11434 to `100.64.0.0/10`. *(1.4)*
-3. `OLLAMA_MODELS` User scope only → needs Machine scope for a service. *(1.4)*
+1. ~~Loopback-only bind~~ → **RESOLVED 2026-06-19** (`OLLAMA_HOST=0.0.0.0:11434`, Machine scope).
+2. ~~No firewall rule~~ → **RESOLVED 2026-06-19** (allow `100.68.180.69/32`; block LAN).
+3. ~~`OLLAMA_MODELS` User scope only~~ → **RESOLVED 2026-06-19** (Machine scope set).
 4. No headless service → won't survive logoff/reboot. *(1.5)*
 5. VRAM-headroom discipline → run lean/headless. *(operational)*
 
 ---
 
-## 6. Next step — RTX-1.4 (planned, not executed)
+## 6. RTX-1.4 — completed 2026-06-19 (next: RTX-1.5)
+
+RTX-1.4 is complete — see [the apply log](../../../09_logs/2026-06-19_phaseRTX1_4_remote_exposure.md).
+The steps below are retained as the record of what was executed.
 
 Secure remote exposure, Tailscale-only:
 
