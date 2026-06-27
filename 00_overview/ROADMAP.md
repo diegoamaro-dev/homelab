@@ -332,11 +332,13 @@ findings):
   + `check-audit-liveness` (03:30, E3-c). `overall_status=ok` (resolved
   2026-06-27 after E5-c closed F-10). Apply log:
   [`../09_logs/2026-06-27_phaseE_E3_observability_applied.md`](../09_logs/2026-06-27_phaseE_E3_observability_applied.md).
-* **E-4 — Maintenance — in progress.** E4-a (log rotation, F-04)
-  **done 2026-06-27** — `/etc/logrotate.d/homelab-ingest` (source:
-  `ai-stack/ingest/etc/logrotate.d/homelab-ingest`); E4-b (Qdrant
-  backup-consistency spike, F-05a — "no change" is the expected outcome)
-  pending.
+* **E-4 — Maintenance — done 2026-06-27.** E4-a (log rotation, F-04)
+  **done 2026-06-27** — `/etc/logrotate.d/homelab-ingest`; E4-b (Qdrant
+  backup-consistency spike, F-05a) **done 2026-06-27 — no change required**:
+  E5-b 16/16 PASS proves hot backup is recoverable; cron order (ingest
+  02:30, restic 03:00) provides quiescent window; residual risk documented
+  and accepted. Decision record:
+  [`../09_logs/2026-06-27_phaseE_E4b_backup_consistency_decision.md`](../09_logs/2026-06-27_phaseE_E4b_backup_consistency_decision.md).
 * **E-5 — Validation — in progress.** E5-a (version-skew drift
   measurement, F-02) **done 2026-06-27** — no measurable drift,
   via the permanent

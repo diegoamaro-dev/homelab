@@ -142,7 +142,12 @@ title          # derived document title
 - **Backup:** the Qdrant data dir is included in the nightly restic backup
   (`/etc/cron.d/homelab-backup`, 03:00). Hot-backup restore-consistency
   proven by E5-b restore drill (2026-06-27, PASS — 16/16 fixture parity).
-  Quiesce-before-backup remains an open spike (F-05a / E4-b).
+  Cron order (ingest 02:30, restic 03:00) provides a 29-minute quiescent
+  window. E4-b decision (2026-06-27): **no change required** — quiesce or
+  snapshot-API not justified at current scale; residual write-overlap risk
+  is accepted (documented in
+  [`../09_logs/2026-06-27_phaseE_E4b_backup_consistency_decision.md`](../09_logs/2026-06-27_phaseE_E4b_backup_consistency_decision.md)).
+  Re-evaluate if ingest moves to real-time writes.
 - **L-RTX-5 (bind-mount recreate):** `rag_search` and the ingest package
   are bind-mounted read-only into `openwebui` at `/opt/ingest`. Editing
   that code on the host and reloading serves the **old** code — a change

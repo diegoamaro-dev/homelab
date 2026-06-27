@@ -614,6 +614,12 @@ green (4049/872/419/280/0), fixture parity 16/16 (top-30 set + top-6 order).
 Production untouched (uptime unbroken, counts unchanged). Apply log:
 [`../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md`](../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md).
 
+**E4-b done (2026-06-27)** — backup-consistency spike (F-05a): no change required.
+Hot backup (E5-b 16/16 PASS) + cron order (ingest 02:30, restic 03:00 — 29-minute
+quiescent window) are sufficient. Quiesce/snapshot-API rejected for current scale.
+Residual risk documented and accepted. Decision record:
+[`../09_logs/2026-06-27_phaseE_E4b_backup_consistency_decision.md`](../09_logs/2026-06-27_phaseE_E4b_backup_consistency_decision.md).
+
 **E-3 observability bundle done (2026-06-27)** — unified platform health
 file `ai-stack/ingest/logs/health.json` live (gitignored; runtime state).
 Two new scripts: `bin/ingest-nightly` (02:30 cron, wraps ingest sync, writes
