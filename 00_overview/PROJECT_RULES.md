@@ -208,7 +208,19 @@ A phase is only considered complete when all of the following are true:
 - Tag created (when appropriate)
 
 ---
+## AI Assistant Session Preservation
 
+Before any operation that may interrupt an AI assistant session
+(reboot, logout, shutdown, terminal closure, context switch,
+machine change or update), the assistant must:
+
+- Stop the workflow.
+- Ask whether the session handoff has been prepared.
+- Ensure any required continuation document has been saved.
+- Ensure the AI assistant is running inside tmux.
+- Confirm the session can be resumed without losing context.
+
+Session preservation is a mandatory checkpoint.
 # Project Philosophy
 
 AMAROLAB is built according to these principles:
