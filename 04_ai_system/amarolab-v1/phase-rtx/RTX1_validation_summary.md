@@ -3,10 +3,11 @@
 - **Assistant:** **AURORA** — Personal AI Assistant for the AMAROLAB ecosystem.
 - **Node:** **Torre** — Windows + RTX workstation (AI compute node).
 - **Date:** 2026-06-18
-- **Status:** **RTX-1.5 complete (2026-06-27) — headless NSSM service; persistence across logoff + reboot-without-login proven, GPU offload restored at cold boot, network posture preserved (host-scoped /32 allowlist). RTX-1.4 complete (2026-06-19). UM790 endpoint swap (RTX-1.6) pending.**
+- **Status:** **PHASE RTX-1 CLOSED (2026-06-27).** RTX-1.6 complete — the UM790 front doors consume Torre's GPU Ollama via the `ollama-proxy` (Torre primary + UM790 fallback). RTX-1.4 (Tailscale-only, host-scoped /32) + RTX-1.5 (headless NSSM service; survives logoff + reboot-without-login, GPU offload restored at cold boot) remain in force. Retrospective: [`../../../09_logs/2026-06-27_phaseRTX1_retrospective.md`](../../../09_logs/2026-06-27_phaseRTX1_retrospective.md).
 - **One-line:** `qwen2.5:7b-instruct` runs on Torre's RTX 5070 at
   **105.3 tok/s** from `D:\ai\ollama\models` — **17.6×** the UM790 CPU
-  baseline — but is **not yet reachable by the UM790**.
+  baseline — and is **consumed by the UM790 front doors via the
+  `ollama-proxy`** (≈101 tok/s end-to-end), with UM790 CPU fallback.
 
 This is the phase-level rollup. Full evidence and reproducibility live in the
 apply log:
@@ -38,7 +39,7 @@ Guardian Cloud, or infrastructure changes.
 | RTX-1.3 | Storage remediation (model store C: → D:) | **Done** |
 | RTX-1.4 | Secure remote exposure (OLLAMA_HOST + firewall, Tailscale-only) | **Completed (2026-06-19)** — [log](../../../09_logs/2026-06-19_phaseRTX1_4_remote_exposure.md) |
 | RTX-1.5 | Headless persistence (Windows service) | **Complete (2026-06-27)** — [log](../../../09_logs/2026-06-19_phaseRTX1_5_headless_service.md) · [closeout](../../../09_logs/2026-06-27_rtx1_5_continuation_handoff.md) |
-| RTX-1.6 | Security delta doc + UM790 endpoint swap | Not started |
+| RTX-1.6 | Security delta doc + UM790 endpoint swap (failover proxy) | **Complete (2026-06-27)** — [log](../../../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md) |
 
 > Numbering note: this session used **RTX-1.x**; the forward-looking
 > node-bridge doc framed the same work as **Phase D-3+**. They refer to the
@@ -109,14 +110,14 @@ to avoid running VRAM-heavy GUI apps while serving.
 | Firewall | 2 scoped inbound rules — allow `100.68.180.69/32`; block `192.168.178.0/24` |
 | Persistence | **NSSM service (LocalSystem, Automatic)** — survives logoff + reboot-without-login (RTX-1.5, 2026-06-27) |
 
-Blockers before the UM790 can consume Torre (all addressed by RTX-1.4 /
-RTX-1.5):
+Blockers before the UM790 can consume Torre — **all resolved; the UM790 now
+consumes Torre as of RTX-1.6 (2026-06-27)**:
 
 1. ~~Loopback-only bind~~ → **RESOLVED 2026-06-19** (`OLLAMA_HOST=0.0.0.0:11434`, Machine scope).
 2. ~~No firewall rule~~ → **RESOLVED 2026-06-19** (allow `100.68.180.69/32`; block LAN).
 3. ~~`OLLAMA_MODELS` User scope only~~ → **RESOLVED 2026-06-19** (Machine scope set).
-4. No headless service → won't survive logoff/reboot. *(1.5)*
-5. VRAM-headroom discipline → run lean/headless. *(operational)*
+4. ~~No headless service~~ → **RESOLVED 2026-06-27** (RTX-1.5 NSSM service).
+5. ~~VRAM-headroom discipline~~ → operational rule in force (run lean/headless, L-RTX-2).
 
 ---
 
@@ -134,10 +135,10 @@ Secure remote exposure, Tailscale-only:
 4. Verify from UM790 over Tailscale (`/api/version`, `/api/generate`); confirm
    LAN-direct path to `192.168.178.21:11434` is blocked.
 
-A security delta doc (`06_security/rtx_node_security.md`) is required before
-the UM790 endpoint actually points at Torre (node-bridge §4). The UM790
-`ollama` endpoint swap (Torre primary + UM790 fallback) is a separate gated
-step, not part of RTX-1.
+A security delta doc (`06_security/rtx_node_security.md`) was required before
+the UM790 endpoint pointed at Torre (node-bridge §4). That doc was authored and
+approved, and the UM790 `ollama` endpoint swap (Torre primary + UM790 fallback)
+was executed as **RTX-1.6** — see §6.6.
 
 ---
 
@@ -161,10 +162,38 @@ Ollama on Torre migrated from the interactive tray app to a **headless NSSM Wind
 
 ---
 
+## 6.6 RTX-1.6 — endpoint swap (completed 2026-06-27) — PHASE CLOSED
+
+The items deferred above are done. RTX-1.6 delivered the security delta doc
+[`06_security/rtx_node_security.md`](../../../06_security/rtx_node_security.md)
+(Step 1, approved) and the UM790 endpoint swap via the **`ollama-proxy`**
+failover front end (Torre primary + UM790 CPU fallback): Open WebUI →
+`ollama-proxy:11434`, Home Assistant → `127.0.0.1:11435`.
+
+| Gate | Result |
+|---|---|
+| G-1.6-1/2 | Proxy primary→Torre; live failover→UM790 |
+| G-1.6-3/4 | Open WebUI + Home Assistant chat through the proxy → Torre |
+| G-1.6-5/6/7 | Tool-calling; 101.3 tok/s (vs ~6 CPU); full GPU offload |
+| G-1.6-8/9 | RAG / Qdrant intact; voice pipeline wiring unchanged |
+| G-1.6-10/11 | Live fallback (HA via UM790 when Torre down); 17 containers up, Guardian Cloud untouched |
+
+The overview triad, `06_security/security_posture.md`, and the live
+architecture doc (RTX amendment merged) were all updated. Apply log:
+[`../../../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md`](../../../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md).
+Retrospective:
+[`../../../09_logs/2026-06-27_phaseRTX1_retrospective.md`](../../../09_logs/2026-06-27_phaseRTX1_retrospective.md).
+
+**Phase RTX-1 is CLOSED.**
+
+---
+
 ## 7. Related documents
 
 - [`../../../09_logs/2026-06-18_phaseRTX1_local_validation.md`](../../../09_logs/2026-06-18_phaseRTX1_local_validation.md) — apply log / full evidence.
 - [`../../../01_architecture/amarolab_architecture_rtx_amendment_DRAFT.md`](../../../01_architecture/amarolab_architecture_rtx_amendment_DRAFT.md) — architecture amendment draft.
 - [`../phase-d/06-rtx-node-bridge.md`](../phase-d/06-rtx-node-bridge.md) — node design rules / invariants.
 - [`../../../01_architecture/remote-access-tailscale.md`](../../../01_architecture/remote-access-tailscale.md) — Tailscale posture.
-- [`../../../00_overview/CURRENT_STATE.md`](../../../00_overview/CURRENT_STATE.md) — overview triad (amend at RTX-1 closeout).
+- [`../../../00_overview/CURRENT_STATE.md`](../../../00_overview/CURRENT_STATE.md) — overview triad (amended at RTX-1 closeout).
+- [`../../../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md`](../../../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md) — RTX-1.6 apply log.
+- [`../../../09_logs/2026-06-27_phaseRTX1_retrospective.md`](../../../09_logs/2026-06-27_phaseRTX1_retrospective.md) — Phase RTX-1 retrospective.
