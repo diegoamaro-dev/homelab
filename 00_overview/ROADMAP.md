@@ -387,6 +387,30 @@ framework exists for future knowledge domains.
 
 ---
 
+## Phase F — Operational Intelligence
+
+**Architecture approved 2026-06-28.** See
+[`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md)
+for the complete design. Mission: shift Aurora from reactive to aware.
+
+Sub-phases:
+
+* **F-0 — Behavioral Audit** — read-only baseline; no implementation.
+* **F-1 — System Prompt Redesign** — identity, tool routing, ≤400 tokens.
+* **F-2 — Signal Layer + Context Generation** — `backup_status.json`,
+  `container_status.json`, `bin/aurora-context`, `ai-stack/aurora/`,
+  `system_status` tool.
+* **F-3 — Situational Awareness Filter** — Open WebUI Filter reads
+  `aurora-context.md`; no tool call for "is everything OK?".
+* **F-4 — Operational Digest + Memory Corpus** — nightly `09_ops/` digest
+  files indexed by `homelab_docs`.
+* **F-5 — Home Intelligence** — home model document; HA entity expansion;
+  home anomaly injection via Filter.
+* **F-6 — Voice Quality** — Whisper upgrade; STT shim migration; latency
+  baseline. Parallel track; no dependency on F-2..F-5.
+
+---
+
 ## Future projects (post-Foundation)
 
 These consume the knowledge platform once the Phase E

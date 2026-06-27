@@ -361,8 +361,7 @@ run-lock), E-3 (unified health.json), E-4 (log rotation +
 backup-consistency decision), E-5 (drift measurement + restore
 drill + audit-log check), E-6 (onboarding framework proven
 end-to-end). All 13 E-0 findings resolved or accepted. Platform
-health `overall_status=ok`. **Current phase: Phase F (to be
-defined).** E-0 report:
+health `overall_status=ok`. **Current phase: Phase F — Operational Intelligence — architecture approved 2026-06-28.** Architecture document: [`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md). Next step: F-0 behavioral audit. E-0 report:
 [`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
 
 The overview triad, `06_security/rtx_node_security.md`,

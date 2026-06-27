@@ -10,7 +10,7 @@ Production:
 Operational
 
 Next milestone:
-Phase F (to be defined)
+Phase F — Operational Intelligence — architecture approved 2026-06-28. See `04_ai_system/phase_f_architecture.md`. Next step: F-0 behavioral audit (read-only).
 
 Last completed:
 E-6 — Onboarding framework (2026-06-28): framework document proven end-to-end against disposable corpus `e6_test`; success criterion met. Prior: E4-b backup-consistency decision (no change); E2-c run-lock + E4-a log rotation; E5-c audit-log check (F-10 resolved); E-3 observability (health.json); E5-b restore drill PASS; E5-a no drift; E2-a fail-loud sync; E-1 reconciliation; E-0 audit.
