@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-Phase E — Knowledge Platform Foundation (E-0 closed 2026-06-27; E-1 in progress)
+Phase E — Knowledge Platform Foundation (E-0, E-1 closed 2026-06-27; E-2 in progress — E2-a fail-loud sync done 2026-06-27)
 
 Overall health:
 Stable
@@ -10,10 +10,10 @@ Production:
 Operational
 
 Next milestone:
-Phase E completion (E-1…E-6: documentation, hardening, observability, maintenance, validation, onboarding framework)
+Phase E completion (E-2…E-6: hardening, observability, maintenance, validation, onboarding framework)
 
 Last completed:
-E-0 operational audit — G-E0 closed (2026-06-27). Prior: RTX-1.6 (UM790 ollama endpoint swap — Torre primary + UM790 fallback)
+E2-a — fail-loud nightly sync (F-01 exit-code remediation), 2026-06-27. Prior: E-1 documentation reconciliation; E-0 operational audit (G-E0).
 
 Blocking issues:
 None
@@ -585,10 +585,13 @@ Indexing operational status (verified 2026-06-27, Phase E E-0):
 - The Qdrant data dir (`ai-stack/data/qdrant`) is in the nightly
   restic backup.
 
-Open Phase E (Knowledge Platform Foundation) follow-ups: the nightly
-sync's exit code is not yet a reliable failure signal; indexing is
-batch (intra-day staleness); ingest/audit logs are not yet rotated.
-Evidence base:
+Phase E hardening: **E2-a done (2026-06-27)** — the nightly sync exit code is
+now a reliable failure signal (a disabled corpus is an expected skip → rc 0;
+a genuine failure → rc 1), per finding F-01. Apply log:
+[`../09_logs/2026-06-27_phaseE_E2a_failloud_sync_applied.md`](../09_logs/2026-06-27_phaseE_E2a_failloud_sync_applied.md).
+Still open: the cron does not yet *act* on rc (run-health signal — E3-b);
+indexing is batch (intra-day staleness — E3-a); ingest/audit logs are not yet
+rotated (E4-a). Audit evidence base:
 [`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
 
 ---

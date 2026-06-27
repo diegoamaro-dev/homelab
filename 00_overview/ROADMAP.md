@@ -20,7 +20,7 @@ service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
 doors now consume Torre's GPU Ollama via the `ollama-proxy`).
 **Phase E — Knowledge Platform Foundation — started 2026-06-27;
-E-0 operational audit closed (G-E0).**
+E-0 + E-1 closed (G-E0); E2-a fail-loud sync done.**
 
 ---
 
@@ -319,10 +319,12 @@ findings):
 
 * **E-0 — Operational audit (read-only) — CLOSED 2026-06-27
   (G-E0).**
-* **E-1 — Documentation reconciliation — in progress.**
-* E-2 — Platform hardening (fail-loud nightly indexing;
-  embedder/reranker version posture *measured before any
-  change*).
+* **E-1 — Documentation reconciliation — CLOSED 2026-06-27.**
+* **E-2 — Platform hardening — in progress.** E2-a (fail-loud
+  nightly indexing — F-01 sync exit-code remediation) **done
+  2026-06-27**; E2-b (embedder/reranker version posture
+  *measured before any change*) conditional on the E5-a
+  measurement; E2-c (run-lock, F-08) pending.
 * E-3 — Observability (index freshness, run health,
   audit-log liveness).
 * E-4 — Maintenance (log rotation; Qdrant backup-consistency

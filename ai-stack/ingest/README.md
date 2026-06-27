@@ -55,6 +55,20 @@ CPU-only build of `torch`. ~1.4 GB total.
 ./bin/ingest drop --collection myfreetour --yes
 ```
 
+## Exit codes
+
+`sync` distinguishes expected operational states from real failures so the exit
+code is a trustworthy signal (Phase E, finding F-01 / step E2-a):
+
+| rc | Meaning |
+|---:|---|
+| 0  | Completed; no **enabled** corpus failed. A **disabled** corpus (`enabled: false`, e.g. the `myfreetour` placeholder) is an *expected* state — it is reported as a skip (`skipped_reason` in the run report) and does **not** affect the exit code. |
+| 1  | At least one **enabled** corpus reported a real error (e.g. its `path` does not exist). |
+| 2  | Usage error (unknown `--collection`; `drop` without `--yes`). |
+
+`status`, `search`, `init` return 0. The nightly cron does not yet *act* on the
+exit code (wiring a run-health signal is Phase E step E3-b).
+
 ## How idempotency works
 
 - Point IDs are deterministic: `uuid(sha256(collection|source_rel|chunk_index))`.

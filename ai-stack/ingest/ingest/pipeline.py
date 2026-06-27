@@ -34,6 +34,7 @@ class CorpusReport:
     chunks_unchanged: int = 0
     files_deleted: int = 0
     points_deleted: int = 0
+    skipped_reason: str | None = None
     errors: list[str] = field(default_factory=list)
 
 
@@ -75,7 +76,10 @@ def _file_chunks(fe: FileEntry, corpus_name: str) -> list[Chunk]:
 def sync_corpus(corpus: Corpus, embedder: Embedder, store: Store, *, dry_run: bool = False) -> CorpusReport:
     rep = CorpusReport(name=corpus.name)
     if not corpus.enabled:
-        rep.errors.append("corpus disabled in corpora.yaml — skipped")
+        # A disabled corpus (e.g. the myfreetour placeholder) is an expected
+        # operational state, not a failure: record it as a skip so the run's
+        # exit code stays 0. Genuine problems below still populate errors.
+        rep.skipped_reason = "disabled in corpora.yaml"
         return rep
     if not corpus.path.exists():
         rep.errors.append(f"path does not exist: {corpus.path}")

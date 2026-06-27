@@ -98,6 +98,13 @@ title          # derived document title
   path directly. A read-only walk is available via `bin/ingest sync
   --dry-run` (no embed, no upsert — but **note** the `git` corpora still
   pull, so dry-run is only side-effect-free for `fs` corpora).
+- **Sync exit-code contract (E2-a, finding F-01):** `bin/ingest sync` returns
+  `0` when no **enabled** corpus failed, `1` when an enabled corpus reported a
+  real error (e.g. missing `path`), `2` on a usage error. A **disabled** corpus
+  (`enabled: false`, e.g. the `myfreetour` placeholder) is an **expected** state
+  — it is reported as a skip (`skipped_reason`) and does **not** fail the run.
+  A future domain therefore onboards (and de-onboards back to `enabled: false`)
+  without ever breaking the nightly exit code.
 
 ---
 
