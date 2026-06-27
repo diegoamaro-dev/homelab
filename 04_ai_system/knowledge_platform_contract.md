@@ -1,7 +1,7 @@
 # Knowledge Platform Contract
 
 - **Status:** Standing reference. Describes **deployed reality** of the
-  AMAROLAB knowledge platform as of 2026-06-27.
+  AMAROLAB knowledge platform as of 2026-06-27 (updated E-3, 2026-06-27).
 - **Authored:** Phase E — Knowledge Platform Foundation, step E-1 (from
   finding F-07: the contract was previously implicit, living only in code).
 - **Authority:** This document records what is deployed. If it disagrees
@@ -118,12 +118,22 @@ title          # derived document title
 
 ## 5. Operational invariants
 
-- **Nightly sync:** cron `30 2 * * *` runs `bin/ingest sync` (before the
-  03:00 restic backup). Indexing is **batch**, not real-time — intra-day
-  staleness up to ~24 h is expected (finding F-03).
+- **Nightly sync:** cron `30 2 * * *` runs `bin/ingest-nightly` (E-3
+  wrapper; before the 03:00 restic backup). `ingest-nightly` invokes
+  `bin/ingest sync`, frames `ingest.log` with run boundaries, and writes
+  the ingest section of `logs/health.json`. Indexing is **batch**, not
+  real-time — intra-day staleness up to ~24 h is expected (finding F-03).
+- **Operational health:** `ai-stack/ingest/logs/health.json` is the
+  single runtime health file (E-3, 2026-06-27). Written atomically by
+  two cron scripts — `ingest-nightly` (02:30, ingest section) and
+  `check-audit-liveness` (03:30, audit section). Fields: `overall_status`
+  (`ok`/`degraded`/`unknown`); `ingest.last_run_status`; `ingest.last_successful_run_end`;
+  `audit.status` (`ok`/`stale`/`missing`/`unparseable`); `audit.age_days`.
+  Gitignored (runtime state). Future HA/Aurora integration target.
 - **Backup:** the Qdrant data dir is included in the nightly restic backup
-  (`/etc/cron.d/homelab-backup`, 03:00). Restore-consistency of a hot
-  Qdrant copy is unverified (findings F-05a/F-05b).
+  (`/etc/cron.d/homelab-backup`, 03:00). Hot-backup restore-consistency
+  proven by E5-b restore drill (2026-06-27, PASS — 16/16 fixture parity).
+  Quiesce-before-backup remains an open spike (F-05a / E4-b).
 - **L-RTX-5 (bind-mount recreate):** `rag_search` and the ingest package
   are bind-mounted read-only into `openwebui` at `/opt/ingest`. Editing
   that code on the host and reloading serves the **old** code — a change

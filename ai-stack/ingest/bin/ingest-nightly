@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Nightly ingest wrapper (E3-a / E3-b).
+# Runs bin/ingest sync, frames ingest.log with run boundaries, and writes
+# the ingest section of logs/health.json atomically.
+# The audit section (written by check-audit-liveness) is preserved unchanged.
+set -euo pipefail
+
+ROOT="/home/diego/homelab/ai-stack/ingest"
+LOGFILE="$ROOT/logs/ingest.log"
+HEALTH="$ROOT/logs/health.json"
+
+ts_start=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+printf '=== RUN START %s ===\n' "$ts_start" >> "$LOGFILE"
+
+rc=0
+"$ROOT/bin/ingest" sync >> "$LOGFILE" 2>&1 || rc=$?
+
+ts_end=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+printf '=== RUN END %s rc=%d ===\n' "$ts_end" "$rc" >> "$LOGFILE"
+
+python3 - "$HEALTH" "$ts_start" "$ts_end" "$rc" <<'PYEOF'
+import json, os, sys
+from datetime import datetime, timezone
+
+health_path, ts_start, ts_end, rc_str = sys.argv[1:]
+rc = int(rc_str)
+tmp = health_path + ".tmp"
+
+run_status = "ok" if rc == 0 else "failed"
+
+existing = {}
+try:
+    with open(health_path) as f:
+        existing = json.load(f)
+except Exception:
+    pass
+
+last_success = (
+    ts_end if run_status == "ok"
+    else (existing.get("ingest") or {}).get("last_successful_run_end")
+)
+
+audit_status = (existing.get("audit") or {}).get("status", "unknown")
+if run_status == "ok" and audit_status == "ok":
+    overall = "ok"
+elif run_status == "failed" or (audit_status not in ("ok", "unknown")):
+    overall = "degraded"
+else:
+    overall = "unknown"
+
+out = {
+    "schema_version": 1,
+    "updated_at": ts_end,
+    "overall_status": overall,
+    "ingest": {
+        "last_run_start":          ts_start,
+        "last_run_end":            ts_end,
+        "last_run_rc":             rc,
+        "last_run_status":         run_status,
+        "last_successful_run_end": last_success,
+        "updated_at":              ts_end,
+    },
+    "audit": existing.get("audit"),
+}
+
+with open(tmp, "w") as f:
+    json.dump(out, f, indent=2, ensure_ascii=False)
+    f.write("\n")
+os.replace(tmp, health_path)
+PYEOF
+
+exit "$rc"

@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-Phase E — Knowledge Platform Foundation (E-0, E-1 closed; E2-a + E5-a + E5-b done 2026-06-27 — E5-b restore drill PASS 16/16 fixture parity; E-2…E-6 otherwise in progress)
+Phase E — Knowledge Platform Foundation (E-0, E-1 closed; E2-a + E-3 + E5-a + E5-b done 2026-06-27; E-2, E-4, E-5-c, E-6 in progress)
 
 Overall health:
 Stable
@@ -13,7 +13,7 @@ Next milestone:
 Phase E completion (E-2…E-6: hardening, observability, maintenance, validation, onboarding framework)
 
 Last completed:
-E5-b — Qdrant restore drill (F-05b): PASS 2026-06-27 — snapshot 228e4183 restored into isolated env, all collections green 4049/872/419/280/0, fixture parity 16/16, prod untouched. Prior: E5-a drift measurement (F-02) no drift; E2-a fail-loud sync (F-01); E-1 reconciliation; E-0 audit (G-E0).
+E-3 — Observability bundle (F-01 cron-action, F-03, F-10 signal): unified health.json live 2026-06-27 (ingest-nightly + check-audit-liveness; health.json shows overall_status=degraded, audit stale 9 days). Prior: E5-b restore drill PASS; E5-a no drift; E2-a fail-loud sync; E-1 reconciliation; E-0 audit.
 
 Blocking issues:
 None
@@ -608,6 +608,16 @@ recoverable: snapshot `228e4183` restored into isolated disposable container
 green (4049/872/419/280/0), fixture parity 16/16 (top-30 set + top-6 order).
 Production untouched (uptime unbroken, counts unchanged). Apply log:
 [`../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md`](../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md).
+
+**E-3 observability bundle done (2026-06-27)** — unified platform health
+file `ai-stack/ingest/logs/health.json` live (gitignored; runtime state).
+Two new scripts: `bin/ingest-nightly` (02:30 cron, wraps ingest sync, writes
+ingest section, frames `ingest.log` with run boundaries — E3-a/E3-b) and
+`bin/check-audit-liveness` (03:30 cron, writes audit section — E3-c).
+`overall_status` computed from both sections; carries `last_successful_run_end`
+across failures. Current state: `overall_status=degraded` (audit stale 9 days,
+F-10 — root cause pending E5-c). Apply log:
+[`../09_logs/2026-06-27_phaseE_E3_observability_applied.md`](../09_logs/2026-06-27_phaseE_E3_observability_applied.md).
 
 ---
 

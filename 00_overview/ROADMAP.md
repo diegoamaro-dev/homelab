@@ -20,9 +20,8 @@ service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
 doors now consume Torre's GPU Ollama via the `ollama-proxy`).
 **Phase E — Knowledge Platform Foundation — started 2026-06-27;
-E-0 + E-1 closed (G-E0); E2-a fail-loud sync + E5-a drift
-measurement + E5-b restore drill done (E5-b: PASS 16/16 fixture
-parity, recovery proven, 2026-06-27).**
+E-0 + E-1 closed (G-E0); E2-a + E-3 + E5-a + E5-b done 2026-06-27
+(E-3: unified health.json live; E5-b: restore drill PASS 16/16).**
 
 ---
 
@@ -328,8 +327,11 @@ findings):
   **not required** — E5-a measured no retrieval drift
   (2026-06-27), so no pin/unify/migration is taken; E2-c
   (run-lock, F-08) pending.
-* E-3 — Observability (index freshness, run health,
-  audit-log liveness).
+* **E-3 — Observability — done 2026-06-27.** Unified `health.json`
+  (gitignored runtime state): `ingest-nightly` wrapper (02:30, E3-a/E3-b)
+  + `check-audit-liveness` (03:30, E3-c). Current `overall_status=degraded`
+  (audit stale F-10 — root cause pending E5-c). Apply log:
+  [`../09_logs/2026-06-27_phaseE_E3_observability_applied.md`](../09_logs/2026-06-27_phaseE_E3_observability_applied.md).
 * E-4 — Maintenance (log rotation; Qdrant backup-consistency
   spike — "no change" is an acceptable outcome).
 * **E-5 — Validation — in progress.** E5-a (version-skew drift
@@ -381,6 +383,29 @@ foundation is in place. They are **not** Phase E work.
   (currently a disabled placeholder, 0 points) via the E-6
   onboarding framework. Blocked on the source path
   (sub-project ROADMAP blocker B-08).
+
+---
+
+## Architectural Backlog — Health Aggregator (future, not Phase E)
+
+Not a phase. Deferred evolution for when additional health producers appear.
+
+The current E-3 design (two writers, one shared `health.json`) is appropriate
+for the current scale. When the platform grows to include additional health
+producers (Docker, Ollama, Qdrant, Home Assistant, GPU node, backups, etc.),
+the recommended evolution is:
+
+* **Multiple health producers** — each subsystem writes its own signal
+  independently (e.g. `ingest-nightly`, a future `qdrant-health`, a future
+  `ollama-health`).
+* **One health builder/aggregator** — a single script assembles all producer
+  signals into one authoritative `health.json` and computes `overall_status`.
+* **One authoritative `health.json`** — same schema, same HA/Aurora integration
+  target; only the build process changes.
+
+This evolution requires no schema change and no HA integration rework.
+Trigger: when a third health producer would otherwise require a third writer
+touching the shared file.
 
 ---
 

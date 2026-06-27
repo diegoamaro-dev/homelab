@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# Audit-log liveness check (E3-c).
+# Reads the last entry from the Open WebUI tool audit log, computes age,
+# and writes the audit section of logs/health.json atomically.
+# The ingest section (written by ingest-nightly) is preserved unchanged.
+# Stale threshold: 7 days.
+set -euo pipefail
+
+AUDIT_LOG="/srv/homelab/data/openwebui/amarolab-audit.log"
+HEALTH="/home/diego/homelab/ai-stack/ingest/logs/health.json"
+STALE_DAYS=7
+
+checked_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+python3 - "$AUDIT_LOG" "$HEALTH" "$checked_at" "$STALE_DAYS" <<'PYEOF'
+import json, os, sys
+from datetime import datetime, timezone
+
+audit_log, health_path, checked_at, stale_str = sys.argv[1:]
+stale_days = int(stale_str)
+tmp = health_path + ".tmp"
+
+last_entry_ts = None
+age_days = None
+status = "missing"
+
+try:
+    with open(audit_log) as f:
+        lines = [l for l in f.read().splitlines() if l.strip()]
+    if not lines:
+        status = "missing"
+    else:
+        entry = json.loads(lines[-1])
+        last_entry_ts = entry["ts"]
+        ts_dt = datetime.fromisoformat(last_entry_ts)
+        now = datetime.now(timezone.utc)
+        age_days = (now - ts_dt).days
+        status = "stale" if age_days >= stale_days else "ok"
+except FileNotFoundError:
+    status = "missing"
+except (json.JSONDecodeError, KeyError, ValueError):
+    status = "unparseable"
+except Exception:
+    status = "unparseable"
+
+audit_section = {
+    "last_entry_ts": last_entry_ts,
+    "age_days":      age_days,
+    "status":        status,
+    "updated_at":    checked_at,
+}
+
+existing = {}
+try:
+    with open(health_path) as f:
+        existing = json.load(f)
+except Exception:
+    pass
+
+ingest_status = (existing.get("ingest") or {}).get("last_run_status", "unknown")
+if ingest_status == "ok" and status == "ok":
+    overall = "ok"
+elif ingest_status == "failed" or (status not in ("ok", "unknown")):
+    overall = "degraded"
+else:
+    overall = "unknown"
+
+out = {
+    "schema_version": 1,
+    "updated_at":     checked_at,
+    "overall_status": overall,
+    "ingest":         existing.get("ingest"),
+    "audit":          audit_section,
+}
+
+with open(tmp, "w") as f:
+    json.dump(out, f, indent=2, ensure_ascii=False)
+    f.write("\n")
+os.replace(tmp, health_path)
+PYEOF
