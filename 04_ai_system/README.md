@@ -7,6 +7,7 @@ Everything in the local LLM + RAG + assistant stack lives here.
 ```
 04_ai_system/
 ├── README.md                                  ← this file
+├── AURORA_VISION.md                           Aurora product vision — north star for Phase F and beyond
 ├── openwebui.md                               Open WebUI inventory + config
 ├── ollama.md                                  Ollama inventory + models on disk
 ├── qdrant.md                                  Qdrant inventory + collections
@@ -51,6 +52,9 @@ top-level service dirs — is the repo's convention.
 
 ## Where to start reading
 
+- Understanding where Aurora is going? Start with
+  [`AURORA_VISION.md`](AURORA_VISION.md) — the north star document for Phase F
+  and beyond.
 - New here? Read `openwebui.md`, `ollama.md`, `qdrant.md` (~10 min)
   to understand the three running components.
 - Building the assistant? Start with
