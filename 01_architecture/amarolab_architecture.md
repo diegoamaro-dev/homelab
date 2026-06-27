@@ -504,13 +504,13 @@ Phase B       Completed
 Phase C       Completed
 Phase D-1     Completed (voice — closed 2026-06-18)
 Phase RTX-1   Closed (GPU node + endpoint swap — 2026-06-27)
-Phase E       Next (Unified Knowledge)
+Phase E       In progress (Knowledge Platform Foundation — E-0 closed 2026-06-27)
 ```
 
 Current objective:
 
 ```text
-Unified Knowledge (Phase E)
+Knowledge Platform Foundation (Phase E) — stabilise the knowledge platform (E-1 in progress)
 ```
 
 See [`../00_overview/ROADMAP.md`](../00_overview/ROADMAP.md)

@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-RTX-1.6 — complete (Phase RTX-1 closed)
+Phase E — Knowledge Platform Foundation (E-0 closed 2026-06-27; E-1 in progress)
 
 Overall health:
 Stable
@@ -10,10 +10,10 @@ Production:
 Operational
 
 Next milestone:
-Phase E (Unified Knowledge)
+Phase E completion (E-1…E-6: documentation, hardening, observability, maintenance, validation, onboarding framework)
 
 Last completed:
-RTX-1.6 (UM790 ollama endpoint swap — Torre primary + UM790 fallback)
+E-0 operational audit — G-E0 closed (2026-06-27). Prior: RTX-1.6 (UM790 ollama endpoint swap — Torre primary + UM790 fallback)
 
 Blocking issues:
 None
@@ -348,8 +348,9 @@ Status: Operational
 - Zigbee2MQTT discovery: enabled (auto-discovery active)
 - Wyoming integrations (per D-1.5): `aurora-whisper`
   (STT), `aurora-piper` (TTS), `aurora-wakeword`.
-- Ollama integration (per D-1.5): `http://ollama:11434`
-  / `qwen2.5:7b-instruct`.
+- Ollama integration: `http://127.0.0.1:11435` (the
+  `ollama-proxy` loopback — Torre primary + UM790 CPU
+  fallback — per RTX-1.6) / `qwen2.5:7b-instruct`.
 - Assist pipeline `AURORA v1` is the default /
   preferred pipeline (language `es-ES`).
 - Voice canary helper: `input_boolean.aurora_voice_canary`
@@ -557,7 +558,7 @@ Status: Operational
 
 ## Ingest service
 
-Status: Versioned
+Status: Versioned + operational (nightly indexing live)
 
 Path: `ai-stack/ingest`
 
@@ -569,6 +570,26 @@ Includes:
 - qdrant storage
 - filesystem connector
 - git connector
+
+Indexing operational status (verified 2026-06-27, Phase E E-0):
+
+- Nightly sync: cron `30 2 * * *` (`diego` crontab), before the
+  03:00 restic backup. Idempotent (per-chunk `content_sha`); GC of
+  vanished files.
+- Live collection point counts: `homelab_docs` 4049 ·
+  `guardian_cloud` 872 · `ensambla2` 419 · `infra_audits` 280 ·
+  `myfreetour` 0 (disabled).
+- Embedder `intfloat/multilingual-e5-small` (384-dim) / reranker
+  `BAAI/bge-reranker-v2-m3`. Full contract:
+  [`../04_ai_system/knowledge_platform_contract.md`](../04_ai_system/knowledge_platform_contract.md).
+- The Qdrant data dir (`ai-stack/data/qdrant`) is in the nightly
+  restic backup.
+
+Open Phase E (Knowledge Platform Foundation) follow-ups: the nightly
+sync's exit code is not yet a reliable failure signal; indexing is
+batch (intra-day staleness); ingest/audit logs are not yet rotated.
+Evidence base:
+[`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
 
 ---
 
@@ -647,7 +668,9 @@ token for the `amarolab` tunnel lives at
    Streaming TTS, prompt trimming, and the STT model-size
    bump remain not started.
 3. **Dedicated NAS** — procurement and data migration.
-4. **MyFreeTour** RAG collection (Phase E).
+4. **MyFreeTour** RAG collection — **future consumer project**,
+   onboards onto the knowledge platform after Phase E (Foundation);
+   not Phase E work. Source path still TBD (sub-project blocker B-08).
 5. **DNS / Cloudflare architecture doc amendments**
    — record the separate-tunnel decision and the
    `ai.amarolab.es` binding in

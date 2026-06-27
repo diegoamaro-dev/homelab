@@ -73,6 +73,8 @@ the same name.
 
 ## Scheduling
 
-Designed to be invoked nightly by cron at ~02:30 (before the 03:00 restic
-backup so the new vector state lands in the snapshot). The cron entry is
-not installed yet — see Phase 1 P1.10.
+Invoked nightly by cron at 02:30 (before the 03:00 restic backup so the new
+vector state lands in the snapshot). The cron entry is **installed** in the
+`diego` user crontab (verified live 2026-06-27, Phase E E-0 audit):
+
+    30 2 * * * /home/diego/homelab/ai-stack/ingest/bin/ingest sync >> /home/diego/homelab/ai-stack/ingest/logs/ingest.log 2>&1

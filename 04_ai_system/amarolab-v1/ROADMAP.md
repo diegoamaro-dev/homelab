@@ -33,7 +33,7 @@ not executed status).
 | # | Blocker | Phase | Owner | Status |
 |---|---|---|---|---|
 | B-07 | HA Long-Lived Access Token | C | user | **RESOLVED** — token issued; Phase C closed 2026-06-17; `ha_get_state` / `ha_call_service` live |
-| B-08 | MyFreeTour source path unknown | E | user | **OPEN** — `myfreetour` corpus stays empty until decided |
+| B-08 | MyFreeTour source path unknown | future | user | **DESCOPED from Phase E** (2026-06-27) — Phase E is now *Knowledge Platform Foundation* (operations/foundation, not domain onboarding). MyFreeTour is a future consumer project; B-08 is its onboarding precondition, not a Phase E blocker. `myfreetour` stays empty/disabled until then. |
 
 Phase-B-era non-blocking carry-overs (BX WebSocket race, v0.2 prompt polish,
 R-new1 rerank latency, W-4…W-7 evidence items) are historical. Current

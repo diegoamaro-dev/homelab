@@ -19,6 +19,8 @@ CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
 service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
 doors now consume Torre's GPU Ollama via the `ollama-proxy`).
+**Phase E — Knowledge Platform Foundation — started 2026-06-27;
+E-0 operational audit closed (G-E0).**
 
 ---
 
@@ -297,17 +299,75 @@ Apply logs:
 
 ## Phase E
 
-Unified Knowledge — **NOT STARTED**.
+**Knowledge Platform Foundation — IN PROGRESS (bounded).**
 
-Tasks:
+A bounded foundation phase — it has a defined start and end
+and is **not** ongoing operations activity. Purpose:
+**stabilise and operationalise the existing knowledge
+platform** (the RAG ingest pipeline, the Qdrant index, and
+the `rag_search` retrieval path) so future knowledge domains
+can onboard onto a sound foundation. **Not feature
+development; Phase E changes no retrieval behaviour.**
 
-* Add MyFreeTour
-* Improve RAG
-* Continuous indexing
+Entry gate **G-E0 — read-only operational audit — CLOSED
+2026-06-27.** The audit's finding register is the sole
+source of the E-1…E-6 backlog. Report:
+[`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
+
+Objectives (bounded charters; work populated only by E-0
+findings):
+
+* **E-0 — Operational audit (read-only) — CLOSED 2026-06-27
+  (G-E0).**
+* **E-1 — Documentation reconciliation — in progress.**
+* E-2 — Platform hardening (fail-loud nightly indexing;
+  embedder/reranker version posture *measured before any
+  change*).
+* E-3 — Observability (index freshness, run health,
+  audit-log liveness).
+* E-4 — Maintenance (log rotation; Qdrant backup-consistency
+  spike — "no change" is an acceptable outcome).
+* E-5 — Validation (retrieval behaviour *provably unchanged*;
+  Qdrant restore drill).
+* E-6 — Future onboarding framework (contract + template +
+  procedure), proven against a disposable corpus.
+
+Out of scope (explicit):
+
+* **MyFreeTour** onboarding — a future consumer project, not
+  Phase E work (it onboards once the platform foundation is
+  in place).
+* **"Improve RAG" / retrieval feature work** — no
+  cross-collection routing, latency tuning, or recall
+  changes in this phase.
+* Embedder/reranker model change or version upgrade that
+  alters outputs — a re-embed is a future migration,
+  considered only if E-5 measures real retrieval drift.
+
+Continuous indexing already exists: the nightly ingest sync
+runs by cron at 02:30 (before the 03:00 restic backup).
+Phase E **hardens and makes it observable** — it does not
+build it.
 
 Success criteria:
 
-Single assistant with access to all project knowledge.
+The knowledge platform is audited; every observed issue is
+resolved or explicitly deferred; documentation matches
+deployed reality; platform health is observable; **retrieval
+behaviour is provably unchanged**; and a proven onboarding
+framework exists for future knowledge domains.
+
+---
+
+## Future projects (post-Foundation)
+
+These consume the knowledge platform once the Phase E
+foundation is in place. They are **not** Phase E work.
+
+* **MyFreeTour** — onboard a `myfreetour` knowledge corpus
+  (currently a disabled placeholder, 0 points) via the E-6
+  onboarding framework. Blocked on the source path
+  (sub-project ROADMAP blocker B-08).
 
 ---
 

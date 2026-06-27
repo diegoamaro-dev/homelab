@@ -168,7 +168,7 @@ Collections:
 * ensambla2
 * infra_audits
 
-Future:
+Future (consumer project — onboards after Phase E Foundation):
 
 * myfreetour
 
@@ -354,8 +354,13 @@ Closeout document:
 Phase D-1 closed; **Phase RTX-1 closed 2026-06-27 —
 RTX-1.4 + RTX-1.5 + RTX-1.6 all complete.** The UM790 front
 doors consume Torre's GPU via the `ollama-proxy` (Torre
-primary + UM790 fallback). **Next phase: Phase E (Unified
-Knowledge) — not started.**
+primary + UM790 fallback). **Current phase: Phase E —
+Knowledge Platform Foundation — in progress.** A bounded
+operations/foundation phase (stabilise the knowledge
+platform; not feature development). E-0 read-only operational
+audit closed 2026-06-27 (G-E0); E-1 documentation
+reconciliation underway. E-0 report:
+[`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
 
 The overview triad, `06_security/rtx_node_security.md`,
 `06_security/security_posture.md`, and the live architecture
