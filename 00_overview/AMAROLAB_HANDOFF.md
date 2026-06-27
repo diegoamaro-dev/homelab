@@ -290,6 +290,11 @@ Pending:
 * Sanitize before GitHub.
 * Do not expose secrets.
 * Guardian Cloud is production.
+* **Operator Git Approval** — never run `git commit`,
+  `git push` or `git tag` without explicit operator approval
+  requested immediately before each command. Approval never
+  carries over between commands or sessions. See
+  `PROJECT_RULES.md` → "Operator Git Approval".
 
 ---
 

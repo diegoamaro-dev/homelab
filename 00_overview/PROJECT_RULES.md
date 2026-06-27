@@ -112,6 +112,45 @@ Commits are operational documentation.
 
 ---
 
+## Operator Git Approval
+
+No AI assistant may run any of the following commands without
+**explicit operator approval immediately before the command**:
+
+```bash
+git commit
+git push
+git tag
+```
+
+Approval is per-command and per-moment. Approval of one
+command does **not** authorize the next, and approval given in
+a previous step, phase or session **never** carries over. Each
+of the three commands requires its own fresh approval,
+requested immediately beforehand.
+
+### Required workflow
+
+1. Plan
+2. Implementation
+3. Validation
+4. Documentation
+5. Documentation audit
+6. Git review
+7. **STOP** — request operator approval before commit
+8. Commit only after approval
+9. **STOP** — request operator approval before push
+10. Push only after approval
+11. **STOP** — request operator approval before tag
+12. Tag only after approval
+13. Push tag only after approval
+14. Confirm remote synchronization
+
+This rule is binding on every AI assistant
+acting on this repository.
+
+---
+
 # Architecture Rules
 
 Architecture documents describe deployed reality.
