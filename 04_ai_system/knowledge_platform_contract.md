@@ -166,12 +166,18 @@ title          # derived document title
 
 ---
 
-## 6. Onboarding a new knowledge domain (summary)
+## 6. Onboarding a new knowledge domain
 
-The full, validated procedure is the **E-6 onboarding framework**. In
-short, a future domain (e.g. MyFreeTour) onboards by: adding a `corpora.yaml`
-entry (type `fs`/`git`, path, include/exclude, `enabled: true`); ensuring
-the collection exists at 384-dim/Cosine; extending the `rag_search` Tool's
-`collection` enum and **recreating** the `openwebui` container (L-RTX-5);
-running `bin/ingest sync --collection <name>`; and validating retrieval.
-No platform-contract value above changes when a domain onboards.
+The authoritative, validated procedure is the
+**[E-6 Onboarding Framework](onboarding_framework.md)** (written and proven
+2026-06-28 against a disposable corpus).
+
+In summary: create the Qdrant collection at 384-dim/Cosine via the REST API;
+add a `corpora.yaml` entry (`type: fs|git`, path, include/exclude,
+`enabled: true`); run `bin/ingest sync --collection <name>`; validate retrieval
+with `bin/ingest search`; extend the `rag_search` Tool's `Literal[...]` and
+reinstall via `bin/install_tool` (no container recreate needed for a tool-only
+change). No platform-contract value above changes when a domain onboards.
+
+See the framework for the full procedure including rollback, security rules,
+documentation requirements, and fixture extension rules.

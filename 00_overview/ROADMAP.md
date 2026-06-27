@@ -352,8 +352,13 @@ findings):
   root cause was absence of web UI tool calls during observation period;
   audit log scope documented (web UI only). Apply log:
   [`../09_logs/2026-06-27_phaseE_E5c_audit_log_check.md`](../09_logs/2026-06-27_phaseE_E5c_audit_log_check.md).
-* E-6 — Future onboarding framework (contract + template +
-  procedure), proven against a disposable corpus.
+* **E-6 — Onboarding framework — done 2026-06-28.** Framework document at
+  `04_ai_system/onboarding_framework.md` covering 12 sections (naming rules,
+  collection creation, indexing, tool extension, validation, rollback, security).
+  Proven end-to-end against disposable corpus `e6_test` (fictional Project Helios,
+  16 points); success criterion met — onboarded, validated, and fully removed with
+  no production artifact remaining. Closes F-07. Apply log:
+  [`../09_logs/2026-06-28_phaseE_E6_onboarding_framework_applied.md`](../09_logs/2026-06-28_phaseE_E6_onboarding_framework_applied.md).
 
 Out of scope (explicit):
 

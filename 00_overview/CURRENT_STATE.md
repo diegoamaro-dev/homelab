@@ -620,6 +620,13 @@ quiescent window) are sufficient. Quiesce/snapshot-API rejected for current scal
 Residual risk documented and accepted. Decision record:
 [`../09_logs/2026-06-27_phaseE_E4b_backup_consistency_decision.md`](../09_logs/2026-06-27_phaseE_E4b_backup_consistency_decision.md).
 
+**E-6 done (2026-06-28)** — onboarding framework (F-07): framework document at
+`04_ai_system/onboarding_framework.md` (12 sections). Proven end-to-end against
+disposable corpus `e6_test` (fictional Project Helios, 16 points indexed): onboarded,
+retrieval validated (HE-01/HE-02/HE-03 all PASS), and fully removed — no production
+artifact remaining. Success criterion met. Apply log:
+[`../09_logs/2026-06-28_phaseE_E6_onboarding_framework_applied.md`](../09_logs/2026-06-28_phaseE_E6_onboarding_framework_applied.md).
+
 **E-3 observability bundle done (2026-06-27)** — unified platform health
 file `ai-stack/ingest/logs/health.json` live (gitignored; runtime state).
 Two new scripts: `bin/ingest-nightly` (02:30 cron, wraps ingest sync, writes
