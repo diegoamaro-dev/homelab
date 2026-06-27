@@ -597,9 +597,14 @@ Phase E hardening: **E2-a done (2026-06-27)** — the nightly sync exit code is
 now a reliable failure signal (a disabled corpus is an expected skip → rc 0;
 a genuine failure → rc 1), per finding F-01. Apply log:
 [`../09_logs/2026-06-27_phaseE_E2a_failloud_sync_applied.md`](../09_logs/2026-06-27_phaseE_E2a_failloud_sync_applied.md).
-Still open: the cron does not yet *act* on rc (run-health signal — E3-b);
-indexing is batch (intra-day staleness — E3-a); ingest/audit logs are not yet
-rotated (E4-a). Audit evidence base:
+**E2-c done (2026-06-27)** — run-lock (`flock -n`, F-08): `bin/ingest-nightly`
+holds `logs/ingest-nightly.lock`; overlapping runs exit 0 with
+`SKIPPED (lock held)`. **E4-a done (2026-06-27)** — log rotation (F-04):
+`/etc/logrotate.d/homelab-ingest` (source:
+`ai-stack/ingest/etc/logrotate.d/homelab-ingest`); `ingest.log` weekly/8-week;
+`amarolab-audit.log` monthly/12-month. Apply log:
+[`../09_logs/2026-06-27_phaseE_E2c_E4a_maintenance_applied.md`](../09_logs/2026-06-27_phaseE_E2c_E4a_maintenance_applied.md).
+Audit evidence base:
 [`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
 
 **E5-b restore drill done (2026-06-27)** — nightly restic backup proven

@@ -1,0 +1,24 @@
+# AMAROLAB — ingest pipeline and audit log rotation (E4-a, F-04)
+# Install: sudo cp <repo>/ai-stack/ingest/etc/logrotate.d/homelab-ingest /etc/logrotate.d/homelab-ingest
+
+/home/diego/homelab/ai-stack/ingest/logs/ingest.log {
+    su diego diego
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0664 diego diego
+}
+
+/srv/homelab/data/openwebui/amarolab-audit.log {
+    su root root
+    monthly
+    rotate 12
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 root root
+}

@@ -321,19 +321,22 @@ findings):
 * **E-0 — Operational audit (read-only) — CLOSED 2026-06-27
   (G-E0).**
 * **E-1 — Documentation reconciliation — CLOSED 2026-06-27.**
-* **E-2 — Platform hardening — in progress.** E2-a (fail-loud
+* **E-2 — Platform hardening — done 2026-06-27.** E2-a (fail-loud
   nightly indexing — F-01 sync exit-code remediation) **done
   2026-06-27**; E2-b (embedder/reranker version posture)
   **not required** — E5-a measured no retrieval drift
   (2026-06-27), so no pin/unify/migration is taken; E2-c
-  (run-lock, F-08) pending.
+  (run-lock, F-08) **done 2026-06-27**.
 * **E-3 — Observability — done 2026-06-27.** Unified `health.json`
   (gitignored runtime state): `ingest-nightly` wrapper (02:30, E3-a/E3-b)
   + `check-audit-liveness` (03:30, E3-c). `overall_status=ok` (resolved
   2026-06-27 after E5-c closed F-10). Apply log:
   [`../09_logs/2026-06-27_phaseE_E3_observability_applied.md`](../09_logs/2026-06-27_phaseE_E3_observability_applied.md).
-* E-4 — Maintenance (log rotation; Qdrant backup-consistency
-  spike — "no change" is an acceptable outcome).
+* **E-4 — Maintenance — in progress.** E4-a (log rotation, F-04)
+  **done 2026-06-27** — `/etc/logrotate.d/homelab-ingest` (source:
+  `ai-stack/ingest/etc/logrotate.d/homelab-ingest`); E4-b (Qdrant
+  backup-consistency spike, F-05a — "no change" is the expected outcome)
+  pending.
 * **E-5 — Validation — in progress.** E5-a (version-skew drift
   measurement, F-02) **done 2026-06-27** — no measurable drift,
   via the permanent
