@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-Phase E — Knowledge Platform Foundation (E-0, E-1 closed 2026-06-27; E-2 in progress — E2-a fail-loud sync done 2026-06-27)
+Phase E — Knowledge Platform Foundation (E-0, E-1 closed; E2-a + E5-a done 2026-06-27 — E5-a measured no retrieval drift, conditional E2-b not required; E-2…E-6 otherwise in progress)
 
 Overall health:
 Stable
@@ -13,7 +13,7 @@ Next milestone:
 Phase E completion (E-2…E-6: hardening, observability, maintenance, validation, onboarding framework)
 
 Last completed:
-E2-a — fail-loud nightly sync (F-01 exit-code remediation), 2026-06-27. Prior: E-1 documentation reconciliation; E-0 operational audit (G-E0).
+E5-a — retrieval drift measurement (F-02): no measurable drift, conditional E2-b not required, 2026-06-27. Prior: E2-a fail-loud sync (F-01); E-1 documentation reconciliation; E-0 audit (G-E0).
 
 Blocking issues:
 None

@@ -20,7 +20,8 @@ service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
 doors now consume Torre's GPU Ollama via the `ollama-proxy`).
 **Phase E — Knowledge Platform Foundation — started 2026-06-27;
-E-0 + E-1 closed (G-E0); E2-a fail-loud sync done.**
+E-0 + E-1 closed (G-E0); E2-a fail-loud sync + E5-a drift
+measurement done (E5-a: no retrieval drift, E2-b not required).**
 
 ---
 
@@ -322,15 +323,20 @@ findings):
 * **E-1 — Documentation reconciliation — CLOSED 2026-06-27.**
 * **E-2 — Platform hardening — in progress.** E2-a (fail-loud
   nightly indexing — F-01 sync exit-code remediation) **done
-  2026-06-27**; E2-b (embedder/reranker version posture
-  *measured before any change*) conditional on the E5-a
-  measurement; E2-c (run-lock, F-08) pending.
+  2026-06-27**; E2-b (embedder/reranker version posture)
+  **not required** — E5-a measured no retrieval drift
+  (2026-06-27), so no pin/unify/migration is taken; E2-c
+  (run-lock, F-08) pending.
 * E-3 — Observability (index freshness, run health,
   audit-log liveness).
 * E-4 — Maintenance (log rotation; Qdrant backup-consistency
   spike — "no change" is an acceptable outcome).
-* E-5 — Validation (retrieval behaviour *provably unchanged*;
-  Qdrant restore drill).
+* **E-5 — Validation — in progress.** E5-a (version-skew drift
+  measurement, F-02) **done 2026-06-27** — no measurable drift,
+  via the permanent
+  [`04_ai_system/validation/retrieval_validation_fixture.yaml`](../04_ai_system/validation/retrieval_validation_fixture.yaml);
+  E5-b (Qdrant restore drill, F-05b) and E5-c (controlled
+  audit-log check) pending.
 * E-6 — Future onboarding framework (contract + template +
   procedure), proven against a disposable corpus.
 

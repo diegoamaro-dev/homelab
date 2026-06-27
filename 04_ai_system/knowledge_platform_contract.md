@@ -48,9 +48,17 @@ onboards against (see the E-6 onboarding framework).
 | Query / rerank (openwebui container) | 5.2.3 | 2.9.1+cpu |
 
 Passages and queries are currently embedded under **different** library
-stacks. Whether this skew moves retrieval ranking is **measured in E-5**
-(`E5-a`); any version action (pin or unify) is taken **only if** that
-measurement shows real drift.
+stacks. Whether this skew moves retrieval ranking was **measured in E5-a**
+(2026-06-27): across the 16-query
+[`validation/retrieval_validation_fixture.yaml`](validation/retrieval_validation_fixture.yaml)
+(all populated collections, es + en), stack-A vs stack-B query embeddings are
+cosine-identical to ~1e-13 (differing only at the float32 noise floor, ~1e-7)
+and produce **byte-identical retrieval** (identical dense top-30 sets and top-6
+order). **Conclusion: no measurable drift — no change required**; the skew is a
+**reproducibility** note, not a retrieval-correctness issue, and the conditional
+E2-b version action is **not** triggered. Evidence:
+[`../09_logs/2026-06-27_phaseE_E5a_drift_measurement.md`](../09_logs/2026-06-27_phaseE_E5a_drift_measurement.md).
+Re-run the fixture before relocking if either stack is upgraded.
 
 ---
 

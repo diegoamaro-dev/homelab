@@ -1,0 +1,115 @@
+# AMAROLAB Knowledge Platform — Retrieval Validation Fixture
+# =========================================================================
+# Status:   PERMANENT, STABLE. Project documentation (Phase E, step E-5).
+# Purpose:  The canonical, fixed query corpus used by every Phase E E-5
+#           retrieval validation run — E5-a (version-skew drift measurement),
+#           E5-b (Qdrant restore drill), E5-c (controlled audit-log check),
+#           and any future retrieval-regression check.
+#
+# Why it exists:
+#   Retrieval validation is only comparable run-to-run if the queries never
+#   change. An ad-hoc query set makes "no drift" unfalsifiable. This fixture
+#   freezes the corpus so any future run measures the SAME thing.
+#
+# STABILITY CONTRACT (binding):
+#   - Query `id`s and their `query` text are FIXED. Never edit or delete an
+#     existing entry — doing so silently invalidates run-to-run comparison.
+#   - You MAY append a new entry (new id) with a documented reason, but the
+#     existing 16 must stay byte-stable.
+#   - `myfreetour` is intentionally absent: it is an empty/disabled
+#     placeholder (0 points). When it is populated by a future project it
+#     gets its own appended entries — it is NOT part of the v1 fixture.
+#
+# Selection criteria (how these 16 were chosen):
+#   - Cover every POPULATED collection (homelab_docs, guardian_cloud,
+#     ensambla2, infra_audits) — 4 queries each.
+#   - Both languages where appropriate: 8 Spanish + 8 English (AURORA is used
+#     primarily in es-ES against largely English technical docs).
+#   - Representative of real AURORA usage; intentionally small.
+#   - Phrased to return non-empty results (each collection has 100s of points)
+#     so the retrieval comparison exercises real ranking.
+#
+# Schema (per entry):
+#   id:         stable unique identifier (COLLECTIONPREFIX-NN)
+#   collection: target Qdrant collection (must be one of the 4 populated)
+#   lang:       es | en
+#   query:      the natural-language query string (2..500 chars; E5 prefixes
+#               are added by ingest/embedder.py at embed time, NOT here)
+# =========================================================================
+
+version: 1
+created: 2026-06-27
+collections_covered: [homelab_docs, guardian_cloud, ensambla2, infra_audits]
+
+queries:
+  # --- homelab_docs (homelab infrastructure / operations) ----------------
+  - id: HL-01
+    collection: homelab_docs
+    lang: es
+    query: "¿Cómo reinicio el stack de Zigbee2MQTT en el homelab?"
+  - id: HL-02
+    collection: homelab_docs
+    lang: en
+    query: "Mosquitto authentication hardening with per-user ACLs"
+  - id: HL-03
+    collection: homelab_docs
+    lang: es
+    query: "Failover del ollama-proxy entre Torre y el UM790"
+  - id: HL-04
+    collection: homelab_docs
+    lang: en
+    query: "AURORA v1 voice pipeline with Whisper and Piper"
+
+  # --- guardian_cloud (independent product — read-only corpus) -----------
+  - id: GC-01
+    collection: guardian_cloud
+    lang: es
+    query: "Procedimiento de recuperación de Guardian Cloud"
+  - id: GC-02
+    collection: guardian_cloud
+    lang: en
+    query: "Guardian Cloud architecture and deployment overview"
+  - id: GC-03
+    collection: guardian_cloud
+    lang: es
+    query: "Estrategia de producto y roadmap de Guardian Cloud"
+  - id: GC-04
+    collection: guardian_cloud
+    lang: en
+    query: "Guardian Cloud API authentication"
+
+  # --- ensambla2 (product — auth / multitenancy) -------------------------
+  - id: E2-01
+    collection: ensambla2
+    lang: en
+    query: "Ensambla2 multitenancy architecture"
+  - id: E2-02
+    collection: ensambla2
+    lang: es
+    query: "Autenticación y autorización en Ensambla2"
+  - id: E2-03
+    collection: ensambla2
+    lang: en
+    query: "Ensambla2 monorepo packages overview"
+  - id: E2-04
+    collection: ensambla2
+    lang: es
+    query: "Primeros pasos para desarrollar en Ensambla2"
+
+  # --- infra_audits (past infra audit reports / Phase 0-1 logs) ----------
+  - id: IA-01
+    collection: infra_audits
+    lang: en
+    query: "Phase 0 remediation actions and outcomes"
+  - id: IA-02
+    collection: infra_audits
+    lang: es
+    query: "Hallazgos de seguridad de la auditoría del servidor"
+  - id: IA-03
+    collection: infra_audits
+    lang: en
+    query: "Mosquitto crash-loop incident R-04"
+  - id: IA-04
+    collection: infra_audits
+    lang: es
+    query: "Implementación de copias de seguridad con Restic"
