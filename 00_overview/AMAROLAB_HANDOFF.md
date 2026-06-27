@@ -359,7 +359,10 @@ Knowledge Platform Foundation — in progress.** A bounded
 operations/foundation phase (stabilise the knowledge
 platform; not feature development). E-0 read-only operational
 audit closed 2026-06-27 (G-E0); E-1 documentation
-reconciliation underway. E-0 report:
+reconciliation closed; E2-a fail-loud sync done (F-01); E5-a
+drift measurement done (F-02, no drift); **E5-b restore drill
+PASS 2026-06-27** (F-05b: snapshot 228e4183, 16/16 fixture
+parity, recovery proven). E-0 report:
 [`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
 
 The overview triad, `06_security/rtx_node_security.md`,

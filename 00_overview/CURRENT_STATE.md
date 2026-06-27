@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-Phase E — Knowledge Platform Foundation (E-0, E-1 closed; E2-a + E5-a done 2026-06-27 — E5-a measured no retrieval drift, conditional E2-b not required; E-2…E-6 otherwise in progress)
+Phase E — Knowledge Platform Foundation (E-0, E-1 closed; E2-a + E5-a + E5-b done 2026-06-27 — E5-b restore drill PASS 16/16 fixture parity; E-2…E-6 otherwise in progress)
 
 Overall health:
 Stable
@@ -13,7 +13,7 @@ Next milestone:
 Phase E completion (E-2…E-6: hardening, observability, maintenance, validation, onboarding framework)
 
 Last completed:
-E5-a — retrieval drift measurement (F-02): no measurable drift, conditional E2-b not required, 2026-06-27. Prior: E2-a fail-loud sync (F-01); E-1 documentation reconciliation; E-0 audit (G-E0).
+E5-b — Qdrant restore drill (F-05b): PASS 2026-06-27 — snapshot 228e4183 restored into isolated env, all collections green 4049/872/419/280/0, fixture parity 16/16, prod untouched. Prior: E5-a drift measurement (F-02) no drift; E2-a fail-loud sync (F-01); E-1 reconciliation; E-0 audit (G-E0).
 
 Blocking issues:
 None
@@ -545,7 +545,7 @@ Planned:
 
 ## Backups
 
-Status: Operational
+Status: Operational — **restore drill PASS (E5-b, 2026-06-27)**
 
 - Restic installed
 - Repository initialised on the 2 TB USB disk
@@ -553,6 +553,14 @@ Status: Operational
 - D-1.5 anchor snapshot `63c072f4` retained as the
   pre-voice-pipeline rollback point (still in the
   repository, unchanged through D-1.6 / D-1.7 / D-1.8).
+- **E5-b restore drill (2026-06-27):** snapshot `228e4183`
+  (2026-06-27 nightly) restored into isolated environment;
+  Qdrant data fully recoverable; 15 consecutive nightly
+  snapshots confirmed in repository. Actual Qdrant backup
+  size: 2.8 GiB (E-0 estimate of 36 MB was an undercount —
+  includes `open-webui_files` and `open-webui_knowledge`
+  collections). Apply log:
+  [`../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md`](../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md).
 
 ---
 
@@ -593,6 +601,13 @@ Still open: the cron does not yet *act* on rc (run-health signal — E3-b);
 indexing is batch (intra-day staleness — E3-a); ingest/audit logs are not yet
 rotated (E4-a). Audit evidence base:
 [`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
+
+**E5-b restore drill done (2026-06-27)** — nightly restic backup proven
+recoverable: snapshot `228e4183` restored into isolated disposable container
+(`qdrant/qdrant:v1.17.0`, loopback-only `127.0.0.1:6399`), all 5 collections
+green (4049/872/419/280/0), fixture parity 16/16 (top-30 set + top-6 order).
+Production untouched (uptime unbroken, counts unchanged). Apply log:
+[`../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md`](../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md).
 
 ---
 

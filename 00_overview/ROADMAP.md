@@ -21,7 +21,8 @@ primary + UM790 fallback) all complete. The UM790 front
 doors now consume Torre's GPU Ollama via the `ollama-proxy`).
 **Phase E — Knowledge Platform Foundation — started 2026-06-27;
 E-0 + E-1 closed (G-E0); E2-a fail-loud sync + E5-a drift
-measurement done (E5-a: no retrieval drift, E2-b not required).**
+measurement + E5-b restore drill done (E5-b: PASS 16/16 fixture
+parity, recovery proven, 2026-06-27).**
 
 ---
 
@@ -335,8 +336,12 @@ findings):
   measurement, F-02) **done 2026-06-27** — no measurable drift,
   via the permanent
   [`04_ai_system/validation/retrieval_validation_fixture.yaml`](../04_ai_system/validation/retrieval_validation_fixture.yaml);
-  E5-b (Qdrant restore drill, F-05b) and E5-c (controlled
-  audit-log check) pending.
+  **E5-b (Qdrant restore drill, F-05b) done 2026-06-27** — PASS:
+  snapshot `228e4183` restored into isolated container, all 5
+  collections green (4049/872/419/280/0), fixture parity 16/16,
+  prod untouched. Apply log:
+  [`../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md`](../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md);
+  E5-c (controlled audit-log check) pending.
 * E-6 — Future onboarding framework (contract + template +
   procedure), proven against a disposable corpus.
 
