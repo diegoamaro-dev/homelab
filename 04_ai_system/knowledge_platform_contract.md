@@ -1,7 +1,7 @@
 # Knowledge Platform Contract
 
 - **Status:** Standing reference. Describes **deployed reality** of the
-  AMAROLAB knowledge platform as of 2026-06-27 (updated E-3, 2026-06-27).
+  AMAROLAB knowledge platform as of 2026-06-28 (last updated E-6, 2026-06-28).
 - **Authored:** Phase E — Knowledge Platform Foundation, step E-1 (from
   finding F-07: the contract was previously implicit, living only in code).
 - **Authority:** This document records what is deployed. If it disagrees

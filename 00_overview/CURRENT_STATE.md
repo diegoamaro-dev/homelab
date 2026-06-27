@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-Phase E — Knowledge Platform Foundation (E-0, E-1 closed; E2-a + E-3 + E5-a + E5-b + E5-c done 2026-06-27; E-2, E-4, E-6 in progress)
+Phase E — Knowledge Platform Foundation — **COMPLETE 2026-06-28.** All steps done: E-0, E-1, E-2 (E2-a/E2-c), E-3, E-4 (E4-a/E4-b), E-5 (E5-a/E5-b/E5-c), E-6. All E-0 findings resolved or accepted. Phase F is next.
 
 Overall health:
 Stable
@@ -10,10 +10,10 @@ Production:
 Operational
 
 Next milestone:
-Phase E completion (E-2…E-6: hardening, observability, maintenance, validation, onboarding framework)
+Phase F (to be defined)
 
 Last completed:
-E5-c — Audit log check (F-10): no defect found. Root cause: no Open WebUI web UI tool calls during observation period. Audit log scope documented (web UI only; HA Assist voice pipeline does not generate entries). health.json now overall_status=ok (first time). Prior: E-3 observability bundle; E5-b restore drill PASS; E5-a no drift; E2-a fail-loud sync; E-1 reconciliation; E-0 audit.
+E-6 — Onboarding framework (2026-06-28): framework document proven end-to-end against disposable corpus `e6_test`; success criterion met. Prior: E4-b backup-consistency decision (no change); E2-c run-lock + E4-a log rotation; E5-c audit-log check (F-10 resolved); E-3 observability (health.json); E5-b restore drill PASS; E5-a no drift; E2-a fail-loud sync; E-1 reconciliation; E-0 audit.
 
 Blocking issues:
 None
@@ -633,8 +633,8 @@ Two new scripts: `bin/ingest-nightly` (02:30 cron, wraps ingest sync, writes
 ingest section, frames `ingest.log` with run boundaries — E3-a/E3-b) and
 `bin/check-audit-liveness` (03:30 cron, writes audit section — E3-c).
 `overall_status` computed from both sections; carries `last_successful_run_end`
-across failures. Current state: `overall_status=degraded` (audit stale 9 days,
-F-10 — root cause pending E5-c). Apply log:
+across failures. `overall_status=ok` (resolved 2026-06-27 after E5-c closed F-10).
+Apply log:
 [`../09_logs/2026-06-27_phaseE_E3_observability_applied.md`](../09_logs/2026-06-27_phaseE_E3_observability_applied.md).
 
 ---

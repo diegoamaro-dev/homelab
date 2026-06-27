@@ -339,7 +339,7 @@ findings):
   02:30, restic 03:00) provides quiescent window; residual risk documented
   and accepted. Decision record:
   [`../09_logs/2026-06-27_phaseE_E4b_backup_consistency_decision.md`](../09_logs/2026-06-27_phaseE_E4b_backup_consistency_decision.md).
-* **E-5 — Validation — in progress.** E5-a (version-skew drift
+* **E-5 — Validation — done 2026-06-27.** E5-a (version-skew drift
   measurement, F-02) **done 2026-06-27** — no measurable drift,
   via the permanent
   [`04_ai_system/validation/retrieval_validation_fixture.yaml`](../04_ai_system/validation/retrieval_validation_fixture.yaml);

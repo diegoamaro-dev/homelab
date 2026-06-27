@@ -354,18 +354,15 @@ Closeout document:
 Phase D-1 closed; **Phase RTX-1 closed 2026-06-27 —
 RTX-1.4 + RTX-1.5 + RTX-1.6 all complete.** The UM790 front
 doors consume Torre's GPU via the `ollama-proxy` (Torre
-primary + UM790 fallback). **Current phase: Phase E —
-Knowledge Platform Foundation — in progress.** A bounded
-operations/foundation phase (stabilise the knowledge
-platform; not feature development). E-0 read-only operational
-audit closed 2026-06-27 (G-E0); E-1 documentation
-reconciliation closed; E2-a fail-loud sync done (F-01); E5-a
-drift measurement done (F-02, no drift); E5-b restore drill PASS
-(F-05b: 16/16 fixture parity); E-3 observability done (unified
-`health.json`); **E5-c audit-log check done 2026-06-27** (F-10
-resolved no-defect — root cause: no web UI tool calls during
-observation period; audit scope documented; `overall_status=ok`
-first time). E-0 report:
+primary + UM790 fallback). **Phase E — Knowledge Platform
+Foundation — CLOSED 2026-06-28.** All steps complete: E-0
+(audit), E-1 (doc reconciliation), E-2 (fail-loud sync +
+run-lock), E-3 (unified health.json), E-4 (log rotation +
+backup-consistency decision), E-5 (drift measurement + restore
+drill + audit-log check), E-6 (onboarding framework proven
+end-to-end). All 13 E-0 findings resolved or accepted. Platform
+health `overall_status=ok`. **Current phase: Phase F (to be
+defined).** E-0 report:
 [`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
 
 The overview triad, `06_security/rtx_node_security.md`,
