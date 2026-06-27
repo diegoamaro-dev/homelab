@@ -361,10 +361,11 @@ platform; not feature development). E-0 read-only operational
 audit closed 2026-06-27 (G-E0); E-1 documentation
 reconciliation closed; E2-a fail-loud sync done (F-01); E5-a
 drift measurement done (F-02, no drift); E5-b restore drill PASS
-(F-05b: 16/16 fixture parity); **E-3 observability done 2026-06-27**
-(unified `health.json`: `ingest-nightly` 02:30 + `check-audit-liveness`
-03:30; current state `degraded` — audit stale F-10, root cause pending
-E5-c). E-0 report:
+(F-05b: 16/16 fixture parity); E-3 observability done (unified
+`health.json`); **E5-c audit-log check done 2026-06-27** (F-10
+resolved no-defect — root cause: no web UI tool calls during
+observation period; audit scope documented; `overall_status=ok`
+first time). E-0 report:
 [`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
 
 The overview triad, `06_security/rtx_node_security.md`,

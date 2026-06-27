@@ -20,8 +20,8 @@ service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
 doors now consume Torre's GPU Ollama via the `ollama-proxy`).
 **Phase E — Knowledge Platform Foundation — started 2026-06-27;
-E-0 + E-1 closed (G-E0); E2-a + E-3 + E5-a + E5-b done 2026-06-27
-(E-3: unified health.json live; E5-b: restore drill PASS 16/16).**
+E-0 + E-1 closed (G-E0); E2-a + E-3 + E5-a + E5-b + E5-c done 2026-06-27
+(E5-c: F-10 resolved no-defect; `overall_status=ok` first time).**
 
 ---
 
@@ -329,8 +329,8 @@ findings):
   (run-lock, F-08) pending.
 * **E-3 — Observability — done 2026-06-27.** Unified `health.json`
   (gitignored runtime state): `ingest-nightly` wrapper (02:30, E3-a/E3-b)
-  + `check-audit-liveness` (03:30, E3-c). Current `overall_status=degraded`
-  (audit stale F-10 — root cause pending E5-c). Apply log:
+  + `check-audit-liveness` (03:30, E3-c). `overall_status=ok` (resolved
+  2026-06-27 after E5-c closed F-10). Apply log:
   [`../09_logs/2026-06-27_phaseE_E3_observability_applied.md`](../09_logs/2026-06-27_phaseE_E3_observability_applied.md).
 * E-4 — Maintenance (log rotation; Qdrant backup-consistency
   spike — "no change" is an acceptable outcome).
@@ -343,7 +343,10 @@ findings):
   collections green (4049/872/419/280/0), fixture parity 16/16,
   prod untouched. Apply log:
   [`../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md`](../09_logs/2026-06-27_phaseE_E5b_restore_drill_applied.md);
-  E5-c (controlled audit-log check) pending.
+  **E5-c (controlled audit-log check, F-10) done 2026-06-27** — no defect:
+  root cause was absence of web UI tool calls during observation period;
+  audit log scope documented (web UI only). Apply log:
+  [`../09_logs/2026-06-27_phaseE_E5c_audit_log_check.md`](../09_logs/2026-06-27_phaseE_E5c_audit_log_check.md).
 * E-6 — Future onboarding framework (contract + template +
   procedure), proven against a disposable corpus.
 

@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-Phase E — Knowledge Platform Foundation (E-0, E-1 closed; E2-a + E-3 + E5-a + E5-b done 2026-06-27; E-2, E-4, E-5-c, E-6 in progress)
+Phase E — Knowledge Platform Foundation (E-0, E-1 closed; E2-a + E-3 + E5-a + E5-b + E5-c done 2026-06-27; E-2, E-4, E-6 in progress)
 
 Overall health:
 Stable
@@ -13,7 +13,7 @@ Next milestone:
 Phase E completion (E-2…E-6: hardening, observability, maintenance, validation, onboarding framework)
 
 Last completed:
-E-3 — Observability bundle (F-01 cron-action, F-03, F-10 signal): unified health.json live 2026-06-27 (ingest-nightly + check-audit-liveness; health.json shows overall_status=degraded, audit stale 9 days). Prior: E5-b restore drill PASS; E5-a no drift; E2-a fail-loud sync; E-1 reconciliation; E-0 audit.
+E5-c — Audit log check (F-10): no defect found. Root cause: no Open WebUI web UI tool calls during observation period. Audit log scope documented (web UI only; HA Assist voice pipeline does not generate entries). health.json now overall_status=ok (first time). Prior: E-3 observability bundle; E5-b restore drill PASS; E5-a no drift; E2-a fail-loud sync; E-1 reconciliation; E-0 audit.
 
 Blocking issues:
 None

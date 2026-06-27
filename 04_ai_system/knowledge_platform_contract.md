@@ -138,6 +138,14 @@ title          # derived document title
   are bind-mounted read-only into `openwebui` at `/opt/ingest`. Editing
   that code on the host and reloading serves the **old** code — a change
   requires an `openwebui` **container recreate**, not a reload.
+- **Audit log scope (E5-c, 2026-06-27):** `amarolab-audit.log` records
+  **Open WebUI web UI tool executions only**. Calls through the HA Assist
+  voice pipeline (HA → Ollama integration) bypass Open WebUI entirely and
+  generate no audit entries. Direct CLI/API queries similarly generate no
+  entries. This is an architectural boundary. The `check-audit-liveness`
+  script measures age of the last entry — expect stale readings during
+  periods with no web UI tool activity (not a defect). See
+  [`../09_logs/2026-06-27_phaseE_E5c_audit_log_check.md`](../09_logs/2026-06-27_phaseE_E5c_audit_log_check.md).
 - **`rag_search` placeholder behaviour (D-22):** a query against a 0-point
   collection returns `{"hits": [], "code": "empty_collection"}` so the LLM
   apologises cleanly instead of silently picking another corpus.
