@@ -1,11 +1,11 @@
 # RTX-1.5 — Headless Ollama Service (NSSM)
 
-**Status:** IN PROGRESS — NOT closed.
+**Status:** CLOSED — RTX-1.5 complete (2026-06-27). All gates PASS.
 
 - Date: 2026-06-19 · Node: Torre (Windows 11 Pro + RTX 5070) · Ecosystem: AMAROLAB · Assistant: AURORA
-- PASS: G-1.5-1, G-1.5-2, G-1.5-3, G-1.5-4, UM790 cross-check, **G-1.5-8 (teardown / VRAM — critical)**
-- PENDING: G-1.5-5 (logoff), G-1.5-6 (reboot without login), G-1.5-7 (firewall re-check), G-1.5-9 (restart throttle), G-1.5-10 (production integrity)
-- Persistence across logoff/reboot is **not yet proven**. No UM790 endpoint swap (RTX-1.6). Torre-only; no Open WebUI / Home Assistant / Guardian Cloud / Cloudflare change.
+- PASS (all): G-1.5-1, G-1.5-2, G-1.5-3, G-1.5-4, UM790 cross-check, **G-1.5-8 (teardown / VRAM — critical)**, **G-1.5-7 (firewall re-check)**, **G-1.5-5 (logoff + PID continuity)**, **G-1.5-6 (reboot without login — core persistence proof)**, **G-1.5-9 (restart throttle)**, **G-1.5-10 (production integrity)**
+- Persistence across logoff and reboot-without-login is **PROVEN** (G-1.5-5 / G-1.5-6), GPU offload restored at cold boot. No UM790 endpoint swap (RTX-1.6 pending). Torre-only; Open WebUI / Home Assistant / Guardian Cloud / Cloudflare unchanged (verified G-1.5-10).
+- Closeout 2026-06-27. Gate detail + reality reconciliations in *Closeout (2026-06-27)* below; full session evidence in [`2026-06-27_rtx1_5_continuation_handoff.md`](./2026-06-27_rtx1_5_continuation_handoff.md).
 
 ## Context
 
@@ -139,13 +139,15 @@ D:\ai\ollama\logs\server-err.log
 
 Process tree handling:
 
-AppKillProcessTree=1
+NSSM 2.24 **default** process-tree termination (kills the whole tree on stop). `AppKillProcessTree` is the opt-out (=0) and is not exposed via `nssm get` in 2.24; with it unset, tree-kill is ON by default. (Corrected at closeout — the earlier `AppKillProcessTree=1` was never a set parameter; see *Closeout*.)
 
-Restart handling:
+Restart handling (actual NSSM 2.24 `nssm get` — corrected at closeout):
 
 AppExit Default Restart
-AppRestartDelay=10000
-AppThrottle=10000
+AppRestartDelay=0  (NSSM default — immediate restart)
+AppThrottle=1500  (NSSM default fail-fast window)
+
+The earlier `AppRestartDelay=10000` / `AppThrottle=10000` were documented intent that was **never applied**; the service has run on NSSM defaults throughout, validated sufficient by G-1.5-9. See *Closeout*.
 
 Provenance:
 
@@ -301,7 +303,7 @@ Evidence summary:
 
 Conclusion:
 
-AppKillProcessTree=1 successfully prevents orphaned llama-server processes and VRAM retention after service crashes. This validates the NSSM-over-WinSW decision on the teardown criterion (safe-by-default recursive process-tree cleanup covering stop, restart, and crash).
+NSSM 2.24's **default** process-tree termination prevents orphaned llama-server processes and VRAM retention after service crashes (corrected attribution — the result is the NSSM default, not a configured `AppKillProcessTree=1`, which was never set; see *Closeout*). This validates the NSSM-over-WinSW decision on the teardown criterion (safe-by-default recursive process-tree cleanup covering stop, restart, and crash). Directly evidenced at G-1.5-9 by NSSM Event Log entries 1023/1027 ("Killing process tree of process …").
 
 ## Final State
 
@@ -315,27 +317,48 @@ Validated posture:
 - GPU acceleration active (29/29 layers, ~111 tok/s)
 - Process-tree cleanup validated (G-1.5-8): no orphan llama-server, VRAM recovered on stop / restart / crash
 
-Not yet proven (pending gates):
+Now proven (closeout 2026-06-27):
 
-- survival across user logoff (G-1.5-5)
-- survival across reboot without login (G-1.5-6)
-- firewall group re-check (G-1.5-7)
-- restart throttle behavior (G-1.5-9)
-- production integrity (G-1.5-10)
+- survival across user logoff + PID continuity (G-1.5-5)
+- survival across reboot without login, GPU offload restored at cold boot (G-1.5-6 — core objective)
+- firewall group re-check, host-scoped /32 allowlist (G-1.5-7)
+- restart throttle behavior, 0→2000→4000 ms back-off (G-1.5-9)
+- production integrity, endpoint not swapped, stack unchanged (G-1.5-10)
 
-RTX-1.5 is **IN PROGRESS** — not closed. Persistence across logoff/reboot — the core objective — is not yet demonstrated.
+RTX-1.5 is **CLOSED** — headless persistence demonstrated end-to-end. See *Closeout (2026-06-27)*.
 
-## Remaining RTX-1.5 Gates
+## Closeout (2026-06-27)
 
-Pending:
+All RTX-1.5 gates PASS. The RTX node serves Ollama as a LocalSystem NSSM service that survives logoff and reboot-without-login with GPU acceleration intact.
 
-- G-1.5-5 logoff validation (login → confirm tray does not start → logoff → still serving)
-- G-1.5-6 reboot without login (the core persistence proof)
-- G-1.5-7 firewall revalidation (reachability differential already confirmed by the UM790 cross-check; Torre-side `Get-NetFirewallRule -Group Amarolab-RTX-1.4` group re-check pending)
-- G-1.5-9 restart throttle validation
-- G-1.5-10 production integrity validation (UM790 endpoint not swapped; Open WebUI / HA / Guardian Cloud / Cloudflare unchanged)
+### Gate results (G-1.5-5/6/7/9/10)
 
-After the pending gates pass: RTX-1.5 closeout, then RTX-1.6 (security delta doc `06_security/rtx_node_security.md` + UM790 endpoint swap). Per the RTX-1 documentation convention, the overview triad, architecture docs, and `security_posture.md` are amended only at RTX-1 closeout — not per sub-step.
+- **G-1.5-7 firewall re-check — PASS.** UM790 differential re-confirmed (Tailscale `/api/version`=0.30.10, `/api/tags`, `/api/generate`→OK; LAN `192.168.178.21:11434` curl exit 28). Torre group `Amarolab-RTX-1.4` rules present + Enabled. **Firewall is a host-scoped /32 allowlist**: `Ollama-Tailscale-Only` allow `100.68.180.69/32` (UM790 only) + `Ollama-Block-LAN` block `192.168.178.0/24` — tighter than a CGNAT-wide allow.
+- **G-1.5-5 logoff — PASS.** UM790-side 8/8 availability probes over ~40 s while signed out + end-to-end inference. PID continuity proven: nssm wrapper + ollama child PIDs unchanged across logoff (no silent restart).
+- **G-1.5-6 reboot without login — PASS (core).** After reboot with no interactive login, the service served over Tailscale before any login; `/api/generate` OK; GPU offload restored at cold boot (`/api/ps` `size_vram==size`) — CUDA initialized in Session 0 at boot, no CPU fallback. LAN blocked.
+- **G-1.5-9 restart throttle — PASS.** Validated against the ACTUAL NSSM defaults. NSSM Event Log (event 1034) shows fast-exit back-off `0 → 2000 → 4000 ms` (doubling, exactly per spec); process-tree kill logged (events 1023/1027); clean recovery to a single instance.
+- **G-1.5-10 production integrity — PASS.** RTX-1.5 stayed Torre-scoped: UM790 Open WebUI endpoint still `http://ollama:11434` (local ollama v0.17.7), Torre IP absent from all container envs (no RTX-1.6 swap); all 16 production containers Up; HA / Guardian Cloud / Cloudflare untouched.
+
+### Reality reconciliations (reality wins)
+
+1. **NSSM restart params**: documented `AppRestartDelay=10000` / `AppThrottle=10000` were **never applied** — the service runs NSSM defaults (`0` / `1500`), validated sufficient (G-1.5-9). Any move to `AppThrottle=10000` is deferred to a separate post-closeout hardening change.
+2. **Process-tree kill**: no configured `AppKillProcessTree=1`; NSSM 2.24 kills the tree **by default** (opt-out param not exposed in 2.24). G-1.5-8 conclusion + Service Configuration re-attributed above.
+3. **NSSM 2.24 has no `dump`** — config captured via per-parameter `nssm get` (the parameter-lock capture this log flagged as a closeout item; recorded below).
+4. **Firewall** is a host-scoped /32 allowlist (UM790 only), not a CGNAT-wide allow.
+5. Local UM790 production ollama is **v0.17.7** (CPU), distinct from Torre **0.30.10** (GPU) — endpoint not swapped.
+
+### Parameter lock (NSSM 2.24 `nssm get`)
+
+`Application`=`C:\Users\diego\AppData\Local\Programs\Ollama\ollama.exe` · `AppParameters`=`serve` · `AppDirectory`=`…\Ollama` · `AppEnvironmentExtra`=`OLLAMA_HOST=0.0.0.0:11434` + `OLLAMA_MODELS=D:\ai\ollama\models` · `AppExit Default`=`Restart` · `AppRestartDelay`=`0` · `AppThrottle`=`1500` · process-tree kill = NSSM default.
+
+### Candidate lessons (to add to `07_operations/lessons_learned.md`)
+
+- **L-RTX-3**: after `nssm install/set`, always verify with `nssm get` — an empty PowerShell variable silently corrupts `Application` (Step 3 incident), and documented param intent can silently never-apply (the 10000/10000 drift).
+- **L-RTX-4**: match validation tooling to the installed version — NSSM 2.24 lacks `dump`; throttle back-off is `0→2000→4000 ms` doubling (event 1034); process-tree kill is the 2.24 default (events 1023/1027), not a set parameter.
+
+### Documentation scope at this closeout
+
+Overview triad (CURRENT_STATE / AMAROLAB_HANDOFF / ROADMAP) refreshed to RTX-1.4 + RTX-1.5 complete (per operator direction, a deliberate refresh ahead of the usual RTX-1-closeout cadence). `security_posture.md` and the architecture amendment (DRAFT) remain **deferred to RTX-1.6**, where RTX node security lands in its own `06_security/rtx_node_security.md`. Next: **RTX-1.6** — security delta doc + UM790 `ollama` endpoint swap (Torre primary + UM790 fallback).
 
 ## Documentation Convention / Security Note
 

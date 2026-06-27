@@ -14,9 +14,10 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-06-18 (Phase D-1 closed; Phase RTX-1
-local validation complete — RTX node provisioned, not
-yet consumed by the UM790).
+Last updated: 2026-06-27 (Phase D-1 closed; Phase RTX-1
+— RTX-1.4 remote exposure + RTX-1.5 headless NSSM service
+complete; RTX node provisioned and Tailscale-reachable but
+not yet consumed by the UM790 — endpoint swap is RTX-1.6).
 
 ---
 
@@ -224,26 +225,62 @@ Tracked in the closeout document and in
 
 ## Phase RTX-1
 
-**Status:** Local validation complete (2026-06-18).
-Remote exposure (RTX-1.4) pending. RTX node provisioned
-but **not yet consumed by the UM790**.
+**Status:** **RTX-1.5 complete (2026-06-27).** Torre runs
+Ollama as a headless NSSM service that persists across
+logoff + reboot-without-login (GPU offload restored at
+cold boot). **RTX-1.4 complete (2026-06-19)** — secure
+remote exposure, Tailscale-only. RTX node provisioned,
+headless and Tailscale-reachable but **not yet consumed by
+the UM790** — the endpoint swap is **RTX-1.6 (next)**.
 
 **Outcome:** Torre (Windows + RTX 5070, 12 GB VRAM) runs
-`qwen2.5:7b-instruct` GPU-accelerated — ≈17.6× the UM790
-CPU baseline. No production service moved; the UM790
-stays the 24/7 node.
+`qwen2.5:7b-instruct` GPU-accelerated — **105.3 tok/s,
+≈17.6×** the UM790 CPU baseline — now reachable from the
+UM790 over Tailscale (host-scoped /32 allowlist) and
+surviving cold boot with no interactive login. No
+production service moved; the UM790 stays the 24/7 node and
+still serves its own local CPU Ollama.
 
-**Next steps:** RTX-1.4 (secure remote exposure,
-Tailscale-only) → security delta doc
-`06_security/rtx_node_security.md` → UM790 `ollama`
-endpoint swap; then merge the architecture amendment
+### Sub-step ledger
+
+| Step | Description | Status |
+|---|---|---|
+| RTX-1.0 | Read-only post-format workstation audit | Done |
+| RTX-1.1 | Install Ollama; pre-stage `D:\ai\ollama\models` | Done |
+| RTX-1.2 | GPU validation (pull, placement, VRAM, benchmark) | Done |
+| RTX-1.3 | Storage remediation (model store C: → D:) | Done |
+| RTX-1.4 | Secure remote exposure (OLLAMA_HOST + firewall, Tailscale-only) | **Complete (2026-06-19)** |
+| RTX-1.5 | Headless persistence (NSSM Windows service) | **Complete (2026-06-27)** |
+| RTX-1.6 | Security delta doc + UM790 endpoint swap | **Not started (next)** |
+
+**RTX-1.5 detail:** Ollama migrated from the interactive
+tray app to a headless NSSM service (`OllamaService`,
+LocalSystem, Automatic). All ten gates G-1.5-1 through
+G-1.5-10 PASS — persistence across logoff and
+reboot-without-login, GPU 29/29 offload restored at cold
+boot, single listener `0.0.0.0:11434`, teardown leaves no
+orphan and recovers VRAM, host-scoped /32 firewall allowlist
+preserved (allow `100.68.180.69/32`, block LAN), and the
+UM790 production stack untouched (still `http://ollama:11434`
+on its local CPU Ollama).
+
+**Next steps (RTX-1.6):** security delta doc
+`06_security/rtx_node_security.md` → UM790 `ollama` endpoint
+swap (Torre primary + UM790 fallback, gated on that doc) →
+merge the architecture amendment
 ([DRAFT](../01_architecture/amarolab_architecture_rtx_amendment_DRAFT.md))
-at RTX-1 closeout.
+and `security_posture.md`.
 
 Full status, benchmark and sub-steps:
-[`04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md`](../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md)
+[`04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md`](../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md).
+Apply logs:
+[`09_logs/2026-06-18_phaseRTX1_local_validation.md`](../09_logs/2026-06-18_phaseRTX1_local_validation.md) (local validation)
 ·
-[`09_logs/2026-06-18_phaseRTX1_local_validation.md`](../09_logs/2026-06-18_phaseRTX1_local_validation.md).
+[`09_logs/2026-06-19_phaseRTX1_4_remote_exposure.md`](../09_logs/2026-06-19_phaseRTX1_4_remote_exposure.md) (RTX-1.4)
+·
+[`09_logs/2026-06-19_phaseRTX1_5_headless_service.md`](../09_logs/2026-06-19_phaseRTX1_5_headless_service.md) (RTX-1.5 service)
+·
+[`09_logs/2026-06-27_rtx1_5_continuation_handoff.md`](../09_logs/2026-06-27_rtx1_5_continuation_handoff.md) (RTX-1.5 closeout).
 
 ---
 

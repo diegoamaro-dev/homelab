@@ -6,7 +6,7 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-06-18
+Last updated: 2026-06-27
 
 ---
 
@@ -154,9 +154,11 @@ baseline and `switch.impresora_3d` untouched
 
 ### Phase RTX-1 — Torre GPU node bring-up
 
-Status: **Local validation complete (2026-06-18).
-Remote exposure pending (RTX-1.4). RTX node provisioned
-but not yet consumed by the UM790.**
+Status: **RTX-1.5 complete (2026-06-27) — Torre runs Ollama
+as a headless NSSM service (persists across logoff +
+reboot-without-login, GPU offload restored at cold boot).
+RTX-1.4 complete (2026-06-19, Tailscale-only). RTX node
+still not consumed by the UM790 — endpoint swap is RTX-1.6.**
 
 **Torre** (Windows 11 Pro + RTX 5070, 12 GB VRAM;
 Tailscale `100.91.154.124` / LAN `192.168.178.21`) is
@@ -174,26 +176,30 @@ moved; the UM790 remains the 24/7 node.
 | RTX-1.1 | Install Ollama; pre-stage `D:\ai\ollama\models` | Done |
 | RTX-1.2 | GPU validation (pull, placement, VRAM, benchmark) | Done |
 | RTX-1.3 | Storage remediation (model store C: → D:) | Done |
-| RTX-1.4 | Secure remote exposure (OLLAMA_HOST + firewall, Tailscale-only) | **Planned — not executed** |
-| RTX-1.5 | Headless persistence (Windows service) | Not started |
-| RTX-1.6 | Security delta doc + UM790 endpoint swap | Not started |
+| RTX-1.4 | Secure remote exposure (OLLAMA_HOST + firewall, Tailscale-only) | **Complete (2026-06-19)** |
+| RTX-1.5 | Headless persistence (Windows service) | **Complete (2026-06-27)** |
+| RTX-1.6 | Security delta doc + UM790 endpoint swap | Not started (next) |
 
-Blockers before the UM790 can consume Torre:
+Remaining before the UM790 can consume Torre (RTX-1.6):
 
-- Ollama binds `127.0.0.1:11434` (loopback only); no
-  `OLLAMA_HOST`, no firewall rule scoping 11434 to the
-  Tailscale range, no headless service (RTX-1.4 / 1.5).
+- ~~Loopback bind / no `OLLAMA_HOST` / no firewall scope /
+  no headless service~~ → **RESOLVED**: RTX-1.4
+  (`OLLAMA_HOST=0.0.0.0:11434`, host-scoped /32 firewall
+  allowlist, Tailscale-only) + RTX-1.5 (headless NSSM
+  service; persists across logoff/reboot).
 - Security delta doc `06_security/rtx_node_security.md`
   required before the UM790 `ollama` endpoint points at
-  Torre — not yet created.
+  Torre — **not yet created (RTX-1.6)**.
 - VRAM-headroom discipline: Torre must run lean/headless
   (lesson L-RTX-2).
 
 Validation summary:
 [`04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md`](../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md).
-Apply log:
-[`09_logs/2026-06-18_phaseRTX1_local_validation.md`](../09_logs/2026-06-18_phaseRTX1_local_validation.md).
-Architecture amendment (DRAFT, not merged):
+Apply logs:
+[`09_logs/2026-06-18_phaseRTX1_local_validation.md`](../09_logs/2026-06-18_phaseRTX1_local_validation.md) (local validation) ·
+[`09_logs/2026-06-19_phaseRTX1_5_headless_service.md`](../09_logs/2026-06-19_phaseRTX1_5_headless_service.md) (RTX-1.5 service) ·
+[`09_logs/2026-06-27_rtx1_5_continuation_handoff.md`](../09_logs/2026-06-27_rtx1_5_continuation_handoff.md) (RTX-1.5 validation/closeout).
+Architecture amendment (DRAFT — merged at RTX-1.6):
 [`01_architecture/amarolab_architecture_rtx_amendment_DRAFT.md`](../01_architecture/amarolab_architecture_rtx_amendment_DRAFT.md).
 
 ---
@@ -252,9 +258,9 @@ A restart on either side does not disturb the other.
 
 Both integrations currently target the **UM790 CPU**
 Ollama (~6 tok/s). Torre's GPU Ollama (105.3 tok/s) is
-provisioned but **not yet consumed**; the endpoint swap
-is a separate gated step after RTX-1.4 (see Phase RTX-1
-above).
+provisioned, headless (RTX-1.5), and Tailscale-reachable
+but **not yet consumed**; the endpoint swap is **RTX-1.6**
+(see Phase RTX-1 above).
 
 ### Qdrant
 
@@ -578,9 +584,10 @@ token for the `amarolab` tunnel lives at
    Guardian-Cloud tunnel.
 2. **RTX 5070 AI-node bridge** — Phase RTX-1 local GPU
    validation complete (2026-06-18, 105.3 tok/s);
-   **remote exposure (RTX-1.4) and the UM790 endpoint
-   swap not yet done.** Streaming TTS, prompt trimming,
-   and the STT model-size bump remain not started.
+   **RTX-1.4 (Tailscale-only exposure) and RTX-1.5
+   (headless NSSM service) complete; the UM790 endpoint
+   swap (RTX-1.6) not yet done.** Streaming TTS, prompt
+   trimming, and the STT model-size bump remain not started.
 3. **Dedicated NAS** — procurement and data migration.
 4. **MyFreeTour** RAG collection (Phase E).
 5. **DNS / Cloudflare architecture doc amendments**

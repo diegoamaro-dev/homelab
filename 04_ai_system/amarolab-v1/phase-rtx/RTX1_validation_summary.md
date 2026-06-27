@@ -3,9 +3,7 @@
 - **Assistant:** **AURORA** — Personal AI Assistant for the AMAROLAB ecosystem.
 - **Node:** **Torre** — Windows + RTX workstation (AI compute node).
 - **Date:** 2026-06-18
-- **Status:** **RTX-1.4 complete (2026-06-19) — Ollama reachable from the UM790
-  over Tailscale only, LAN blocked. Headless persistence (RTX-1.5) and the UM790
-  endpoint swap (RTX-1.6) pending.**
+- **Status:** **RTX-1.5 complete (2026-06-27) — headless NSSM service; persistence across logoff + reboot-without-login proven, GPU offload restored at cold boot, network posture preserved (host-scoped /32 allowlist). RTX-1.4 complete (2026-06-19). UM790 endpoint swap (RTX-1.6) pending.**
 - **One-line:** `qwen2.5:7b-instruct` runs on Torre's RTX 5070 at
   **105.3 tok/s** from `D:\ai\ollama\models` — **17.6×** the UM790 CPU
   baseline — but is **not yet reachable by the UM790**.
@@ -39,7 +37,7 @@ Guardian Cloud, or infrastructure changes.
 | RTX-1.2 | GPU validation (pull, placement, VRAM, benchmark) | **Done** |
 | RTX-1.3 | Storage remediation (model store C: → D:) | **Done** |
 | RTX-1.4 | Secure remote exposure (OLLAMA_HOST + firewall, Tailscale-only) | **Completed (2026-06-19)** — [log](../../../09_logs/2026-06-19_phaseRTX1_4_remote_exposure.md) |
-| RTX-1.5 | Headless persistence (Windows service) | Not started |
+| RTX-1.5 | Headless persistence (Windows service) | **Complete (2026-06-27)** — [log](../../../09_logs/2026-06-19_phaseRTX1_5_headless_service.md) · [closeout](../../../09_logs/2026-06-27_rtx1_5_continuation_handoff.md) |
 | RTX-1.6 | Security delta doc + UM790 endpoint swap | Not started |
 
 > Numbering note: this session used **RTX-1.x**; the forward-looking
@@ -109,7 +107,7 @@ to avoid running VRAM-heavy GUI apps while serving.
 | `OLLAMA_MODELS` | Machine + User scope = `D:\ai\ollama\models` |
 | `OLLAMA_HOST` | `0.0.0.0:11434` (Machine scope) |
 | Firewall | 2 scoped inbound rules — allow `100.68.180.69/32`; block `192.168.178.0/24` |
-| Persistence | none — manual start |
+| Persistence | **NSSM service (LocalSystem, Automatic)** — survives logoff + reboot-without-login (RTX-1.5, 2026-06-27) |
 
 Blockers before the UM790 can consume Torre (all addressed by RTX-1.4 /
 RTX-1.5):
@@ -122,7 +120,7 @@ RTX-1.5):
 
 ---
 
-## 6. RTX-1.4 — completed 2026-06-19 (next: RTX-1.5)
+## 6. RTX-1.4 — completed 2026-06-19
 
 RTX-1.4 is complete — see [the apply log](../../../09_logs/2026-06-19_phaseRTX1_4_remote_exposure.md).
 The steps below are retained as the record of what was executed.
@@ -140,6 +138,26 @@ A security delta doc (`06_security/rtx_node_security.md`) is required before
 the UM790 endpoint actually points at Torre (node-bridge §4). The UM790
 `ollama` endpoint swap (Torre primary + UM790 fallback) is a separate gated
 step, not part of RTX-1.
+
+---
+
+## 6.5 RTX-1.5 — headless persistence (completed 2026-06-27)
+
+Ollama on Torre migrated from the interactive tray app to a **headless NSSM Windows service** (`OllamaService`, LocalSystem, Automatic). All gates PASS — full record in [the phase log](../../../09_logs/2026-06-19_phaseRTX1_5_headless_service.md) and [the closeout handoff](../../../09_logs/2026-06-27_rtx1_5_continuation_handoff.md).
+
+| Gate | Result |
+|---|---|
+| G-1.5-1/2/3/4 | Service Running/Automatic; env vars; single listener `0.0.0.0:11434`; GPU 29/29, size_vram==size, ~111 tok/s |
+| G-1.5-8 (critical) | Teardown/VRAM: stop/restart/crash → no orphan, VRAM recovered (NSSM 2.24 **default** tree-kill) |
+| G-1.5-7 | Firewall re-check: host-scoped /32 allowlist (allow `100.68.180.69/32`, block LAN); UM790 reachable, LAN blocked |
+| G-1.5-5 | Logoff: serves while signed out; PID continuity (no silent restart) |
+| **G-1.5-6** | **Reboot without login (core): serves over Tailscale before any login; GPU offload restored at cold boot** |
+| G-1.5-9 | Restart throttle: NSSM back-off `0→2000→4000 ms` (event 1034); clean recovery |
+| G-1.5-10 | Production integrity: UM790 endpoint unchanged (`http://ollama:11434`, local v0.17.7); Torre IP absent from all containers; stack untouched |
+
+**Reality reconciliations:** NSSM restart params are defaults (`AppRestartDelay=0`, `AppThrottle=1500`) — the documented `10000/10000` were never applied; no `AppKillProcessTree=1` (tree-kill is the NSSM 2.24 default); NSSM 2.24 has no `dump` (used `nssm get`); firewall is a host-scoped /32 allowlist (not CGNAT-wide). Local UM790 ollama (v0.17.7, CPU) is distinct from Torre (0.30.10, GPU); endpoint **not** swapped.
+
+**Deferred to RTX-1.6:** `security_posture.md` + the architecture amendment, and the UM790 `ollama` endpoint swap. Security delta lands in its own `06_security/rtx_node_security.md`.
 
 ---
 
