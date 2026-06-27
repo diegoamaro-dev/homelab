@@ -1,0 +1,33 @@
+# ollama-proxy — RTX-1.6 failover front end (Torre primary + UM790 fallback).
+#
+# Self-contained compose project. Touches no existing service.
+#   - Open WebUI (bridge)      reaches it as  http://ollama-proxy:11434
+#   - Home Assistant (host net) reaches it as http://127.0.0.1:11435
+#
+# Deploy:   docker compose -f 03_services/ollama-proxy/docker-compose.yml up -d
+# Rollback: docker compose -f 03_services/ollama-proxy/docker-compose.yml down
+name: ollama-proxy
+
+services:
+  ollama-proxy:
+    image: nginx:alpine
+    container_name: ollama-proxy
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      # Published on loopback only — for the host-network Home Assistant.
+      # Open WebUI does NOT use this; it reaches the proxy over the docker network.
+      - "127.0.0.1:11435:11434"
+    networks:
+      - ai-local_default
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:11434/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  ai-local_default:
+    external: true
+    name: ai-local_default

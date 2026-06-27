@@ -67,14 +67,16 @@ infrastructure.
 * 512 GB SSD
 * Linux
 
-### AI Compute Node (Torre) — RTX-1.5 complete 2026-06-27
+### AI Compute Node (Torre) — Phase RTX-1 closed 2026-06-27
 
 * Windows tower + NVIDIA RTX 5070 (12 GB VRAM)
 * On-demand GPU compute (not 24/7)
 * Runs Ollama as a **headless NSSM service** (LocalSystem,
   Automatic) — Tailscale-only (host-scoped /32 allowlist),
   persists across logoff + reboot-without-login (RTX-1.5).
-  **Not yet consumed by the UM790** — endpoint swap is RTX-1.6.
+* **Consumed by the UM790 since RTX-1.6** via the
+  `ollama-proxy` (Torre primary + UM790 CPU fallback);
+  ~101 tok/s end-to-end.
 
 ### Network
 
@@ -300,10 +302,12 @@ Current phase:
 
 **Phase D-1 — Voice — CLOSED 2026-06-18.**
 
-Active follow-on: **Phase RTX-1 — Torre GPU node —
-RTX-1.4 (Tailscale-only exposure) + RTX-1.5 (headless NSSM
-service) complete (2026-06-27, ≈17.6× the UM790 CPU). Node
-not yet consumed by the UM790 — endpoint swap is RTX-1.6.**
+Active follow-on: **Phase RTX-1 — Torre GPU node — CLOSED
+2026-06-27. RTX-1.4 (Tailscale-only) + RTX-1.5 (headless
+NSSM service) + RTX-1.6 (UM790 endpoint swap via the
+`ollama-proxy`, Torre primary + UM790 fallback) all
+complete. The front doors now consume Torre's GPU
+(≈17.6× the UM790 CPU).**
 
 Phase status:
 
@@ -342,19 +346,17 @@ Closeout document:
 
 ## Next Immediate Task
 
-Phase D-1 closed; **RTX-1.4 (Tailscale-only exposure) and
-RTX-1.5 (headless NSSM service) complete (2026-06-27).**
-Next concrete step toward consuming the RTX node:
-**RTX-1.6 — security delta doc
-`06_security/rtx_node_security.md` + UM790 `ollama`
-endpoint swap (Torre primary + UM790 fallback).**
+Phase D-1 closed; **Phase RTX-1 closed 2026-06-27 —
+RTX-1.4 + RTX-1.5 + RTX-1.6 all complete.** The UM790 front
+doors consume Torre's GPU via the `ollama-proxy` (Torre
+primary + UM790 fallback). **Next phase: Phase E (Unified
+Knowledge) — not started.**
 
-This triad and `07_operations/lessons_learned.md` reflect
-RTX-1.4 + RTX-1.5. The live architecture doc and
-`security_posture.md` remain **intentionally not yet
-amended** (architecture amendment stays a DRAFT, and RTX
-node security lands in its own
-`06_security/rtx_node_security.md` at RTX-1.6).
+The overview triad, `06_security/rtx_node_security.md`,
+`06_security/security_posture.md`, and the live architecture
+doc (`01_architecture/amarolab_architecture.md`, RTX
+amendment merged) all reflect RTX-1.6. Apply log:
+[`../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md`](../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md).
 
 Pending post-D-1 follow-ups (tracked in
 [`CURRENT_STATE.md`](CURRENT_STATE.md) and the closeout
@@ -364,11 +366,10 @@ document — none of these are mandatory next steps):
 * DNS / Cloudflare architecture doc amendments to
   record the separate-tunnel decision and the
   `ai.amarolab.es` binding.
-* **RTX-1.6** — UM790 `ollama` endpoint swap (Torre
-  primary + UM790 fallback), gated on the security delta
-  doc `06_security/rtx_node_security.md`. RTX-1.4 +
-  RTX-1.5 are done. Details:
-  [`../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md`](../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md).
+* ~~**RTX-1.6** — UM790 `ollama` endpoint swap~~ **DONE
+  (2026-06-27)** via the `ollama-proxy` (Torre primary +
+  UM790 fallback). Apply log:
+  [`../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md`](../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md).
 * STT model-size bump candidate (`small` or
   `medium-int8`).
 * Streaming TTS in Open WebUI.

@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-RTX-1.6
+RTX-1.6 — complete (Phase RTX-1 closed)
 
 Overall health:
 Stable
@@ -10,10 +10,10 @@ Production:
 Operational
 
 Next milestone:
-Endpoint migration
+Phase E (Unified Knowledge)
 
 Last completed:
-RTX-1.5
+RTX-1.6 (UM790 ollama endpoint swap — Torre primary + UM790 fallback)
 
 Blocking issues:
 None
@@ -173,11 +173,13 @@ baseline and `switch.impresora_3d` untouched
 
 ### Phase RTX-1 — Torre GPU node bring-up
 
-Status: **RTX-1.5 complete (2026-06-27) — Torre runs Ollama
-as a headless NSSM service (persists across logoff +
-reboot-without-login, GPU offload restored at cold boot).
-RTX-1.4 complete (2026-06-19, Tailscale-only). RTX node
-still not consumed by the UM790 — endpoint swap is RTX-1.6.**
+Status: **Phase RTX-1 CLOSED. RTX-1.6 complete (2026-06-27)
+— both UM790 front doors (Open WebUI chat + Home Assistant
+voice/LLM) now consume Torre's GPU Ollama through the
+`ollama-proxy` (Torre primary + UM790 CPU fallback). RTX-1.5
+(headless NSSM service) and RTX-1.4 (Tailscale-only) remain
+in force. The UM790 stays the 24/7 node and still serves its
+own CPU Ollama as the always-on fallback.**
 
 **Torre** (Windows 11 Pro + RTX 5070, 12 GB VRAM;
 Tailscale `100.91.154.124` / LAN `192.168.178.21`) is
@@ -186,8 +188,12 @@ the on-demand GPU compute node anticipated by
 `qwen2.5:7b-instruct` runs on the RTX 5070 at
 **105.3 tok/s** (3-pass 105.5 / 105.5 / 104.9; model on
 `D:\ai\ollama\models`, 29/29 layers on GPU) — **≈ 17.6×**
-the ~6 tok/s UM790 CPU baseline. No production service
-moved; the UM790 remains the 24/7 node.
+the ~6 tok/s UM790 CPU baseline. As of RTX-1.6 the front
+doors consume this GPU path via the `ollama-proxy`
+(measured **101.3 tok/s** end-to-end through the proxy; HA
+conversation 24.1 s CPU → 3.9 s Torre). No service was
+*moved* to Torre; the UM790 remains the 24/7 node and the
+CPU fallback.
 
 | Step | Description | Status |
 |---|---|---|
@@ -197,20 +203,25 @@ moved; the UM790 remains the 24/7 node.
 | RTX-1.3 | Storage remediation (model store C: → D:) | Done |
 | RTX-1.4 | Secure remote exposure (OLLAMA_HOST + firewall, Tailscale-only) | **Complete (2026-06-19)** |
 | RTX-1.5 | Headless persistence (Windows service) | **Complete (2026-06-27)** |
-| RTX-1.6 | Security delta doc + UM790 endpoint swap | Not started (next) |
+| RTX-1.6 | Security delta doc + UM790 endpoint swap (failover proxy) | **Complete (2026-06-27)** |
 
-Remaining before the UM790 can consume Torre (RTX-1.6):
+RTX-1.6 delivered (all prerequisites resolved):
 
 - ~~Loopback bind / no `OLLAMA_HOST` / no firewall scope /
   no headless service~~ → **RESOLVED**: RTX-1.4
   (`OLLAMA_HOST=0.0.0.0:11434`, host-scoped /32 firewall
   allowlist, Tailscale-only) + RTX-1.5 (headless NSSM
   service; persists across logoff/reboot).
-- Security delta doc `06_security/rtx_node_security.md`
-  required before the UM790 `ollama` endpoint points at
-  Torre — **not yet created (RTX-1.6)**.
+- ~~Security delta doc `06_security/rtx_node_security.md`~~
+  → **created + approved (RTX-1.6 Step 1, 2026-06-27)**.
+- ~~UM790 endpoint swap~~ → **DONE**: `ollama-proxy`
+  ([`03_services/ollama-proxy/`](../03_services/ollama-proxy/))
+  fronts Torre (primary) + UM790 CPU (fallback); Open WebUI
+  → `ollama-proxy:11434`, Home Assistant → `127.0.0.1:11435`.
+  Apply log:
+  [`09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md`](../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md).
 - VRAM-headroom discipline: Torre must run lean/headless
-  (lesson L-RTX-2).
+  (lesson L-RTX-2) — unchanged.
 
 Validation summary:
 [`04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md`](../04_ai_system/amarolab-v1/phase-rtx/RTX1_validation_summary.md).
@@ -275,11 +286,39 @@ integrations**:
 
 A restart on either side does not disturb the other.
 
-Both integrations currently target the **UM790 CPU**
-Ollama (~6 tok/s). Torre's GPU Ollama (105.3 tok/s) is
-provisioned, headless (RTX-1.5), and Tailscale-reachable
-but **not yet consumed**; the endpoint swap is **RTX-1.6**
-(see Phase RTX-1 above).
+As of **RTX-1.6** both integrations target the
+**`ollama-proxy`** instead of a single Ollama:
+
+- Open WebUI → `http://ollama-proxy:11434` (docker network).
+- Home Assistant → `http://127.0.0.1:11435` (loopback).
+
+The proxy routes to **Torre's GPU Ollama** (`100.91.154.124:11434`,
+~101 tok/s end-to-end, primary) and falls back automatically
+to the **UM790 CPU Ollama** (`ollama:11434`, ~6 tok/s) when
+Torre is unreachable. The UM790 CPU Ollama (v0.17.7) and
+Torre (v0.30.10) are distinct instances; the UM790 remains
+the always-on fallback. Proxy config:
+[`03_services/ollama-proxy/`](../03_services/ollama-proxy/).
+
+### ollama-proxy
+
+Status: Operational (added RTX-1.6, 2026-06-27)
+
+- Image: `nginx:alpine`; container `ollama-proxy` on
+  `ai-local_default`; published `127.0.0.1:11435` (loopback
+  only, for the host-network Home Assistant).
+- Failover front end for the AURORA ollama endpoint:
+  **Torre** `100.91.154.124:11434` (primary) →
+  **UM790 CPU** `ollama:11434` (`backup`). `nginx` upstream
+  with `proxy_next_upstream … non_idempotent` and
+  `proxy_buffering off` (streaming preserved).
+- Single point of failure in front of both front doors;
+  `restart: unless-stopped` + healthcheck. A *Torre* outage
+  fails over to the UM790; only a *proxy* outage stops
+  inference (rollback = repoint consumers back to
+  `ollama:11434`).
+- Config + compose:
+  [`03_services/ollama-proxy/`](../03_services/ollama-proxy/).
 
 ### Qdrant
 
@@ -601,12 +640,12 @@ token for the `amarolab` tunnel lives at
 
 1. **Cloudflare Tunnel token rotation** (R-01) — existing
    Guardian-Cloud tunnel.
-2. **RTX 5070 AI-node bridge** — Phase RTX-1 local GPU
-   validation complete (2026-06-18, 105.3 tok/s);
-   **RTX-1.4 (Tailscale-only exposure) and RTX-1.5
-   (headless NSSM service) complete; the UM790 endpoint
-   swap (RTX-1.6) not yet done.** Streaming TTS, prompt
-   trimming, and the STT model-size bump remain not started.
+2. **RTX 5070 AI-node bridge** — **Phase RTX-1 CLOSED.**
+   RTX-1.4 (Tailscale-only), RTX-1.5 (headless NSSM
+   service), and **RTX-1.6 (endpoint swap via `ollama-proxy`,
+   Torre primary + UM790 fallback) all complete (2026-06-27).**
+   Streaming TTS, prompt trimming, and the STT model-size
+   bump remain not started.
 3. **Dedicated NAS** — procurement and data migration.
 4. **MyFreeTour** RAG collection (Phase E).
 5. **DNS / Cloudflare architecture doc amendments**

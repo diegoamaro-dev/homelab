@@ -1,8 +1,13 @@
-# AMAROLAB Architecture — RTX Node Amendment (DRAFT)
+# AMAROLAB Architecture — RTX Node Amendment (DRAFT — MERGED)
 
-- **Status:** **DRAFT — not yet merged.** Proposed amendment to
-  [`amarolab_architecture.md`](amarolab_architecture.md), to be merged into
-  that document at **RTX-1 closeout**.
+- **Status:** **MERGED into [`amarolab_architecture.md`](amarolab_architecture.md)
+  at RTX-1.6 closeout (2026-06-27).** Retained for traceability. The live
+  architecture doc is now the source of truth; where this draft differs (it
+  pre-dates RTX-1.4/1.5/1.6), the live doc and
+  [`../06_security/rtx_node_security.md`](../06_security/rtx_node_security.md)
+  win — notably the firewall is a host-scoped **/32** allowlist (not the CGNAT
+  `100.64.0.0/10` range this draft proposed), and the endpoint swap shipped as
+  the `ollama-proxy` failover front end (Torre primary + UM790 fallback).
 - **Date drafted:** 2026-06-18
 - **Reason:** The "Future Distributed Architecture / AI Compute Node"
   section of the live architecture doc describes the RTX tower as *planned*.

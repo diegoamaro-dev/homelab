@@ -1,6 +1,6 @@
 # Security Posture
 
-Last updated: 2026-06-17
+Last updated: 2026-06-27
 
 ---
 
@@ -358,6 +358,82 @@ No cloud-based vector database is required.
 
 ---
 
+# RTX Compute Node (Torre)
+
+Status:
+
+```text
+Operational (RTX-1 closed 2026-06-27)
+```
+
+Torre is an on-demand GPU compute node. Its full security
+architecture is the authoritative companion document:
+
+```text
+06_security/rtx_node_security.md
+```
+
+Summary of controls (deployed):
+
+```text
+Tailscale-only access      (encrypted transport + tailnet identity)
+Host-scoped /32 firewall   (allow UM790 only; LAN blocked; default-deny)
+Headless NSSM service      (OllamaService, LocalSystem, Automatic)
+NSSM binary ACL-hardened   (no Authenticated Users modify)
+No public path             (NAT, no port-forward, no tunnel on Torre)
+```
+
+Network-layer is the only access control: Ollama itself is
+unauthenticated, so the boundary is the host firewall plus
+Tailscale. Acceptable for a single-user, Tailscale-only
+posture. See `rtx_node_security.md` for trust boundaries,
+accepted/mitigated risks, recovery, and rollback.
+
+---
+
+## ollama-proxy (RTX-1.6 endpoint swap)
+
+Status:
+
+```text
+Operational (2026-06-27)
+```
+
+A failover front end (`nginx:alpine`) presents one internal
+endpoint and routes:
+
+```text
+primary  -> Torre  (RTX 5070 GPU, over Tailscale)
+fallback -> UM790  (local CPU Ollama) when Torre is unreachable
+```
+
+Security properties:
+
+```text
+Published on loopback only (127.0.0.1:11435) for Home Assistant.
+Open WebUI reaches it over the docker network (ollama-proxy:11434).
+No LAN / tailnet / public exposure of the proxy port.
+No new secrets.
+```
+
+Accepted risk:
+
+```text
+The proxy is a single point of failure in front of both
+front doors. restart=unless-stopped + healthcheck. A Torre
+outage fails over to the UM790; only a proxy outage stops
+inference (rollback = repoint consumers to ollama:11434).
+```
+
+Reference:
+
+```text
+03_services/ollama-proxy/
+09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md
+```
+
+---
+
 # Data Protection
 
 ## Backups
@@ -430,6 +506,9 @@ Mosquitto authentication
 Mosquitto ACLs
 Secret sanitisation
 Git hygiene
+RTX node Tailscale-only exposure (host-scoped /32)
+RTX node headless service + ACL hardening
+ollama-proxy failover (Torre primary + UM790 fallback)
 ```
 
 Pending:
