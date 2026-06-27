@@ -6,10 +6,20 @@ assume CURRENT_STATE.md is correct until the inconsistency
 is reconciled.
 Read in this order:
 
-Mandatory:
-- AMAROLAB_HANDOFF.md
-- CURRENT_STATE.md
-- ROADMAP.md
+Mandatory Reading Order:
+
+1. START_HERE.md
+2. PROJECT_RULES.md
+3. AMAROLAB_HANDOFF.md
+4. CURRENT_STATE.md
+5. ROADMAP.md
+
+Optional
+
+6. INITIAL_SYSTEM_STATUS.md
+7. amarolab_architecture.md
+8. security_posture.md
+9. lessons_learned.md
 
 Architecture work:
 - amarolab_architecture.md
