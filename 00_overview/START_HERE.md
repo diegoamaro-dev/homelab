@@ -1,3 +1,9 @@
+Last updated: 2026-06-27
+CURRENT_STATE.md is the operational source of truth.
+
+If any document contradicts CURRENT_STATE.md,
+assume CURRENT_STATE.md is correct until the inconsistency
+is reconciled.
 Read in this order:
 
 Mandatory:

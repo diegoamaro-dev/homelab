@@ -10,7 +10,9 @@ Last updated: 2026-06-27
 ## Purpose
 
 This document allows any future AI session to rebuild project context quickly and continue work without relying on conversation history.
+This document is intentionally concise.
 
+Detailed operational state lives in CURRENT_STATE.md.
 ---
 
 ## Project

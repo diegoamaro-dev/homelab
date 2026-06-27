@@ -1,3 +1,22 @@
+CURRENT STATUS
+
+Current phase:
+RTX-1.6
+
+Overall health:
+Stable
+
+Production:
+Operational
+
+Next milestone:
+Endpoint migration
+
+Last completed:
+RTX-1.5
+
+Blocking issues:
+None
 # CURRENT_STATE
 
 Related documents:
