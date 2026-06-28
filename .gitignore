@@ -62,3 +62,7 @@ __pycache__/
 passwords
 
 secret.yaml
+
+# Aurora runtime artifacts (F-2) — generated nightly, never committed
+ai-stack/aurora/
+09_ops/runtime/
