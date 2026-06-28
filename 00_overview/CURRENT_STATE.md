@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-Phase E — Knowledge Platform Foundation — **COMPLETE 2026-06-28.** All steps done: E-0, E-1, E-2 (E2-a/E2-c), E-3, E-4 (E4-a/E4-b), E-5 (E5-a/E5-b/E5-c), E-6. All E-0 findings resolved or accepted. Phase F is next.
+Phase F — Operational Intelligence — **IN PROGRESS.** F-0 behavioral audit COMPLETE 2026-06-28 (8 AF findings validated; baseline 4/10; AF-06 disproved — system prompt stale, actively blocks 4/5 wired tools). **Current active step: F-1 — System Prompt Redesign.** Prior: Phase E COMPLETE 2026-06-28 (all steps done: E-0..E-6).
 
 Overall health:
 Stable
@@ -10,10 +10,10 @@ Production:
 Operational
 
 Next milestone:
-Phase F — Operational Intelligence — architecture approved 2026-06-28. See `04_ai_system/phase_f_architecture.md`. Next step: F-0 behavioral audit (read-only).
+F-1 — System Prompt Redesign — rewrite the Aurora system prompt to accurately reflect all 5 wired tools (AF-06 disproved). Target: ≤400 tokens, no stale phase references, no citation-format tool-substitution bug. See `04_ai_system/phase_f_architecture.md`.
 
 Last completed:
-E-6 — Onboarding framework (2026-06-28): framework document proven end-to-end against disposable corpus `e6_test`; success criterion met. Prior: E4-b backup-consistency decision (no change); E2-c run-lock + E4-a log rotation; E5-c audit-log check (F-10 resolved); E-3 observability (health.json); E5-b restore drill PASS; E5-a no drift; E2-a fail-loud sync; E-1 reconciliation; E-0 audit.
+F-0 — Behavioral audit (2026-06-28): 8 AF findings resolved (6 confirmed, 1 superseded, 1 disproved). Baseline 4/10 pass. AF-06 disproved — system prompt is Phase A draft; blocks 4/5 wired tools. F-1 blocker identified. Audit report: `09_logs/2026-06-28_phaseF_F0_audit_report.md`. Prior: E-6 onboarding framework (2026-06-28).
 
 Blocking issues:
 None
@@ -25,7 +25,7 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-06-27
+Last updated: 2026-06-28
 
 ---
 
@@ -247,7 +247,9 @@ Primary tool-calling model:
 - `meta.toolIds`:
   `["time_now","rag_search","audit_search","ha_get_state","ha_call_service"]`
 - `params.system`: Amarolab v0.1 system prompt
-  (≈ 3 342 chars)
+  (≈ 3 342 chars) — **Phase A draft, stale; F-1 rewrite in
+  progress** (AF-06 disproved: describes 1/5 tools correctly,
+  actively blocks the other 4)
 
 Tools registered in `webui.db.tool`:
 

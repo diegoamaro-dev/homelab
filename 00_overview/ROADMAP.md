@@ -14,14 +14,17 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-06-27 (Phase D-1 closed; **Phase RTX-1
+Last updated: 2026-06-28 (Phase D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
 service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
 doors now consume Torre's GPU Ollama via the `ollama-proxy`).
-**Phase E — Knowledge Platform Foundation — started 2026-06-27;
-E-0 + E-1 closed (G-E0); E2-a + E-3 + E5-a + E5-b + E5-c done 2026-06-27
-(E5-c: F-10 resolved no-defect; `overall_status=ok` first time).**
+**Phase E — Knowledge Platform Foundation — CLOSED 2026-06-28.**
+All steps done: E-0..E-6; 13 findings resolved or accepted.
+**Phase F — Operational Intelligence — IN PROGRESS. F-0 behavioral
+audit COMPLETE 2026-06-28 (8 AF findings; AF-06 disproved — stale
+system prompt is the F-1 blocker). Current active step: F-1 — System
+Prompt Redesign.**
 
 ---
 
@@ -395,8 +398,15 @@ for the complete design. Mission: shift Aurora from reactive to aware.
 
 Sub-phases:
 
-* **F-0 — Behavioral Audit** — read-only baseline; no implementation.
-* **F-1 — System Prompt Redesign** — identity, tool routing, ≤400 tokens.
+* **F-0 — Behavioral Audit — COMPLETE 2026-06-28.** Read-only baseline.
+  8 AF findings: 6 confirmed, 1 superseded (AF-05 → `input_text` +
+  Jinja2), 1 disproved (AF-06 — system prompt stale, blocks 4/5 tools).
+  Baseline 4/10 pass. Audit report:
+  [`09_logs/2026-06-28_phaseF_F0_audit_report.md`](../09_logs/2026-06-28_phaseF_F0_audit_report.md).
+* **F-1 — System Prompt Redesign — CURRENT ACTIVE STEP.** Rewrite the
+  Aurora system prompt to accurately describe all 5 wired tools; remove
+  stale Phase B/C/D language; fix citation-format tool-substitution bug;
+  target ≤400 tokens.
 * **F-2 — Signal Layer + Context Generation** — `backup_status.json`,
   `container_status.json`, `bin/aurora-context`, `ai-stack/aurora/`,
   `system_status` tool.

@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-06-27
+Last updated: 2026-06-28
 
 ## Purpose
 
@@ -361,7 +361,15 @@ run-lock), E-3 (unified health.json), E-4 (log rotation +
 backup-consistency decision), E-5 (drift measurement + restore
 drill + audit-log check), E-6 (onboarding framework proven
 end-to-end). All 13 E-0 findings resolved or accepted. Platform
-health `overall_status=ok`. **Current phase: Phase F — Operational Intelligence — architecture approved 2026-06-28.** Architecture document: [`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md). Next step: F-0 behavioral audit. E-0 report:
+health `overall_status=ok`. **Current phase: Phase F — Operational Intelligence — IN PROGRESS.**
+F-0 behavioral audit COMPLETE 2026-06-28: 8 AF findings resolved; baseline
+4/10 pass; AF-06 disproved (system prompt is Phase A draft — describes 1/5
+tools correctly, actively blocks the other 4). **Current active step: F-1 —
+System Prompt Redesign.** Architecture document:
+[`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md).
+F-0 audit report:
+[`../09_logs/2026-06-28_phaseF_F0_audit_report.md`](../09_logs/2026-06-28_phaseF_F0_audit_report.md).
+Phase E closeout — E-0 report:
 [`../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md`](../09_logs/2026-06-27_phaseE_E0_operational_audit_report.md).
 
 The overview triad, `06_security/rtx_node_security.md`,
