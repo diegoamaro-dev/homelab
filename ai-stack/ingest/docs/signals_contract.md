@@ -221,6 +221,8 @@ window. The backup script remains untouched.
 - **Producer:** `ai-stack/ingest/bin/container-probe` (new, F-2; runs as diego at 04:00)
 - **Existing signal:** No — created in F-2.
 
+**Normal payload:**
+
 ```json
 {
   "schema_version": 1,
@@ -250,25 +252,49 @@ window. The backup script remains untouched.
 }
 ```
 
+**Error payload** (Docker daemon unreachable or probe failure):
+
+```json
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-28T04:00:00Z",
+  "probe_error": "docker command failed: ...",
+  "container_count": null,
+  "all_running": null,
+  "degraded": null,
+  "containers": null
+}
+```
+
 **Field reference:**
 
 | Field | Type | Description |
 |---|---|---|
 | `schema_version` | int | Always `1` |
 | `generated_at` | ISO 8601 UTC | When `container-probe` ran |
-| `container_count` | int | Total number of containers found by `docker ps` |
-| `all_running` | bool | `true` if every container has `running: true` |
-| `degraded` | string[] | Names of containers with `running: false` |
-| `containers` | object[] | Per-container detail (see below) |
-| `containers[].name` | string | Container name |
-| `containers[].status` | string | Raw Docker status string (e.g., `"running"`, `"exited"`) |
-| `containers[].running` | bool | `true` if status is `"running"` |
+| `probe_error` | string \| absent | Present only on probe failure; error message truncated to 200 chars |
+| `container_count` | int \| `null` | Total containers found; `null` on probe error |
+| `all_running` | bool \| `null` | `true` if every container has `running: true`; `null` on probe error |
+| `degraded` | string[] \| `null` | Names of containers with `running: false`; `null` on probe error |
+| `containers` | object[] \| `null` | Per-container detail; `null` on probe error |
+| `containers[].name` | string | Container name (leading `/` stripped) |
+| `containers[].status` | string | Raw Docker state string (`"running"`, `"exited"`, `"paused"`, etc.) |
+| `containers[].running` | bool | `true` only when `status == "running"` |
 
-**Expected baseline:** 17 containers. If `container_count` differs from the
-baseline at validation time, `aurora-context` logs the delta but does not
-error. The baseline is updated whenever a container is intentionally
-added or removed; update this document and the expected count in the
-`container-probe` script accordingly.
+**Status rules:**
+- **Normal** — `container_count` ≥ 0, `containers` is an array, `all_running` and `degraded`
+  reflect actual state. If any container is not running, `all_running` is `false` and its
+  name appears in `degraded`. `aurora-context` sets `overall_status: "degraded"` when
+  `degraded` is non-empty.
+- **Error** — `probe_error` is present; all data fields are `null`. `aurora-context` treats
+  this the same as a missing file (adds `container_status.json` to `signals_missing`). This
+  is preferred over leaving yesterday's healthy file in place, because stale success is worse
+  than an explicit probe failure.
+
+**Expected baseline:** 17 containers as of 2026-06-28. `container-probe` is fully dynamic —
+it never enforces a hardcoded count. If `container_count` differs from 17, `aurora-context`
+reports the delta to Aurora. Update this document when containers are intentionally added or
+removed.
 
 ---
 
