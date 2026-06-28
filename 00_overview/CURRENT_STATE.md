@@ -329,6 +329,7 @@ Status: Operational
 RAG collections:
 
 - homelab_docs
+- knowledge_history
 - guardian_cloud
 - ensambla2
 - infra_audits
@@ -581,14 +582,14 @@ Includes:
 - filesystem connector
 - git connector
 
-Indexing operational status (verified 2026-06-27, Phase E E-0):
+Indexing operational status (verified 2026-06-28, Phase F F-1):
 
 - Nightly sync: cron `30 2 * * *` (`diego` crontab), before the
   03:00 restic backup. Idempotent (per-chunk `content_sha`); GC of
   vanished files.
-- Live collection point counts: `homelab_docs` 4049 ·
-  `guardian_cloud` 872 · `ensambla2` 419 · `infra_audits` 280 ·
-  `myfreetour` 0 (disabled).
+- Live collection point counts: `homelab_docs` 1911 (excl. `09_logs/`) ·
+  `knowledge_history` 2918 · `guardian_cloud` 872 · `ensambla2` 419 ·
+  `infra_audits` 280 · `myfreetour` 0 (disabled).
 - Embedder `intfloat/multilingual-e5-small` (384-dim) / reranker
   `BAAI/bge-reranker-v2-m3`. Full contract:
   [`../04_ai_system/knowledge_platform_contract.md`](../04_ai_system/knowledge_platform_contract.md).

@@ -40,15 +40,15 @@ at the start of Phase F, not what will be true at the end.
 
 | Component | Status | Notes |
 |---|---|---|
-| `rag_search` (5 collections) | Production | homelab_docs 4049 pts, guardian_cloud 872, ensambla2 419, infra_audits 280, myfreetour 0 (disabled) |
+| `rag_search` (5 collections) | Production | homelab_docs 1911 pts, knowledge_history 2918 pts, guardian_cloud 872, ensambla2 419, infra_audits 280, myfreetour 0 (disabled) |
 | `ha_get_state` | Production | Reads any HA entity; curated attribute allowlist |
 | `ha_call_service` | Production | 12 allowed domains; gate-validated |
-| `audit_search` | Production | Open WebUI tool-call audit log |
+| `audit_search` | Production | Searches `infra_audits` corpus (Phase 0/1 audit reports; R-XX records) |
 | `time_now` | Production | Trivial |
 | Ollama proxy | Production | Torre RTX 5070 ~101 tok/s primary; UM790 CPU fallback ~6 tok/s |
 | `health.json` | Production | Ingest + audit health signal at `ai-stack/ingest/logs/health.json` |
 | Whisper / Piper / WakeWord | Production | HA voice pipeline operational; Spanish quality gap (base-int8) |
-| Open WebUI system prompt | Production | 822 tokens; stale; does not reflect current tool surface accurately |
+| Open WebUI system prompt | Production | F-1 installed 2026-06-28; ~450 tokens; domain-based routing; no collection names |
 
 ### Known gaps entering Phase F
 
@@ -359,6 +359,59 @@ This is the committed ordering; changes require a deliberate decision.
 `bin/generate-digest` and the HA voice refresh are sequential steps at 04:20.
 They may be combined into one script or adjacent cron entries separated by
 30 seconds; the ordering between them is not critical.
+
+### 6.5 Knowledge Layer Routing
+
+The knowledge layer is split into semantically distinct corpora. Aurora
+reasons in terms of knowledge domains; collection names are an
+implementation detail confined to the tool layer.
+
+**Corpus inventory**
+
+| Corpus | Source path | Knowledge type | Access |
+|---|---|---|---|
+| `homelab_docs` | `/home/diego/homelab/**` (excl. `09_logs/`) | Living docs — current state of AMAROLAB | `rag_search` |
+| `knowledge_history` | `/home/diego/homelab/09_logs/` (seed; expandable) | Historical records — what happened, why, which phase | `rag_search` |
+| `infra_audits` | `/home/diego/server-audit-2026-06-13/` | Phase 0/1 infrastructure audit reports; R-XX remediation records | `audit_search` (hardcoded) |
+| `guardian_cloud` | `/mnt/storage/projects/guardian-cloud/` | Guardian Cloud project documentation | `rag_search` |
+| `ensambla2` | `/mnt/storage/projects/ensambla2/` | Ensambla2 project documentation | `rag_search` |
+| `myfreetour` | TBD | Placeholder | disabled |
+
+**Collection-level routing policy**
+
+| Query intent | Domain label | Collection | Tool |
+|---|---|---|---|
+| Current state, config, living docs | Current documentation | `homelab_docs` | `rag_search` |
+| Past events, decisions, phase history | Historical records | `knowledge_history` | `rag_search` |
+| Phase 0/1 audit, R-XX remediation | Infrastructure audit | `infra_audits` | `audit_search` |
+| Guardian Cloud | Guardian Cloud docs | `guardian_cloud` | `rag_search` |
+| Ensambla2 | Ensambla2 docs | `ensambla2` | `rag_search` |
+| Live datetime | — | — | `time_now` |
+| HA entity state | — | — | `ha_get_state` |
+| HA action | — | — | `ha_call_service` |
+| Live call log | _(not yet available)_ | — | _(future tool, F-2 or F-3)_ |
+
+**Separation rationale:** `homelab_docs` indexes living documentation that
+describes current state. `knowledge_history` indexes historical records
+(apply logs, closeout reports, gate results) that may contain quoted
+wrong answers, documented failures, and negative examples. Mixing these
+in a single corpus causes high-relevance historical chunks to outrank
+authoritative living docs for factual queries (observed and fixed in
+F-1, 2026-06-28). The two corpora serve different retrieval intents and
+must not compete in the same collection.
+
+**Prompt / tool layer boundary:** The system prompt describes knowledge
+domains by intent only (current documentation, historical records). The
+tool layer (`rag_search` docstring, `collection` Literal parameter)
+maps domains to collection names. Collection names must not appear in
+the system prompt; they may change without requiring a prompt update.
+
+**Expandability of `knowledge_history`:** The corpus is seeded from
+`09_logs/` but is not tied to it. Additional historical source paths
+(e.g., past project retrospectives, archived architecture docs) can be
+added to `corpora.yaml` as separate `knowledge_history` fs entries or
+by broadening the include globs. The Qdrant collection name and routing
+intent remain stable.
 
 ---
 

@@ -225,7 +225,7 @@ bin/ingest status
 ```
 
 After Mode B, `bin/ingest status` must not show the removed collection, and the
-production point counts (4049/872/419/280/0 as of 2026-06-28) must be unchanged.
+production point counts (1911/2918/872/419/280/0 as of 2026-06-28, post F-1 corpus split) must be unchanged.
 
 ---
 

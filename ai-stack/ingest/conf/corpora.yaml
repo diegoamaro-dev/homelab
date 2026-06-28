@@ -57,6 +57,15 @@ corpora:
       - "ai-stack/ingest/**"      # don't recurse into our own source
       - "ai-stack/data/**"
       - "**/.HA_VERSION"
+      - "09_logs/**"              # historical records → knowledge_history
+    enabled: true
+
+  - name: knowledge_history
+    type: fs
+    path: /home/diego/homelab/09_logs
+    include:
+      - "**/*.md"
+    exclude: []
     enabled: true
 
   - name: guardian_cloud

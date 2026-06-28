@@ -83,11 +83,12 @@ title          # derived document title
 - **Deterministic point ID:** `uuid(sha256(collection|source_rel|chunk_index))`.
 - **Chunking:** 600 chars target, 80-char overlap.
 
-### Live collection inventory (2026-06-27)
+### Live collection inventory (2026-06-28)
 
 | Collection | Points | Enabled | Source |
 |---|---:|---|---|
-| `homelab_docs` | 4049 | yes | `fs` — `/home/diego/homelab` |
+| `homelab_docs` | 1911 | yes | `fs` — `/home/diego/homelab` (excl. `09_logs/`) |
+| `knowledge_history` | 2918 | yes | `fs` — `/home/diego/homelab/09_logs` — historical records (phase logs, gate results, closeouts) |
 | `guardian_cloud` | 872 | yes | `git` — read-only over Guardian Cloud docs (D-09) |
 | `ensambla2` | 419 | yes | `git` |
 | `infra_audits` | 280 | yes | `fs` |
