@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+"""
+backup-probe — read restic snapshot metadata and write backup_status.json.
+
+Must run as root (needs /etc/restic/passwd-homelab).
+Output file is world-readable (0644); aurora-context reads it as diego.
+
+Environment overrides:
+  BACKUP_PROBE_WINDOW_HOURS  freshness window in hours (default: 4)
+  RESTIC_REPOSITORY          restic repo path (default: /mnt/storage/backups/restic/)
+  RESTIC_PASSWORD_FILE       passphrase file  (default: /etc/restic/passwd-homelab)
+"""
+
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+RESTIC_BIN      = "/usr/bin/restic"
+RESTIC_REPO     = os.environ.get("RESTIC_REPOSITORY",   "/mnt/storage/backups/restic/")
+RESTIC_PASSFILE = os.environ.get("RESTIC_PASSWORD_FILE", "/etc/restic/passwd-homelab")
+WINDOW_HOURS    = float(os.environ.get("BACKUP_PROBE_WINDOW_HOURS", "4"))
+OUTPUT_FILE     = Path("/home/diego/homelab/ai-stack/ingest/logs/backup_status.json")
+SCHEMA_VERSION  = 1
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def iso(dt: datetime) -> str:
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def parse_snap_time(raw: str) -> datetime:
+    # restic uses RFC 3339 with nanoseconds: "2026-06-28T03:00:47.123456789+02:00"
+    # Strip sub-second precision so strptime can handle it.
+    import re
+    clean = re.sub(r"\.\d+", "", raw)          # remove fractional seconds
+    clean = re.sub(r"Z$", "+00:00", clean)      # normalise Z suffix
+    return datetime.fromisoformat(clean).astimezone(timezone.utc)
+
+
+def write_atomic(path: Path, data: dict) -> None:
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+    with open(tmp, "rb") as f:
+        os.fsync(f.fileno())
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, path)
+
+
+def run_restic() -> list:
+    result = subprocess.run(
+        [
+            RESTIC_BIN,
+            "-r", RESTIC_REPO,
+            "--password-file", RESTIC_PASSFILE,
+            "--no-lock",           # read-only; skip lock acquisition
+            "snapshots",
+            "--latest", "1",
+            "--json",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if result.returncode != 0:
+        msg = (result.stderr.strip() or "restic exited non-zero")[:200]
+        raise RuntimeError(msg)
+    return json.loads(result.stdout)
+
+
+def main() -> int:
+    probed_at = utcnow()
+    payload: dict = {
+        "schema_version": SCHEMA_VERSION,
+        "probed_at": iso(probed_at),
+    }
+
+    try:
+        snapshots = run_restic()
+    except Exception as exc:
+        payload.update({
+            "status":        "error",
+            "snapshot_id":   None,
+            "snapshot_time": None,
+            "files_new":     None,
+            "files_changed": None,
+            "data_added_mb": None,
+            "probe_error":   str(exc)[:200],
+        })
+        write_atomic(OUTPUT_FILE, payload)
+        print(f"backup-probe: error: {exc}", file=sys.stderr)
+        return 1
+
+    if not snapshots:
+        payload.update({
+            "status":        "no_snapshot_tonight",
+            "snapshot_id":   None,
+            "snapshot_time": None,
+            "files_new":     None,
+            "files_changed": None,
+            "data_added_mb": None,
+        })
+        write_atomic(OUTPUT_FILE, payload)
+        print("backup-probe: no_snapshot_tonight (empty snapshot list)", file=sys.stderr)
+        return 0
+
+    # --latest 1 returns one entry per path/host group; pick the globally most recent.
+    # ISO 8601 timestamps sort lexicographically, so max() by "time" is correct.
+    snap = max(snapshots, key=lambda s: s["time"])
+    snap_time = parse_snap_time(snap["time"])
+    age_hours = (probed_at - snap_time).total_seconds() / 3600
+
+    summary = snap.get("summary") or {}
+    data_added_bytes = summary.get("data_added") or 0
+
+    status = "ok" if age_hours <= WINDOW_HOURS else "no_snapshot_tonight"
+
+    payload.update({
+        "status":        status,
+        "snapshot_id":   snap.get("short_id"),
+        "snapshot_time": iso(snap_time),
+        "files_new":     summary.get("files_new"),
+        "files_changed": summary.get("files_changed"),
+        "data_added_mb": round(data_added_bytes / (1024 * 1024), 1) if data_added_bytes else None,
+    })
+
+    write_atomic(OUTPUT_FILE, payload)
+    print(
+        f"backup-probe: {status}"
+        f" snapshot={snap.get('short_id')}"
+        f" age={age_hours:.1f}h"
+        f" window={WINDOW_HOURS}h",
+        file=sys.stderr,
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
