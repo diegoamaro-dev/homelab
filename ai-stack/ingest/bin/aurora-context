@@ -1,0 +1,351 @@
+#!/usr/bin/env python3
+"""
+aurora-context — aggregate signal files and write three context artifacts.
+
+Inputs  (ai-stack/ingest/logs/):
+  health.json, backup_status.json, container_status.json
+
+Outputs (ai-stack/aurora/):
+  aurora-context.json   — machine-readable context for system_status tool
+  aurora-context.md     — LLM prose for Open WebUI Filter / system prompt
+  aurora-context-voice.txt — single-line ≤200-char summary for HA voice
+
+Staleness rules (applied via internal timestamp fields, not filesystem mtime):
+  absent file (never written)   → signals_missing only
+  existing file with old ts     → signals_missing + overall_status=degraded
+  container probe_error payload → signals_missing + overall_status=degraded
+"""
+
+import json
+import os
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+LOGS_DIR       = Path("/home/diego/homelab/ai-stack/ingest/logs")
+AURORA_DIR     = Path("/home/diego/homelab/ai-stack/aurora")
+HEALTH_FILE    = LOGS_DIR / "health.json"
+BACKUP_FILE    = LOGS_DIR / "backup_status.json"
+CONTAINER_FILE = LOGS_DIR / "container_status.json"
+CTX_JSON       = AURORA_DIR / "aurora-context.json"
+CTX_MD         = AURORA_DIR / "aurora-context.md"
+CTX_VOICE      = AURORA_DIR / "aurora-context-voice.txt"
+
+STALE_HOURS    = 26
+SCHEMA_VERSION = 1
+
+
+# ── Utilities ──────────────────────────────────────────────────────────────
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def iso(dt: datetime) -> str:
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def parse_ts(s) -> datetime | None:
+    if not s:
+        return None
+    try:
+        clean = re.sub(r"\.\d+", "", str(s))
+        clean = re.sub(r"Z$", "+00:00", clean)
+        return datetime.fromisoformat(clean).astimezone(timezone.utc)
+    except (ValueError, TypeError):
+        return None
+
+
+def age_h(ts: datetime | None, now: datetime) -> float:
+    if ts is None:
+        return float("inf")
+    return (now - ts).total_seconds() / 3600
+
+
+def fmt_h(h: float) -> str:
+    if h == float("inf"):
+        return "unknown"
+    return f"{h:.1f}h ago"
+
+
+def ts_display(ts_str: str | None) -> str:
+    """'2026-06-28T00:30:13Z' → '2026-06-28 00:30 UTC'"""
+    if not ts_str:
+        return "unknown"
+    return ts_str[:16].replace("T", " ") + " UTC"
+
+
+def write_atomic(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(content, encoding="utf-8")
+    with open(tmp, "rb") as f:
+        os.fsync(f.fileno())
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, path)
+
+
+# ── Signal readers ─────────────────────────────────────────────────────────
+
+def read_signal(path: Path, ts_field: str, now: datetime) -> tuple[dict | None, str]:
+    """
+    Returns (data_or_None, state) where state is one of:
+      "absent"  — file not found or unparseable
+      "stale"   — file found, parsed, but ts_field is > STALE_HOURS old
+      "ok"      — file found, fresh, ready to use
+    """
+    if not path.exists():
+        return None, "absent"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None, "absent"
+    ts = parse_ts(data.get(ts_field))
+    if age_h(ts, now) > STALE_HOURS:
+        return data, "stale"
+    return data, "ok"
+
+
+def read_health(now: datetime) -> tuple[dict | None, str, str]:
+    """
+    Returns (data_or_None, ingest_state, audit_state).
+    Each state is "absent" | "stale" | "ok", checked independently per section.
+    """
+    if not HEALTH_FILE.exists():
+        return None, "absent", "absent"
+    try:
+        data = json.loads(HEALTH_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return None, "absent", "absent"
+
+    ingest = data.get("ingest") or {}
+    audit  = data.get("audit")  or {}
+
+    ingest_state = "stale" if age_h(parse_ts(ingest.get("updated_at")), now) > STALE_HOURS else "ok"
+    audit_state  = "stale" if age_h(parse_ts(audit.get("updated_at")),  now) > STALE_HOURS else "ok"
+    return data, ingest_state, audit_state
+
+
+# ── Main ───────────────────────────────────────────────────────────────────
+
+def main() -> int:
+    now = utcnow()
+
+    signals_missing: list[str] = []
+    degrades:        list[str] = []
+
+    def add_missing(name: str) -> None:
+        if name not in signals_missing:
+            signals_missing.append(name)
+
+    # ── Read signals ───────────────────────────────────────────────
+    health, ingest_state, audit_state   = read_health(now)
+    backup_data,    backup_state        = read_signal(BACKUP_FILE,    "probed_at",    now)
+    container_data, container_state     = read_signal(CONTAINER_FILE, "generated_at", now)
+
+    # Probe-error payload: file is fresh but the probe explicitly failed.
+    if container_state == "ok" and container_data and container_data.get("probe_error"):
+        container_state = "probe_error"
+
+    # Track which files are wholly absent (vs stale) for the "unknown" sentinel.
+    health_absent    = health is None
+    backup_absent    = backup_state == "absent"
+    container_absent = container_state == "absent"
+
+    # ── Ingest section ─────────────────────────────────────────────
+    if ingest_state == "absent":
+        add_missing("health.json")
+        ingest_out = {"status": "signal_missing", "last_run_end": None, "last_run_rc": None}
+        ingest_md  = "signal missing"
+
+    elif ingest_state == "stale":
+        add_missing("health.json")
+        degrades.append("health.json ingest stale >26h")
+        ingest_out = {"status": "signal_missing", "last_run_end": None, "last_run_rc": None}
+        ingest_md  = "stale — ingest signal not updated in >26h"
+
+    else:
+        ingest      = (health or {}).get("ingest") or {}
+        run_status  = ingest.get("last_run_status", "unknown")
+        last_rc     = ingest.get("last_run_rc")
+        last_end    = ingest.get("last_run_end")
+        last_end_h  = fmt_h(age_h(parse_ts(last_end), now))
+
+        if run_status == "ok":
+            ingest_out = {"status": "ok", "last_run_end": last_end, "last_run_rc": last_rc}
+            ingest_md  = f"ok — last run {ts_display(last_end)} ({last_end_h}, rc={last_rc})"
+        else:
+            degrades.append(f"ingest last_run_status={run_status!r}")
+            ingest_out = {"status": "error", "last_run_end": last_end, "last_run_rc": last_rc}
+            ingest_md  = f"error — last run failed (rc={last_rc}) at {ts_display(last_end)} ({last_end_h})"
+
+    # ── Audit section ──────────────────────────────────────────────
+    if audit_state == "absent":
+        add_missing("health.json")
+        audit_out = {"status": "signal_missing", "age_days": None}
+        audit_md  = "signal missing"
+
+    elif audit_state == "stale":
+        add_missing("health.json")
+        degrades.append("health.json audit stale >26h")
+        audit_out = {"status": "signal_missing", "age_days": None}
+        audit_md  = "stale — audit signal not updated in >26h"
+
+    else:
+        audit   = (health or {}).get("audit") or {}
+        ast     = audit.get("status", "unknown")
+        age_d   = audit.get("age_days")
+        audit_out = {"status": ast, "age_days": age_d}
+
+        if ast == "ok":
+            audit_md = f"ok — last entry age {age_d} days"
+        elif ast == "stale":
+            degrades.append(f"audit log stale ({age_d} days)")
+            audit_md = f"stale — last entry {age_d} days ago (threshold 7 days)"
+        elif ast == "missing":
+            degrades.append("audit log missing")
+            audit_md = "missing — no audit log entries found"
+        else:
+            degrades.append(f"audit status={ast!r}")
+            audit_md = f"{ast} — last entry age {age_d} days"
+
+    # ── Backup section ─────────────────────────────────────────────
+    if backup_state == "absent":
+        add_missing("backup_status.json")
+        backup_out   = {"status": "signal_missing", "snapshot_id": None,
+                        "snapshot_time": None, "data_added_mb": None}
+        backup_md    = "signal missing"
+        backup_voice = "signal missing"
+
+    elif backup_state == "stale":
+        add_missing("backup_status.json")
+        degrades.append("backup_status.json stale >26h")
+        backup_out   = {"status": "signal_missing", "snapshot_id": None,
+                        "snapshot_time": None, "data_added_mb": None}
+        backup_md    = "stale — backup-probe not run in >26h"
+        backup_voice = "probe stale"
+
+    else:
+        bstatus  = backup_data.get("status", "unknown")
+        snap_id  = backup_data.get("snapshot_id")
+        snap_ts  = backup_data.get("snapshot_time")
+        snap_h   = fmt_h(age_h(parse_ts(snap_ts), now))
+        mb       = backup_data.get("data_added_mb")
+        backup_out = {"status": bstatus, "snapshot_id": snap_id,
+                      "snapshot_time": snap_ts, "data_added_mb": mb}
+
+        if bstatus == "ok":
+            mb_str       = f", {mb} MB added" if mb is not None else ""
+            backup_md    = f"ok — snapshot {snap_id} at {ts_display(snap_ts)} ({snap_h}{mb_str})"
+            backup_voice = f"backup ok {int(mb)}MB" if mb is not None else "backup ok"
+        elif bstatus == "no_snapshot_tonight":
+            degrades.append("no backup snapshot tonight")
+            snap_desc    = f"last: {ts_display(snap_ts)} ({snap_h})" if snap_ts else "no prior snapshot"
+            backup_md    = f"no snapshot tonight — {snap_desc}"
+            backup_voice = "no backup tonight"
+        else:
+            degrades.append(f"backup probe status={bstatus!r}")
+            backup_md    = "error — backup probe failed"
+            backup_voice = "backup error"
+
+    # ── Container section ──────────────────────────────────────────
+    if container_state == "absent":
+        add_missing("container_status.json")
+        containers_out   = {"all_running": None, "count": None, "degraded": None}
+        containers_md    = "signal missing"
+        containers_voice = "containers: signal missing"
+
+    elif container_state == "stale":
+        add_missing("container_status.json")
+        degrades.append("container_status.json stale >26h")
+        containers_out   = {"all_running": None, "count": None, "degraded": None}
+        containers_md    = "stale — container-probe not run in >26h"
+        containers_voice = "containers: probe stale"
+
+    elif container_state == "probe_error":
+        add_missing("container_status.json")
+        err_msg = (container_data or {}).get("probe_error", "unknown")[:80]
+        degrades.append(f"container probe error: {err_msg}")
+        containers_out   = {"all_running": None, "count": None, "degraded": None}
+        containers_md    = f"error — probe failed: {err_msg}"
+        containers_voice = "containers: probe error"
+
+    else:
+        all_running = container_data.get("all_running")
+        count       = container_data.get("container_count")
+        deg_list    = container_data.get("degraded") or []
+        containers_out = {"all_running": all_running, "count": count, "degraded": deg_list}
+
+        if all_running:
+            containers_md    = f"{count}/{count} running"
+            containers_voice = f"{count}/{count} running"
+        else:
+            running_n     = (count - len(deg_list)) if count is not None else "?"
+            stopped_names = ", ".join(deg_list)
+            degrades.append(f"{len(deg_list)} container(s) stopped: {stopped_names}")
+            containers_md    = f"{running_n}/{count} running — stopped: {stopped_names}"
+            containers_voice = f"{running_n}/{count}: {stopped_names} stopped"
+
+    # ── Overall status ─────────────────────────────────────────────
+    all_files_absent = health_absent and backup_absent and container_absent
+    if all_files_absent:
+        overall = "unknown"
+    elif degrades:
+        overall = "degraded"
+    else:
+        overall = "ok"
+
+    # ── aurora-context.json ────────────────────────────────────────
+    ctx_json_data = {
+        "schema_version":  SCHEMA_VERSION,
+        "generated_at":    iso(now),
+        "overall_status":  overall,
+        "ingest":          ingest_out,
+        "backup":          backup_out,
+        "audit":           audit_out,
+        "containers":      containers_out,
+        "home":            {"anomalies": []},
+        "signals_missing": signals_missing,
+    }
+
+    # ── aurora-context.md ──────────────────────────────────────────
+    ts_hdr = now.strftime("%Y-%m-%d %H:%M")
+    md_parts = [
+        f"[Aurora context — {ts_hdr} UTC]",
+        "",
+        f"Status:      {overall}",
+        "",
+        f"Ingest:      {ingest_md}",
+        f"Backup:      {backup_md}",
+        f"Audit:       {audit_md}",
+        f"Containers:  {containers_md}",
+    ]
+    if signals_missing:
+        md_parts.append(f"\nSignals missing: {', '.join(signals_missing)}")
+    md_text = "\n".join(md_parts) + "\n"
+
+    # ── aurora-context-voice.txt ───────────────────────────────────
+    anomalies_str = "no anomalies"
+    voice_line = (
+        f"{ts_hdr} | {overall} | {backup_voice} | {containers_voice} | {anomalies_str}"
+    )
+    if len(voice_line) > 200:
+        voice_line = voice_line[:197] + "…"
+
+    # ── Write all three outputs atomically ─────────────────────────
+    write_atomic(CTX_JSON,  json.dumps(ctx_json_data, indent=2, ensure_ascii=False) + "\n")
+    write_atomic(CTX_MD,    md_text)
+    write_atomic(CTX_VOICE, voice_line + "\n")
+
+    print(
+        f"aurora-context: {overall}"
+        f" signals_missing={signals_missing}"
+        f" degrades={degrades}",
+        file=sys.stderr,
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
