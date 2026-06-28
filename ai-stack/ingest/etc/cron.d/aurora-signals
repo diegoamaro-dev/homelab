@@ -1,0 +1,19 @@
+# AMAROLAB — Aurora signal layer (Phase F, F-2 / F2-8)
+#
+# Source of truth: ai-stack/ingest/etc/cron.d/aurora-signals (tracked in git).
+# Install:
+#   sudo cp /home/diego/homelab/ai-stack/ingest/etc/cron.d/aurora-signals /etc/cron.d/aurora-signals
+#   sudo chown root:root /etc/cron.d/aurora-signals
+#   sudo chmod 0644      /etc/cron.d/aurora-signals
+# cron ignores /etc/cron.d files that are not root-owned or are group/world-writable.
+#
+# Times are server-local (Europe/Madrid). Chain order, after the 03:00 restic backup:
+#   03:30 backup-probe    (root  — reads /etc/restic/passwd-homelab) -> backup_status.json
+#   04:00 container-probe (diego — docker group)                     -> container_status.json
+#   04:15 aurora-context  (diego — aggregates all signals)           -> aurora-context.{json,md,voice}
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+30 3 * * * root  /home/diego/homelab/ai-stack/ingest/bin/backup-probe    >> /home/diego/homelab/ai-stack/ingest/logs/aurora-signals.log 2>&1
+0  4 * * * diego /home/diego/homelab/ai-stack/ingest/bin/container-probe >> /home/diego/homelab/ai-stack/ingest/logs/aurora-signals.log 2>&1
+15 4 * * * diego /home/diego/homelab/ai-stack/ingest/bin/aurora-context  >> /home/diego/homelab/ai-stack/ingest/logs/aurora-signals.log 2>&1

@@ -12,6 +12,18 @@
     create 0664 diego diego
 }
 
+# Aurora signal-layer cron output (Phase F, F2-8)
+/home/diego/homelab/ai-stack/ingest/logs/aurora-signals.log {
+    su diego diego
+    weekly
+    rotate 8
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0664 diego diego
+}
+
 /srv/homelab/data/openwebui/amarolab-audit.log {
     su root root
     monthly
