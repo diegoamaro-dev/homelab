@@ -1,0 +1,214 @@
+#!/usr/bin/env python3
+"""
+F2-6: Recreate openwebui with /opt/aurora bind-mount added.
+
+Derives ALL configuration from the live container via docker inspect.
+The only intentional change from the current runtime state is one
+additional bind-mount:
+  /home/diego/homelab/ai-stack/aurora:/opt/aurora:ro
+
+Usage:
+  python3 recreate-openwebui          # execute
+  python3 recreate-openwebui --dry-run  # print what would run, then stop
+"""
+
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import time
+
+CONTAINER        = "openwebui"
+BACKUP_NAME      = "openwebui_pre_f2_6"
+NEW_MOUNT_HOST   = "/home/diego/homelab/ai-stack/aurora"
+NEW_MOUNT_DEST   = "/opt/aurora"
+NEW_MOUNT_MODE   = "ro"
+SECONDARY_NET    = "proxy_default"   # added post-start; docker run takes only one --network
+
+
+def sh(cmd: list[str]) -> tuple[int, str, str]:
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    return r.returncode, r.stdout.strip(), r.stderr.strip()
+
+
+def die(msg: str) -> None:
+    print(f"\nERROR: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+# ── 1. Inspect ─────────────────────────────────────────────────────────────
+
+print(f"Inspecting {CONTAINER}...")
+rc, out, err = sh(["docker", "inspect", CONTAINER])
+if rc != 0:
+    die(f"docker inspect {CONTAINER} failed: {err}")
+cfg = json.loads(out)[0]
+
+
+# ── 2. Extract configuration ────────────────────────────────────────────────
+
+image   = cfg["Config"]["Image"]
+hc      = cfg["HostConfig"]
+restart = hc["RestartPolicy"]["Name"]
+
+# Primary network: the NetworkMode is what --network should receive
+primary_net = hc["NetworkMode"]
+
+# Ports
+port_args: list[str] = []
+for cport, bindings in (hc.get("PortBindings") or {}).items():
+    for b in (bindings or []):
+        host_ip   = b.get("HostIp", "")
+        host_port = b.get("HostPort", "")
+        spec = f"{host_ip}:{host_port}:{cport}" if host_ip else f"{host_port}:{cport}"
+        port_args += ["-p", spec]
+
+# Mounts — all current bind-mounts, plus the new aurora mount
+mount_args: list[str] = []
+for m in cfg["Mounts"]:
+    if m["Type"] == "bind":
+        flag = f"{m['Source']}:{m['Destination']}" + ("" if m["RW"] else ":ro")
+        mount_args += ["-v", flag]
+
+# Verify the aurora mount is not already present
+aurora_already = any(m["Destination"] == NEW_MOUNT_DEST for m in cfg["Mounts"])
+if aurora_already:
+    die(f"{NEW_MOUNT_DEST} is already mounted — nothing to do.")
+
+aurora_mount = f"{NEW_MOUNT_HOST}:{NEW_MOUNT_DEST}:{NEW_MOUNT_MODE}"
+mount_args += ["-v", aurora_mount]
+
+# Env vars — ALL of them, written to a private temp file
+env_vars: list[str] = cfg["Config"]["Env"] or []
+
+
+# ── 3. Write env file ───────────────────────────────────────────────────────
+
+fd, envfile = tempfile.mkstemp(prefix="openwebui_env_", suffix=".env")
+os.close(fd)
+os.chmod(envfile, 0o600)
+with open(envfile, "w") as f:
+    for var in env_vars:
+        f.write(var + "\n")
+
+
+# ── 4. Build docker run command ─────────────────────────────────────────────
+
+docker_run = (
+    ["docker", "run", "-d"]
+    + ["--name", CONTAINER]
+    + ["--restart", restart]
+    + ["--network", primary_net]
+    + port_args
+    + mount_args
+    + ["--env-file", envfile]
+    + [image]
+)
+
+
+# ── 5. Print summary for review ─────────────────────────────────────────────
+
+print()
+print("=" * 60)
+print("CONFIGURATION DERIVED FROM LIVE CONTAINER")
+print("=" * 60)
+print(f"  Image:          {image}")
+print(f"  Restart:        {restart}")
+print(f"  Primary net:    {primary_net}")
+print(f"  Secondary net:  {SECONDARY_NET} (added post-start via network connect)")
+print(f"  Port bindings:  {' '.join(port_args)}")
+print(f"  Env vars:       {len(env_vars)} (written to {envfile}, mode 600)")
+print(f"  Env file:       [secrets redacted from this summary]")
+print()
+print("Mounts:")
+for m in cfg["Mounts"]:
+    if m["Type"] == "bind":
+        print(f"  [KEEP]  {m['Source']} → {m['Destination']} {'ro' if not m['RW'] else 'rw'}")
+print(f"  [NEW]   {aurora_mount}")
+print()
+print("docker run command (env vars loaded from file, not shown here):")
+safe = [a if a != envfile else "<envfile:600>" for a in docker_run]
+print("  " + " \\\n    ".join(safe))
+print()
+print("Rollback if new container fails:")
+print(f"  docker stop {CONTAINER} && docker rm {CONTAINER}")
+print(f"  docker rename {BACKUP_NAME} {CONTAINER}")
+print(f"  docker start {CONTAINER}")
+print("=" * 60)
+
+DRY_RUN = "--dry-run" in sys.argv
+if DRY_RUN:
+    os.unlink(envfile)
+    print("\n[dry-run] Stopping here. Env file removed.")
+    sys.exit(0)
+
+print()
+input("Press ENTER to proceed, or Ctrl-C to abort...")
+
+
+# ── 6. Execute ──────────────────────────────────────────────────────────────
+
+try:
+    # Rename existing container (keeps it stoppable/startable for rollback)
+    print(f"\nRenaming {CONTAINER} → {BACKUP_NAME}...")
+    rc, _, err = sh(["docker", "rename", CONTAINER, BACKUP_NAME])
+    if rc != 0:
+        die(f"Rename failed: {err}")
+
+    print(f"Stopping {BACKUP_NAME}...")
+    rc, _, err = sh(["docker", "stop", BACKUP_NAME])
+    if rc != 0:
+        # Stop failed — rename back immediately
+        sh(["docker", "rename", BACKUP_NAME, CONTAINER])
+        die(f"Stop failed: {err}")
+
+    # Start new container
+    print("Starting new container...")
+    rc, cid, err = sh(docker_run)
+    if rc != 0:
+        print(f"docker run failed: {err}")
+        print("Rolling back...")
+        sh(["docker", "rename", BACKUP_NAME, CONTAINER])
+        sh(["docker", "start", CONTAINER])
+        die("docker run failed. Original container restored.")
+    print(f"Container ID: {cid[:12]}")
+
+    # Connect to secondary network
+    print(f"Connecting to {SECONDARY_NET}...")
+    rc, _, err = sh(["docker", "network", "connect", SECONDARY_NET, CONTAINER])
+    if rc != 0:
+        print(f"WARNING: network connect to {SECONDARY_NET} failed: {err}")
+
+    # Wait for health
+    print("Waiting for health check (up to 120s)...")
+    deadline = time.monotonic() + 120
+    healthy  = False
+    while time.monotonic() < deadline:
+        rc, status, _ = sh(
+            ["docker", "inspect", CONTAINER, "--format", "{{.State.Health.Status}}"]
+        )
+        print(f"  health: {status}")
+        if status == "healthy":
+            healthy = True
+            break
+        time.sleep(5)
+
+    if healthy:
+        print(f"\nSUCCESS: {CONTAINER} is healthy.")
+        print(f"Backup '{BACKUP_NAME}' preserved. Remove after 24h of stable operation.")
+    else:
+        print(f"\nWARNING: {CONTAINER} did not become healthy within 120s.")
+        print(f"Check logs: docker logs {CONTAINER}")
+        print("Rollback if needed:")
+        print(f"  docker stop {CONTAINER} && docker rm {CONTAINER}")
+        print(f"  docker rename {BACKUP_NAME} {CONTAINER}")
+        print(f"  docker start {CONTAINER}")
+
+finally:
+    # Always remove the env file regardless of outcome
+    try:
+        os.unlink(envfile)
+        print(f"Env file removed.")
+    except OSError:
+        pass
