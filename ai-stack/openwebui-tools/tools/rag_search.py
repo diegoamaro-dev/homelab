@@ -2,8 +2,8 @@
 title: Amarolab rag_search
 author: amarolab
 author_url: https://github.com/amaroou
-description: Search an Amarolab knowledge corpus (homelab_docs, guardian_cloud, ensambla2, infra_audits, or myfreetour) with dense retrieval + cross-encoder reranking and return the top-k reranked chunks with source citations.
-version: 0.1.0
+description: Search an Amarolab knowledge corpus (homelab_docs, ops_digests, guardian_cloud, ensambla2, infra_audits, or myfreetour) with dense retrieval + cross-encoder reranking and return the top-k reranked chunks with source citations.
+version: 0.2.0
 license: MIT
 requirements:
 """
@@ -93,6 +93,7 @@ class Tools:
         self,
         collection: Literal[
             "homelab_docs",
+            "ops_digests",
             "guardian_cloud",
             "ensambla2",
             "infra_audits",
@@ -102,9 +103,9 @@ class Tools:
         k: int = TOP_K_DEFAULT,
     ) -> str:
         """
-        Search an Amarolab knowledge corpus and return reranked top-k chunks with source citations. Call this whenever the user asks something that requires grounding in documentation: homelab infrastructure, Guardian Cloud product/architecture/recovery, Ensambla2 product/auth/multitenancy, past infrastructure audits, or MyFreeTour (placeholder, returns empty_collection). Pick the most specific collection; do not guess across collections. Use audit_search for audit/Phase 0 questions when it is available.
+        Search an Amarolab knowledge corpus and return reranked top-k chunks with source citations. Call this whenever the user asks something that requires grounding in documentation or operational history: homelab infrastructure, what happened on a past night (operational history — nightly lab digests; for today/last night use system_status instead), Guardian Cloud product/architecture/recovery, Ensambla2 product/auth/multitenancy, past infrastructure audits, or MyFreeTour (placeholder, returns empty_collection). Pick the most specific collection; do not guess across collections. Use audit_search for audit/Phase 0 questions when it is available.
 
-        :param collection: One of "homelab_docs" (homelab infrastructure docs), "guardian_cloud" (Guardian Cloud product docs - read only), "ensambla2" (Ensambla2 product docs), "infra_audits" (past infra audit reports and Phase 0/1 application logs), "myfreetour" (placeholder - returns empty_collection until corpus is indexed).
+        :param collection: One of "homelab_docs" (homelab infrastructure docs - current state), "ops_digests" (operational history - machine-generated nightly lab digests; what happened on a given past night), "guardian_cloud" (Guardian Cloud product docs - read only), "ensambla2" (Ensambla2 product docs), "infra_audits" (past infra audit reports and Phase 0/1 application logs), "myfreetour" (placeholder - returns empty_collection until corpus is indexed).
         :param query: Natural-language question or topic, 2-500 characters. Spanish or English both supported.
         :param k: How many reranked hits to return (1-12, default 6).
         :return: JSON string with keys collection, query, hits[]. Each hit has rank, source_rel, title, chunk_index, score, content (truncated to 600 chars). On error or empty collection: {"error": "...", "code": "..."} or {"hits": [], "code": "empty_collection"}.

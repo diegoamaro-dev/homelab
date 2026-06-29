@@ -68,6 +68,17 @@ corpora:
     exclude: []
     enabled: true
 
+  # Operational memory — nightly ops digests (Phase F, F-4; AD-14). Gitignored
+  # runtime artifacts written by bin/generate-digest (F-4.2); indexed here so
+  # "what happened on night X" is retrievable via rag_search(ops_digests).
+  - name: ops_digests
+    type: fs
+    path: /home/diego/homelab/09_ops/runtime
+    include:
+      - "**/*.md"
+    exclude: []
+    enabled: true
+
   - name: guardian_cloud
     type: git
     path: /mnt/storage/projects/guardian-cloud
