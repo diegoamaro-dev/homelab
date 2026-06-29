@@ -14,17 +14,18 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-06-28 (Phase D-1 closed; **Phase RTX-1
+Last updated: 2026-06-29 (Phase D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
 service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
 doors now consume Torre's GPU Ollama via the `ollama-proxy`).
 **Phase E — Knowledge Platform Foundation — CLOSED 2026-06-28.**
 All steps done: E-0..E-6; 13 findings resolved or accepted.
-**Phase F — Operational Intelligence — IN PROGRESS. F-0 behavioral
-audit COMPLETE 2026-06-28 (8 AF findings; AF-06 disproved — stale
-system prompt is the F-1 blocker). Current active step: F-1 — System
-Prompt Redesign.**
+**Phase F — Operational Intelligence — IN PROGRESS. F-0 (behavioral
+audit), F-1 (system prompt redesign) and F-2 (signal layer + context
+generation + `system_status`) COMPLETE — F-2 closed 2026-06-29 (F2-9);
+the unattended nightly signal pipeline is validated and G-F1-01 passed.
+Current active step: F-3 — Situational Awareness Filter.**
 
 ---
 
@@ -403,15 +404,27 @@ Sub-phases:
   Jinja2), 1 disproved (AF-06 — system prompt stale, blocks 4/5 tools).
   Baseline 4/10 pass. Audit report:
   [`09_logs/2026-06-28_phaseF_F0_audit_report.md`](../09_logs/2026-06-28_phaseF_F0_audit_report.md).
-* **F-1 — System Prompt Redesign — CURRENT ACTIVE STEP.** Rewrite the
-  Aurora system prompt to accurately describe all 5 wired tools; remove
-  stale Phase B/C/D language; fix citation-format tool-substitution bug;
-  target ≤400 tokens.
-* **F-2 — Signal Layer + Context Generation** — `backup_status.json`,
-  `container_status.json`, `bin/aurora-context`, `ai-stack/aurora/`,
-  `system_status` tool.
-* **F-3 — Situational Awareness Filter** — Open WebUI Filter reads
-  `aurora-context.md`; no tool call for "is everything OK?".
+* **F-1 — System Prompt Redesign — COMPLETE 2026-06-28.** F-1 prompt
+  installed (3 389 chars / ~485 tokens incl. the F2-9 `system_status`
+  addition); domain-based routing; all tools described; stale phase
+  language removed; citation-format bug fixed; knowledge-layer corpus
+  split (`homelab_docs` / `knowledge_history`). Platform finding G-F1-01
+  (UI tool-forwarding) raised here, resolved in F-2. Log:
+  [`09_logs/2026-06-28_phaseF_F1_system_prompt_installed.md`](../09_logs/2026-06-28_phaseF_F1_system_prompt_installed.md).
+* **F-2 — Signal Layer + Context Generation — COMPLETE 2026-06-29
+  (F2-9).** `bin/backup-probe` → `backup_status.json` (03:30);
+  `bin/container-probe` → `container_status.json` (04:00);
+  `bin/aurora-context` → `ai-stack/aurora/aurora-context.{json,md,voice}`
+  (04:15); scheduled by `/etc/cron.d/aurora-signals`; `ai-stack/aurora`
+  bind-mounted read-only into `openwebui` at `/opt/aurora`. The
+  `system_status` tool (v0.2.0) is wired to `qwen2.5` and reads that
+  context + a live Torre probe. First unattended nightly cycle validated;
+  G-F1-01 passed across all layers incl. the browser UI;
+  `overall_status = ok`. Closeout:
+  [`09_logs/2026-06-29_phaseF_F2_9_closeout.md`](../09_logs/2026-06-29_phaseF_F2_9_closeout.md).
+* **F-3 — Situational Awareness Filter — CURRENT ACTIVE STEP.** Open
+  WebUI Filter reads `aurora-context.md`; no tool call for "is everything
+  OK?".
 * **F-4 — Operational Digest + Memory Corpus** — nightly `09_ops/` digest
   files indexed by `homelab_docs`.
 * **F-5 — Home Intelligence** — home model document; HA entity expansion;

@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-Phase F — Operational Intelligence — **IN PROGRESS.** F-0 behavioral audit COMPLETE 2026-06-28 (8 AF findings validated; baseline 4/10; AF-06 disproved — system prompt stale, actively blocks 4/5 wired tools). **Current active step: F-1 — System Prompt Redesign.** Prior: Phase E COMPLETE 2026-06-28 (all steps done: E-0..E-6).
+Phase F — Operational Intelligence — **IN PROGRESS.** F-0 (behavioral audit), F-1 (system prompt redesign) and F-2 (signal layer + context generation + `system_status`) COMPLETE — F-2 closed 2026-06-29 (F2-9). The unattended nightly signal pipeline is validated and `system_status` is wired to `qwen2.5` (G-F1-01 passed across all layers incl. the browser UI). **Current active step: F-3 — Situational Awareness Filter.** Prior: Phase E COMPLETE 2026-06-28 (E-0..E-6).
 
 Overall health:
 Stable
@@ -10,10 +10,10 @@ Production:
 Operational
 
 Next milestone:
-F-1 — System Prompt Redesign — rewrite the Aurora system prompt to accurately reflect all 5 wired tools (AF-06 disproved). Target: ≤400 tokens, no stale phase references, no citation-format tool-substitution bug. See `04_ai_system/phase_f_architecture.md`.
+F-3 — Situational Awareness Filter — deploy the Open WebUI Filter that injects `aurora-context.md` at conversation start so Aurora reports lab state with no tool call. See `04_ai_system/phase_f_architecture.md` §F-3.
 
 Last completed:
-F-0 — Behavioral audit (2026-06-28): 8 AF findings resolved (6 confirmed, 1 superseded, 1 disproved). Baseline 4/10 pass. AF-06 disproved — system prompt is Phase A draft; blocks 4/5 wired tools. F-1 blocker identified. Audit report: `09_logs/2026-06-28_phaseF_F0_audit_report.md`. Prior: E-6 onboarding framework (2026-06-28).
+F-2 — Signal Layer + Context Generation (closed 2026-06-29, F2-9): `backup-probe`/`container-probe`/`aurora-context` nightly pipeline validated unattended; `system_status` v0.2.0 wired to `qwen2.5` and validated end-to-end (G-F1-01); `overall_status = ok`. Closeout: `09_logs/2026-06-29_phaseF_F2_9_closeout.md`. Prior: F-1 system prompt (2026-06-28).
 
 Blocking issues:
 None
@@ -25,7 +25,7 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-06-28
+Last updated: 2026-06-29
 
 ---
 
@@ -232,6 +232,37 @@ Apply logs:
 Architecture amendment (DRAFT — merged at RTX-1.6):
 [`01_architecture/amarolab_architecture_rtx_amendment_DRAFT.md`](../01_architecture/amarolab_architecture_rtx_amendment_DRAFT.md).
 
+### Phase F — Operational Intelligence
+
+Status: **F-0, F-1, F-2 COMPLETE. F-2 closed 2026-06-29 (F2-9). Current
+active step: F-3 — Situational Awareness Filter.**
+
+Phase F shifts Aurora from reactive to aware. Architecture:
+[`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md).
+
+- **F-0 — Behavioral audit** (2026-06-28). Baseline 4/10; 8 AF findings.
+  Report: [`09_logs/2026-06-28_phaseF_F0_audit_report.md`](../09_logs/2026-06-28_phaseF_F0_audit_report.md).
+- **F-1 — System Prompt Redesign** (2026-06-28). F-1 prompt installed
+  (3 389 chars / ~485 tokens incl. the F2-9 `system_status` addition);
+  domain-based routing; knowledge-layer corpus split (`homelab_docs` /
+  `knowledge_history`). Platform finding G-F1-01 raised here. Log:
+  [`09_logs/2026-06-28_phaseF_F1_system_prompt_installed.md`](../09_logs/2026-06-28_phaseF_F1_system_prompt_installed.md).
+- **F-2 — Signal Layer + Context Generation** (closed 2026-06-29, F2-9).
+  `bin/backup-probe` (03:30 → `backup_status.json`), `bin/container-probe`
+  (04:00 → `container_status.json`) and `bin/aurora-context` (04:15 →
+  `ai-stack/aurora/aurora-context.{json,md,voice}`), scheduled by
+  `/etc/cron.d/aurora-signals`. `ai-stack/aurora/` is bind-mounted
+  read-only into `openwebui` at `/opt/aurora`. The `system_status` Open
+  WebUI tool (v0.2.0) reads that context + a live Torre probe and is wired
+  to `qwen2.5`. First unattended nightly cycle validated 2026-06-29;
+  G-F1-01 (chat-level tool firing) passed across all layers including the
+  browser UI; `overall_status = ok`. Closeout:
+  [`09_logs/2026-06-29_phaseF_F2_9_closeout.md`](../09_logs/2026-06-29_phaseF_F2_9_closeout.md).
+
+Generated runtime artifacts (`ai-stack/aurora/`, signal JSON) are
+gitignored. Next: **F-3** deploys the Open WebUI Filter that injects
+`aurora-context.md` at conversation start (no tool call).
+
 ---
 
 ## AI stack
@@ -245,11 +276,13 @@ Primary tool-calling model:
 - id: `qwen2.5:7b-instruct`
 - `base_model_id`: **NULL** (D-35 preserved)
 - `meta.toolIds`:
-  `["time_now","rag_search","audit_search","ha_get_state","ha_call_service"]`
-- `params.system`: Amarolab v0.1 system prompt
-  (≈ 3 342 chars) — **Phase A draft, stale; F-1 rewrite in
-  progress** (AF-06 disproved: describes 1/5 tools correctly,
-  actively blocks the other 4)
+  `["time_now","rag_search","audit_search","ha_get_state","ha_call_service","system_status"]`
+- `params.system`: **F-1 system prompt** (3 389 chars / ~485 tokens;
+  installed 2026-06-28 F-1, `system_status` added 2026-06-29 F2-9).
+  Domain-based routing; all 6 tools described; no stale phase references.
+- **Runtime state:** `base_model_id` / `meta.toolIds` / `params.system` live
+  in `webui.db` (not git). Reproduction + recovery procedure:
+  [`04_ai_system/openwebui_model_runtime_state.md`](../04_ai_system/openwebui_model_runtime_state.md).
 
 Tools registered in `webui.db.tool`:
 
@@ -258,8 +291,10 @@ Tools registered in `webui.db.tool`:
 - audit_search
 - ha_get_state
 - ha_call_service
-- legacy Jarvis tools (`docker_containers`, `docker_logs`,
-  `system_status`) — scoped to `llama3*` rows only per D-20
+- `system_status` (v0.2.0) — Aurora operational status; attached to
+  `qwen2.5` (F2-9) and to the legacy `llama3*` rows
+- legacy Jarvis tools (`docker_containers`, `docker_logs`) —
+  scoped to `llama3*` rows only per D-20
 
 Audio surface (D-1.7):
 
@@ -582,14 +617,15 @@ Includes:
 - filesystem connector
 - git connector
 
-Indexing operational status (verified 2026-06-28, Phase F F-1):
+Indexing operational status (verified 2026-06-29, Phase F F2-9):
 
 - Nightly sync: cron `30 2 * * *` (`diego` crontab), before the
   03:00 restic backup. Idempotent (per-chunk `content_sha`); GC of
   vanished files.
-- Live collection point counts: `homelab_docs` 1911 (excl. `09_logs/`) ·
-  `knowledge_history` 2918 · `guardian_cloud` 872 · `ensambla2` 419 ·
-  `infra_audits` 280 · `myfreetour` 0 (disabled).
+- Live collection point counts (as of 2026-06-29; grow nightly as docs are
+  added): `homelab_docs` 1968 (excl. `09_logs/`) · `knowledge_history` 3029 ·
+  `guardian_cloud` 872 · `ensambla2` 419 · `infra_audits` 280 ·
+  `myfreetour` 0 (disabled).
 - Embedder `intfloat/multilingual-e5-small` (384-dim) / reranker
   `BAAI/bge-reranker-v2-m3`. Full contract:
   [`../04_ai_system/knowledge_platform_contract.md`](../04_ai_system/knowledge_platform_contract.md).

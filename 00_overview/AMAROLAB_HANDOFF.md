@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-06-28
+Last updated: 2026-06-29
 
 ## Purpose
 
@@ -186,6 +186,8 @@ Validated capabilities:
 - runtime secret loading
 - Zigbee device control
 - **voice control** through Aurora v1 Assist pipeline
+- **operational awareness** — `system_status` tool + nightly signal
+  layer (`aurora-context`), wired to `qwen2.5` (Phase F-2)
 
 Verified device:
 
@@ -305,7 +307,9 @@ Assistant.
 
 Current phase:
 
-**Phase D-1 — Voice — CLOSED 2026-06-18.**
+**Phase F — Operational Intelligence — IN PROGRESS (F-0/F-1/F-2
+complete; F-2 closed 2026-06-29; current active step F-3). Phase D-1
+(Voice) closed 2026-06-18.**
 
 Active follow-on: **Phase RTX-1 — Torre GPU node — CLOSED
 2026-06-27. RTX-1.4 (Tailscale-only) + RTX-1.5 (headless
@@ -362,10 +366,14 @@ backup-consistency decision), E-5 (drift measurement + restore
 drill + audit-log check), E-6 (onboarding framework proven
 end-to-end). All 13 E-0 findings resolved or accepted. Platform
 health `overall_status=ok`. **Current phase: Phase F — Operational Intelligence — IN PROGRESS.**
-F-0 behavioral audit COMPLETE 2026-06-28: 8 AF findings resolved; baseline
-4/10 pass; AF-06 disproved (system prompt is Phase A draft — describes 1/5
-tools correctly, actively blocks the other 4). **Current active step: F-1 —
-System Prompt Redesign.** Architecture document:
+F-0 (behavioral audit), F-1 (system prompt redesign) and F-2 (signal layer
++ context generation + `system_status`) COMPLETE — F-2 closed 2026-06-29
+(F2-9): the unattended nightly signal pipeline (`backup-probe`,
+`container-probe`, `aurora-context` → `/opt/aurora`) is validated,
+`system_status` v0.2.0 is wired to `qwen2.5`, and G-F1-01 passed across all
+layers incl. the browser UI (`overall_status = ok`). **Current active step:
+F-3 — Situational Awareness Filter.** F-2 closeout:
+`09_logs/2026-06-29_phaseF_F2_9_closeout.md`. Architecture document:
 [`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md).
 F-0 audit report:
 [`../09_logs/2026-06-28_phaseF_F0_audit_report.md`](../09_logs/2026-06-28_phaseF_F0_audit_report.md).

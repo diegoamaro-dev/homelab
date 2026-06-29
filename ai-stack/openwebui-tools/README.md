@@ -70,6 +70,12 @@ the Open WebUI admin UI:
 - Verify the Tool is **not** enabled for `llama3:latest`,
   `llama3.2:latest`, or `phi3:latest` (Amarolab decision D-20).
 
+The model→tool attachment (`meta.toolIds`) and the system prompt
+(`params.system`) are runtime `webui.db` state, not git. F-1 and F2-9 applied
+them via a scripted `sqlite3` UPDATE (with readback) rather than the admin UI.
+Reproduction, restic recovery, and the automation recommendation:
+[`../../04_ai_system/openwebui_model_runtime_state.md`](../../04_ai_system/openwebui_model_runtime_state.md).
+
 ## Adding a new Tool
 
 1. Drop a file at `tools/<id>.py`. Keep `<id>` a valid Python
