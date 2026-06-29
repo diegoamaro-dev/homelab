@@ -1,14 +1,17 @@
 # Phase F — Architecture Document
 
-- **Status:** Approved — **revised at F3.0 (2026-06-29)**. Governs all Phase F
-  implementation decisions. The F-3 architecture, acceptance gates, and
-  implementation milestones are **FROZEN** as of F3.0 (see §4A and §9 → F-3).
+- **Status:** Approved — revised at F3.0; **F-3 implemented + closed at F3.3
+  (2026-06-29)**. Governs all Phase F implementation decisions. The F-3
+  architecture, acceptance gates, and milestones were **FROZEN** at F3.0 (see
+  §4A and §9 → F-3) and **delivered** at F3.1/F3.2 (G-F3-1…G-F3-8 pass).
 - **Phase:** F — Operational Intelligence.
 - **Mission alignment:** [`AURORA_VISION.md`](AURORA_VISION.md) — read first.
 - **Authored:** F-0 pre-work, 2026-06-28.
 - **Revised:** F3.0 Architecture Refinement, 2026-06-29 — F-1/F-2 drift
   reconciled (backup-probe decision, AF-05 voice mechanism, runtime details);
-  F-3 split into F-3a/F-3b; F-3 gates and milestones frozen. See §15 (Revision Log).
+  F-3 split into F-3a/F-3b; F-3 gates and milestones frozen. **F3.3
+  (2026-06-29):** F-3a/F-3b marked implemented + closed; G-F3-1 `# Context`
+  precedence note recorded. See §15 (Revision Log).
 - **Authority:** This document defines *how* Phase F is built. If an
   implementation decision conflicts with it, this document wins — or is
   revised through a deliberate decision recorded here, not by drift.
@@ -698,7 +701,7 @@ cycle after F-2 work begins.
 
 ---
 
-### F-3 — Situational Awareness (FROZEN at F3.0, 2026-06-29)
+### F-3 — Situational Awareness (FROZEN at F3.0; IMPLEMENTED + CLOSED 2026-06-29, F3.3)
 
 **Objective:** Opening a conversation gives Aurora current lab state without
 any tool call.
@@ -708,6 +711,22 @@ Filter behaviour contract in §7 is the authoritative mechanism spec; the
 decisions AD-08…AD-13 are binding. This sub-phase, its acceptance gates, and
 its milestones are **frozen** as of F3.0 — changes require a recorded revision
 (§15), not drift.
+
+> **As built (F3.3, 2026-06-29) — IMPLEMENTED + CLOSED.** F-3a and F-3b are
+> validated; **all gates G-F3-1…G-F3-8 pass**. F-3a is published as
+> `phase-f3a-complete` (commit `96217e52`); F-3b + this reconciliation are staged
+> for the F3.3 publication. Apply logs:
+> [`../09_logs/2026-06-29_phaseF_F3_1_applied.md`](../09_logs/2026-06-29_phaseF_F3_1_applied.md) (F3.1),
+> [`../09_logs/2026-06-29_phaseF_F3_2_applied.md`](../09_logs/2026-06-29_phaseF_F3_2_applied.md) (F3.2);
+> closeout [`../09_logs/2026-06-29_phaseF_F3_closeout.md`](../09_logs/2026-06-29_phaseF_F3_closeout.md).
+>
+> **G-F3-1 note (required by F-3a reality):** the frozen plan assumed the injected
+> block + the F-1 prompt would yield a no-tool-call status answer; in practice the
+> 7B needed an explicit `# Context`-over-`# Routing` precedence directive in
+> `params.system` (operator-approved, + an `openwebui` reload) before G-F3-1 passed
+> with tools offered. **F-3b note:** only the AD-13 Jinja line was appended to the
+> **stock** HA voice prompt — the F-1 voice identity was found absent and is tracked
+> as a separate maintenance item (out of F-3b scope).
 
 #### F-3a — Open WebUI Awareness Filter
 
@@ -758,10 +777,10 @@ its milestones are **frozen** as of F3.0 — changes require a recorded revision
 
 | Milestone | Content | Type |
 |---|---|---|
-| **F3.0** | Architecture refinement & freeze (this revision) | docs only — **current** |
-| **F3.1** | F-3a: entry-verify (installed F-1 prompt references the block; smoke-re-confirm AF-01 on the running 0.8.10 build; confirm `/opt/aurora/aurora-context.md` fresh in-container) → implement committed Filter → install → validate G-F3-1…G-F3-7 | build + validate |
-| **F3.2** | F-3b: `input_text` helper + Jinja2 prompt ref + 04:20 `set_value` push + HA token in `.env` → validate G-F3-8 | build + validate |
-| **F3.3** | Reconciliation & closeout: update the overview triad + this doc's F-3 status to complete; closeout log; STOP at git gate | docs + git |
+| **F3.0** | Architecture refinement & freeze (this revision) | docs — **DONE (frozen)** |
+| **F3.1** | F-3a: entry-verify (installed F-1 prompt references the block; smoke-re-confirm AF-01 on the running 0.8.10 build; confirm `/opt/aurora/aurora-context.md` fresh in-container) → implement committed Filter → install → validate G-F3-1…G-F3-7 | build + validate — **DONE** (G-F3-1…7 pass; tag `phase-f3a-complete`) |
+| **F3.2** | F-3b: `input_text` helper + Jinja2 prompt ref + 04:20 `set_value` push + HA token in `.env` → validate G-F3-8 | build + validate — **DONE** (G-F3-8 pass) |
+| **F3.3** | Reconciliation & closeout: update the overview triad + this doc's F-3 status to complete; closeout log; STOP at git gate | docs + git — **current** (triad + doc reconciled; STOP at git gate) |
 
 **Dependencies:** F-2 (context artifacts + `/opt/aurora` bind-mount +
 `system_status`) — **complete/verified**; F-1 (prompt must reference and
@@ -1042,3 +1061,4 @@ are not accidentally implemented in Phase F.
 |---|---|---|
 | 2026-06-28 | Authored (F-0 pre-work) | Original approved Phase F architecture. |
 | 2026-06-29 | **F3.0 — Architecture Refinement** | Reviewed the F-3 design; recorded the decision register (§4A) and AD-08…AD-13. Reconciled F-1/F-2 drift: backup signal is `bin/backup-probe` at 03:30, not `homelab-backup.sh` (AD-12; §6.1/§6.4); HA-voice mechanism is `input_text` + Jinja2 (AD-13; §7); `aurora-context.md` example replaced with real F-2 output (§6.2); §2 marked as a pre-F baseline (live state in CURRENT_STATE.md). Split F-3 into F-3a/F-3b; **froze** the F-3 architecture, acceptance gates (G-F3-1…G-F3-8), and milestones (F3.0→F3.3). No code/prompt/container/DB/Open WebUI changes. Next: operator approval before F3.1. |
+| 2026-06-29 | **F3.3 — F-3 closeout / reconciliation** | Recorded F-3 as IMPLEMENTED + CLOSED: F-3a Open WebUI Filter (`aurora_context`, active+global) + F-3b HA voice awareness (`input_text.aurora_voice_context` + Jinja2 + 04:20 `push-voice-context`); all gates G-F3-1…G-F3-8 pass. Added the §9 "as built" note + milestone statuses (F3.0→F3.3 done) + status header, and recorded the **G-F3-1 `# Context` precedence** requirement (for G-F3-1 with tools offered) and the **F-1 HA-voice-identity-absent** finding (separate item). Overview triad reconciled in parallel. No code/prompt/DB/container changes in F3.3. Apply logs: F3_1, F3_2; closeout `2026-06-29_phaseF_F3_closeout.md`. STOP at git gate (operator review before publication). |

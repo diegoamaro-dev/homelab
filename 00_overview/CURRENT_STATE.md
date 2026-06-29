@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-Phase F — Operational Intelligence — **IN PROGRESS.** F-0 (behavioral audit), F-1 (system prompt redesign) and F-2 (signal layer + context generation + `system_status`) COMPLETE — F-2 closed 2026-06-29 (F2-9). The unattended nightly signal pipeline is validated and `system_status` is wired to `qwen2.5` (G-F1-01 passed across all layers incl. the browser UI). **Current active step: F-3 — Situational Awareness Filter.** Prior: Phase E COMPLETE 2026-06-28 (E-0..E-6).
+Phase F — Operational Intelligence — **IN PROGRESS.** F-0, F-1, F-2 and **F-3 (Situational Awareness) COMPLETE — F-3 closed 2026-06-29 (F3.3): F-3a chat Filter (G-F3-1…7) and F-3b HA-voice awareness (G-F3-8) both validated.** The nightly signal pipeline is validated, `system_status` is wired to `qwen2.5`, the `aurora_context` Open WebUI Filter is active+global, and the HA voice prompt renders the nightly context via `input_text.aurora_voice_context`. **Current active step: F-4 — Operational Digest + Memory Corpus.** Prior: Phase E COMPLETE 2026-06-28 (E-0..E-6).
 
 Overall health:
 Stable
@@ -10,10 +10,10 @@ Production:
 Operational
 
 Next milestone:
-F-3 — Situational Awareness Filter — deploy the Open WebUI Filter that injects `aurora-context.md` at conversation start so Aurora reports lab state with no tool call. See `04_ai_system/phase_f_architecture.md` §F-3.
+F-4 — Operational Digest + Memory Corpus — nightly `09_ops/runtime/` digest files indexed by `homelab_docs` for historical retrieval. See `04_ai_system/phase_f_architecture.md` §9 → F-4. (F-5 Home Intelligence and F-6 Voice Quality are also unblocked.)
 
 Last completed:
-F-2 — Signal Layer + Context Generation (closed 2026-06-29, F2-9): `backup-probe`/`container-probe`/`aurora-context` nightly pipeline validated unattended; `system_status` v0.2.0 wired to `qwen2.5` and validated end-to-end (G-F1-01); `overall_status = ok`. Closeout: `09_logs/2026-06-29_phaseF_F2_9_closeout.md`. Prior: F-1 system prompt (2026-06-28).
+F-3 — Situational Awareness (closed 2026-06-29, F3.3). F-3a: `aurora_context` Open WebUI Filter (active+global) injects `aurora-context.md` on message 1; G-F3-1…7 pass (G-F3-1 after an operator-approved `# Context` precedence directive). F-3b: HA `input_text.aurora_voice_context` + Jinja2 in the Ollama voice prompt + 04:20 `push-voice-context`; G-F3-8 pass. Closeout: `09_logs/2026-06-29_phaseF_F3_closeout.md`. Apply logs: `09_logs/2026-06-29_phaseF_F3_1_applied.md`, `09_logs/2026-06-29_phaseF_F3_2_applied.md`. Prior: F-2 (2026-06-29, F2-9).
 
 Blocking issues:
 None
@@ -234,8 +234,8 @@ Architecture amendment (DRAFT — merged at RTX-1.6):
 
 ### Phase F — Operational Intelligence
 
-Status: **F-0, F-1, F-2 COMPLETE. F-2 closed 2026-06-29 (F2-9). Current
-active step: F-3 — Situational Awareness Filter.**
+Status: **F-0, F-1, F-2, F-3 COMPLETE. F-3 closed 2026-06-29 (F3.3). Current
+active step: F-4 — Operational Digest + Memory Corpus.**
 
 Phase F shifts Aurora from reactive to aware. Architecture:
 [`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md).
@@ -258,10 +258,30 @@ Phase F shifts Aurora from reactive to aware. Architecture:
   G-F1-01 (chat-level tool firing) passed across all layers including the
   browser UI; `overall_status = ok`. Closeout:
   [`09_logs/2026-06-29_phaseF_F2_9_closeout.md`](../09_logs/2026-06-29_phaseF_F2_9_closeout.md).
+- **F-3 — Situational Awareness** (closed 2026-06-29, F3.3). Split into
+  F-3a (chat) + F-3b (voice) per AD-08.
+  - **F-3a — Open WebUI Awareness Filter** (F3.1): committed Filter
+    [`ai-stack/openwebui-tools/filters/aurora_context.py`](../ai-stack/openwebui-tools/filters/aurora_context.py)
+    installed via `install_function`, **active + global** in `webui.db`;
+    injects `aurora-context.md` from `/opt/aurora` on message 1 (freshness off
+    the JSON; ≤26h graduated/fallback). All 7 gates G-F3-1…G-F3-7 pass — G-F3-1
+    closed after an operator-approved `# Context` precedence directive in
+    `params.system` + an `openwebui` reload. Apply log:
+    [`09_logs/2026-06-29_phaseF_F3_1_applied.md`](../09_logs/2026-06-29_phaseF_F3_1_applied.md).
+  - **F-3b — HA Voice Awareness Refresh** (F3.2): HA helper
+    `input_text.aurora_voice_context` (max 255) + Jinja2
+    `{{ states('input_text.aurora_voice_context') }}` appended to the Ollama
+    voice prompt; `bin/push-voice-context` writes the nightly
+    `aurora-context-voice.txt` into the helper via HA REST `input_text/set_value`
+    at 04:20. G-F3-8 pass. Apply log:
+    [`09_logs/2026-06-29_phaseF_F3_2_applied.md`](../09_logs/2026-06-29_phaseF_F3_2_applied.md).
+  - Closeout:
+    [`09_logs/2026-06-29_phaseF_F3_closeout.md`](../09_logs/2026-06-29_phaseF_F3_closeout.md).
 
 Generated runtime artifacts (`ai-stack/aurora/`, signal JSON) are
-gitignored. Next: **F-3** deploys the Open WebUI Filter that injects
-`aurora-context.md` at conversation start (no tool call).
+gitignored. Next: **F-4** — nightly `09_ops/runtime/` operational digest
+indexed by `homelab_docs` (F-5 Home Intelligence and F-6 Voice Quality also
+unblocked).
 
 ---
 
@@ -277,11 +297,16 @@ Primary tool-calling model:
 - `base_model_id`: **NULL** (D-35 preserved)
 - `meta.toolIds`:
   `["time_now","rag_search","audit_search","ha_get_state","ha_call_service","system_status"]`
-- `params.system`: **F-1 system prompt** (3 389 chars / ~485 tokens;
-  installed 2026-06-28 F-1, `system_status` added 2026-06-29 F2-9).
-  Domain-based routing; all 6 tools described; no stale phase references.
-- **Runtime state:** `base_model_id` / `meta.toolIds` / `params.system` live
-  in `webui.db` (not git). Reproduction + recovery procedure:
+- `params.system`: **F-1 system prompt** (3 532 chars; installed 2026-06-28
+  F-1, `system_status` added 2026-06-29 F2-9, `# Context` precedence directive
+  added 2026-06-29 F3.1). Domain-based routing; all 6 tools described; no
+  stale phase references.
+- **`aurora_context` Filter (F3.1):** Open WebUI Function (type `filter`),
+  **active + global** in `webui.db.function`. Injects `aurora-context.md` from
+  `/opt/aurora` on message 1 (situational awareness, no tool call). Source:
+  [`ai-stack/openwebui-tools/filters/aurora_context.py`](../ai-stack/openwebui-tools/filters/aurora_context.py).
+- **Runtime state:** `base_model_id` / `meta.toolIds` / `params.system` (and the
+  `aurora_context` filter row) live in `webui.db` (not git). Reproduction + recovery procedure:
   [`04_ai_system/openwebui_model_runtime_state.md`](../04_ai_system/openwebui_model_runtime_state.md).
 
 Tools registered in `webui.db.tool`:
@@ -391,6 +416,12 @@ Status: Operational
   fallback — per RTX-1.6) / `qwen2.5:7b-instruct`.
 - Assist pipeline `AURORA v1` is the default /
   preferred pipeline (language `es-ES`).
+- **Voice awareness (F-3b):** helper `input_text.aurora_voice_context`
+  (max 255) holds the nightly single-line lab status; the Ollama voice
+  prompt renders it via Jinja2 `{{ states('input_text.aurora_voice_context') }}`.
+  `bin/push-voice-context` pushes `aurora-context-voice.txt` into the helper at
+  04:20 via HA REST `input_text/set_value` (G-F3-8). The voice prompt is
+  otherwise the production baseline (the F-1 voice identity is unchanged).
 - Voice canary helper: `input_boolean.aurora_voice_canary`
   (state `off`, baseline restored after every gate).
 - Voice-exposure ACL: exactly **one** entity exposed —

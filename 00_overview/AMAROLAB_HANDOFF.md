@@ -188,6 +188,10 @@ Validated capabilities:
 - **voice control** through Aurora v1 Assist pipeline
 - **operational awareness** — `system_status` tool + nightly signal
   layer (`aurora-context`), wired to `qwen2.5` (Phase F-2)
+- **situational awareness** — Open WebUI `aurora_context` Filter (chat,
+  F-3a) + HA voice `input_text.aurora_voice_context` rendered in the Ollama
+  voice prompt (F-3b); Aurora reports lab state at conversation start with no
+  tool call (Phase F-3)
 
 Verified device:
 
@@ -307,9 +311,9 @@ Assistant.
 
 Current phase:
 
-**Phase F — Operational Intelligence — IN PROGRESS (F-0/F-1/F-2
-complete; F-2 closed 2026-06-29; current active step F-3). Phase D-1
-(Voice) closed 2026-06-18.**
+**Phase F — Operational Intelligence — IN PROGRESS (F-0/F-1/F-2/F-3
+complete; F-3 closed 2026-06-29 (F3.3) — F-3a chat Filter + F-3b voice
+awareness; current active step F-4). Phase D-1 (Voice) closed 2026-06-18.**
 
 Active follow-on: **Phase RTX-1 — Torre GPU node — CLOSED
 2026-06-27. RTX-1.4 (Tailscale-only) + RTX-1.5 (headless
@@ -366,13 +370,13 @@ backup-consistency decision), E-5 (drift measurement + restore
 drill + audit-log check), E-6 (onboarding framework proven
 end-to-end). All 13 E-0 findings resolved or accepted. Platform
 health `overall_status=ok`. **Current phase: Phase F — Operational Intelligence — IN PROGRESS.**
-F-0 (behavioral audit), F-1 (system prompt redesign) and F-2 (signal layer
-+ context generation + `system_status`) COMPLETE — F-2 closed 2026-06-29
-(F2-9): the unattended nightly signal pipeline (`backup-probe`,
-`container-probe`, `aurora-context` → `/opt/aurora`) is validated,
-`system_status` v0.2.0 is wired to `qwen2.5`, and G-F1-01 passed across all
-layers incl. the browser UI (`overall_status = ok`). **Current active step:
-F-3 — Situational Awareness Filter.** F-2 closeout:
+F-0, F-1, F-2 and **F-3 (Situational Awareness) COMPLETE — F-3 closed
+2026-06-29 (F3.3).** F-3a: the `aurora_context` Open WebUI Filter (active+global)
+injects `aurora-context.md` on message 1 (G-F3-1…7). F-3b: the HA helper
+`input_text.aurora_voice_context` + Jinja2 in the Ollama voice prompt +
+04:20 `push-voice-context` give the voice surface the same nightly context
+(G-F3-8). **Current active step: F-4 — Operational Digest + Memory Corpus.**
+F-3 closeout: `09_logs/2026-06-29_phaseF_F3_closeout.md`; F-2 closeout:
 `09_logs/2026-06-29_phaseF_F2_9_closeout.md`. Architecture document:
 [`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md).
 F-0 audit report:

@@ -21,11 +21,10 @@ primary + UM790 fallback) all complete. The UM790 front
 doors now consume Torre's GPU Ollama via the `ollama-proxy`).
 **Phase E — Knowledge Platform Foundation — CLOSED 2026-06-28.**
 All steps done: E-0..E-6; 13 findings resolved or accepted.
-**Phase F — Operational Intelligence — IN PROGRESS. F-0 (behavioral
-audit), F-1 (system prompt redesign) and F-2 (signal layer + context
-generation + `system_status`) COMPLETE — F-2 closed 2026-06-29 (F2-9);
-the unattended nightly signal pipeline is validated and G-F1-01 passed.
-Current active step: F-3 — Situational Awareness Filter.**
+**Phase F — Operational Intelligence — IN PROGRESS. F-0, F-1, F-2 and F-3
+(Situational Awareness) COMPLETE — F-3 closed 2026-06-29 (F3.3): F-3a chat
+Filter (G-F3-1…7) + F-3b HA-voice awareness (G-F3-8) both validated. Current
+active step: F-4 — Operational Digest + Memory Corpus (F-5/F-6 also unblocked).**
 
 ---
 
@@ -422,13 +421,24 @@ Sub-phases:
   G-F1-01 passed across all layers incl. the browser UI;
   `overall_status = ok`. Closeout:
   [`09_logs/2026-06-29_phaseF_F2_9_closeout.md`](../09_logs/2026-06-29_phaseF_F2_9_closeout.md).
-* **F-3 — Situational Awareness Filter — CURRENT ACTIVE STEP.** Open
-  WebUI Filter reads `aurora-context.md`; no tool call for "is everything
-  OK?".
-* **F-4 — Operational Digest + Memory Corpus** — nightly `09_ops/` digest
-  files indexed by `homelab_docs`.
+* **F-3 — Situational Awareness — COMPLETE 2026-06-29 (F3.3).** Split into
+  F-3a (chat) + F-3b (voice) per AD-08.
+  * **F-3a — Open WebUI Awareness Filter (F3.1):** committed Filter
+    `ai-stack/openwebui-tools/filters/aurora_context.py`, installed
+    active+global; injects `aurora-context.md` on message 1. G-F3-1…G-F3-7
+    pass (G-F3-1 closed after an operator-approved `# Context` precedence
+    directive + `openwebui` reload). Log:
+    [`09_logs/2026-06-29_phaseF_F3_1_applied.md`](../09_logs/2026-06-29_phaseF_F3_1_applied.md).
+  * **F-3b — HA Voice Awareness Refresh (F3.2):** `input_text.aurora_voice_context`
+    + Jinja2 in the Ollama voice prompt + 04:20 `bin/push-voice-context`
+    (`input_text/set_value`). G-F3-8 pass. Log:
+    [`09_logs/2026-06-29_phaseF_F3_2_applied.md`](../09_logs/2026-06-29_phaseF_F3_2_applied.md).
+  * Closeout:
+    [`09_logs/2026-06-29_phaseF_F3_closeout.md`](../09_logs/2026-06-29_phaseF_F3_closeout.md).
+* **F-4 — Operational Digest + Memory Corpus — NEXT.** nightly `09_ops/runtime/`
+  digest files indexed by `homelab_docs`.
 * **F-5 — Home Intelligence** — home model document; HA entity expansion;
-  home anomaly injection via Filter.
+  home anomaly injection via Filter. (Unblocked — depends on F-3a, now complete.)
 * **F-6 — Voice Quality** — Whisper upgrade; STT shim migration; latency
   baseline. Parallel track; no dependency on F-2..F-5.
 
