@@ -1,9 +1,14 @@
 # Phase F — Architecture Document
 
-- **Status:** Approved. Governs all Phase F implementation decisions.
+- **Status:** Approved — **revised at F3.0 (2026-06-29)**. Governs all Phase F
+  implementation decisions. The F-3 architecture, acceptance gates, and
+  implementation milestones are **FROZEN** as of F3.0 (see §4A and §9 → F-3).
 - **Phase:** F — Operational Intelligence.
 - **Mission alignment:** [`AURORA_VISION.md`](AURORA_VISION.md) — read first.
 - **Authored:** F-0 pre-work, 2026-06-28.
+- **Revised:** F3.0 Architecture Refinement, 2026-06-29 — F-1/F-2 drift
+  reconciled (backup-probe decision, AF-05 voice mechanism, runtime details);
+  F-3 split into F-3a/F-3b; F-3 gates and milestones frozen. See §15 (Revision Log).
 - **Authority:** This document defines *how* Phase F is built. If an
   implementation decision conflicts with it, this document wins — or is
   revised through a deliberate decision recorded here, not by drift.
@@ -35,6 +40,12 @@ Diego's cognitive load while keeping him fully in control?
 
 The baseline from which Phase F begins. This section records what is true
 at the start of Phase F, not what will be true at the end.
+
+*Pre-F baseline snapshot — intentionally not rewritten (PROJECT_RULES:
+historical records are not rewritten). F-1 and F-2 are now complete; live
+counts and runtime state are authoritative in
+[`../00_overview/CURRENT_STATE.md`](../00_overview/CURRENT_STATE.md). The
+reconciled forward design is §4A, §6, and §9.*
 
 ### Running components
 
@@ -124,7 +135,9 @@ message before the model processes message 1. The mechanism is an Open WebUI
 Filter that reads the pre-generated `aurora-context.md` and prepends it to
 the system message on message 1 of each conversation.
 
-The Filter contains no domain logic. It reads one file. Its only job is
+The Filter contains no domain logic. It reads only pre-generated context
+artifacts (no construction) — refined in AD-10 to read `aurora-context.json`
+for the freshness decision and inject `aurora-context.md`. Its only job is
 delivery, not construction.
 
 ### AD-03: Live state is delivered by the `system_status` tool.
@@ -182,6 +195,90 @@ the direct conflict between automated digest generation and the operator git
 approval constraint (§13). Any future proposal to commit digest files
 automatically must explicitly revise this decision and update §13.
 
+### AD-08: F-3 is delivered as two independent sub-milestones — F-3a (chat) and F-3b (voice).
+
+The Open WebUI Filter (chat awareness) and the HA-voice context refresh share
+only the context artifact; their mechanisms are unrelated (a `webui.db` Python
+Function vs. an HA `input_text` helper + Jinja2 + a nightly REST push). They are
+built and gated separately. F-3a is the headline objective and ships first; F-3b
+follows. F-5 (home-anomaly injection) depends on **F-3a only**.
+
+### AD-09: Awareness-delivery consumers are source-controlled code, not runtime-only state.
+
+The Filter is `webui.db` runtime state, exactly like the model config and tool
+rows flagged in
+[`openwebui_model_runtime_state.md`](openwebui_model_runtime_state.md) §4. To
+avoid widening that reproducibility gap, the Filter **source** is committed to git
+(`ai-stack/openwebui-tools/filters/aurora_context.py`) with an install + recovery
+note, and the HA voice prompt / `input_text` changes are documented. The broader
+unified `configure-model` automator (one script re-applying prompt + tools +
+filter) remains a **deferred** follow-up — F-3 commits the Filter source but does
+not build the unified automator.
+
+### AD-10: The Filter keys freshness on the JSON and injects the markdown; injected content is stable within a conversation.
+
+The Filter reads `aurora-context.json` (`generated_at`, `overall_status`) for the
+staleness decision — robust machine fields, not header-string parsing or file
+mtime — and injects the prose of `aurora-context.md`. The injected block carries
+no per-request live timestamp, so it is identical across turns of a conversation
+and does not invalidate the KV cache. Live "right now" state remains the job of
+`system_status` (AD-03).
+
+### AD-11: The injected payload is the full compact `aurora-context.md` block (not a one-liner).
+
+The generated markdown is ~6 lines; on Torre (~101 tok/s) the token cost is
+negligible, and the full block answers routine briefing passively without a tool
+call (the Vision target, AD-02). A minimal `overall_status`-only one-liner was
+considered and **rejected**: it would force a `system_status` call for any detail.
+Reversible — revisit only if prompt-eval latency becomes material.
+
+### AD-12: The backup signal is produced by a standalone `bin/backup-probe`, not by modifying `homelab-backup.sh`.
+
+**Supersedes the original §6.1 / §9-F-2 "modify `homelab-backup.sh`" approach.**
+F-2 implemented `bin/backup-probe` (03:30), which reads restic snapshot metadata
+and writes `backup_status.json` (`schema_version`, `probed_at`, `status`,
+`snapshot_id`, `snapshot_time`; `files_new` / `files_changed` / `data_added_mb`
+= `null`). Rationale: the production backup script stays untouched (safer); the
+snapshot list lacks per-run deltas, accepted as sufficient for context /
+`system_status`. Decision origin: F2-9 closeout §6.
+
+### AD-13: HA-voice awareness is delivered via an `input_text` helper + Jinja2, refreshed nightly.
+
+**Supersedes the original §7 "REST API or direct config write" wording (AF-05).**
+F-0 validated and improved the mechanism: an HA `input_text.aurora_voice_context`
+helper (max_length 255) holds the voice line; the HA Ollama voice prompt
+references it with Jinja2 `{{ states('input_text.aurora_voice_context') }}`,
+rendered per request with no integration reload. A nightly step (04:20, F-3b)
+pushes `aurora-context-voice.txt` into the helper via the HA REST
+`input_text/set_value` service. This requires an HA long-lived token in
+`ai-stack/.env` (gitignored) — a dependency that therefore arrives at **F-3b**,
+earlier than the F-5 statement in §13 / §9-F-5.
+
+---
+
+## 4A. F3.0 Architecture Refinement — Decision Register
+
+F3.0 (2026-06-29) reviewed every recommendation from the F-3 design review.
+Outcomes:
+
+| # | Recommendation (F-3 review) | Decision | Captured in |
+|---|---|---|---|
+| R1 | Split F-3 into F-3a (chat Filter) / F-3b (voice) | **Accepted** | AD-08; §9 F-3 |
+| R2 | Treat the Filter as source-controlled code | **Accepted** (narrow); unified `configure-model` automator **Deferred** | AD-09 |
+| R3 | Freshness decision off the JSON; inject the MD | **Accepted** | AD-10 |
+| R4 | Injected payload = full compact md | **Accepted**; one-liner **Rejected** | AD-11 |
+| R5 | Stable injection within a conversation (KV cache) | **Accepted** | AD-10 |
+| R6 | Separate mechanism vs behavioral validation | **Accepted** | §9 F-3 (G-F3-1 vs AF-01) |
+| R7 | Explicit acceptance gates G-F3-1…G-F3-8 | **Accepted — FROZEN** | §9 F-3 |
+| R8 | Reconcile F-1/F-2 doc drift | **Accepted — done in F3.0** | AD-12, AD-13; §6.1, §6.2, §6.4, §7 |
+| R9 | HA token dependency arrives at F-3b, not F-5 | **Accepted** | AD-13; §9 F-3b |
+| R10 | Verify F-1 prompt references the injected block | **Accepted** (F3.1 entry gate) | §9 F-3 milestones |
+| R11 | Smoke-re-confirm AF-01 on the running 0.8.10 build | **Accepted** (F3.1 entry gate) | §9 F-3 milestones |
+| R12 | Small milestone plan | **Accepted — FROZEN** as F3.0→F3.3 | §9 F-3 milestones |
+
+Only two items are not carried into F-3 as work: the one-liner payload
+(rejected, R4) and the unified `configure-model` automator (deferred, R2).
+
 ---
 
 ## 5. Rejected Alternatives
@@ -219,9 +316,10 @@ the context block on the fly.
 
 **Why rejected:** This couples context construction logic to a UI plugin.
 Every signal schema change requires a Filter update. Adding a new signal
-requires a Filter update. The Filter should be dumb — it reads one file and
-prepends it. Context construction belongs in `bin/aurora-context`, where it
-can serve all consumers. Schema changes are handled in one place.
+requires a Filter update. The Filter should be dumb — it reads the
+pre-generated context and prepends it (AD-10). Context construction belongs in
+`bin/aurora-context`, where it can serve all consumers. Schema changes are
+handled in one place.
 
 ### RA-04: Single RAG collection for both operational history and same-night briefing
 
@@ -251,13 +349,13 @@ signals that Aurora happens to be able to read.
 | Signal file | Written by | Schedule | Schema |
 |---|---|---|---|
 | `ai-stack/ingest/logs/health.json` | `ingest-nightly` (ingest section) + `check-audit-liveness` (audit section) | 02:30 + 03:30 | `overall_status`, `ingest.*`, `audit.*` — see contract |
-| `ai-stack/ingest/logs/backup_status.json` | `homelab-backup.sh` (modified) | 03:00 | `schema_version`, `run_at`, `exit_code`, `status`, `snapshot_id`, `files_new`, `files_changed`, `data_added_mb`, `duration_seconds`, `prune_removed` |
+| `ai-stack/ingest/logs/backup_status.json` | **`bin/backup-probe`** (standalone — reads restic snapshot metadata; **AD-12**, not `homelab-backup.sh`) | 03:30 | `schema_version`, `probed_at`, `status`, `snapshot_id`, `snapshot_time`; `files_new` / `files_changed` / `data_added_mb` = `null` |
 | `ai-stack/ingest/logs/container_status.json` | new host-side `bin/container-probe` script | nightly at 04:00 | `generated_at`, `containers: [{name, status, running}]` |
 
-`backup_status.json` and `container_status.json` are new signals that must
-be created as part of Phase F (F-2). Until they exist, the context
-generation script operates with reduced data and must communicate the gap
-honestly.
+`backup_status.json` and `container_status.json` were created in F-2
+(`bin/backup-probe` at 03:30; `bin/container-probe` at 04:00). `bin/aurora-context`
+degrades gracefully if any signal is missing or stale (≥26h): it omits or marks
+the section and records the gap in `signals_missing` — it does not guess.
 
 ### 6.2 Context Generation
 
@@ -282,9 +380,9 @@ ai-stack/ingest/logs/
   "generated_at": "2026-06-28T04:15:00Z",
   "overall_status": "ok | degraded | unknown",
   "ingest": { "status": "ok", "last_run_end": "...", "last_run_rc": 0 },
-  "backup": { "status": "ok", "snapshot_id": "...", "run_at": "...", "exit_code": 0 },
+  "backup": { "status": "ok", "snapshot_id": "...", "snapshot_time": "...", "data_added_mb": null },
   "audit": { "status": "ok", "age_days": 0 },
-  "containers": { "all_running": true, "degraded": [] },
+  "containers": { "all_running": true, "count": 17, "degraded": [] },
   "home": { "anomalies": [] },
   "signals_missing": []
 }
@@ -292,21 +390,29 @@ ai-stack/ingest/logs/
 
 **`aurora-context.md`** — LLM-formatted, human-readable. Consumed by the
 Open WebUI Filter. Format: compact, timestamped, honest about missing
-signals and their age. Example:
+signals and their age. Actual F-2 output (2026-06-29):
 
 ```
-[Aurora context — 2026-06-28 04:15 UTC]
-Platform: OK — ingest ok (02:30), backup ok (03:00, snapshot 228e4183,
-+2.1 MB), audit ok, all 17 containers running. Torre: not probed (live
-probe available via system_status). Home: no anomalies.
+[Aurora context — 2026-06-29 10:38 UTC]
+
+Status:      ok
+
+Ingest:      ok — last run 2026-06-29 00:30 UTC (10.1h ago, rc=0)
+Backup:      ok — snapshot c38ddcc1 at 2026-06-29 01:00 UTC (9.6h ago)
+Audit:       ok — last entry age 0 days
+Containers:  17/17 running
 ```
+
+The block is multi-line labelled (not a single prose line) and carries no live
+Torre line — live Torre reachability is `system_status` only (AD-03).
 
 **`aurora-context-voice.txt`** — single-line compact variant for the HA
-voice LLM configuration. Budget: ≤200 characters. Contains only
-overall_status, last backup result, and any anomalies. Example:
+voice LLM configuration. Budget: ≤200 characters. Contains the timestamp,
+overall_status, last backup result, container summary, and any anomalies.
+Actual F-2 format:
 
 ```
-2026-06-28 04:15 | ok | backup ok 228e4183 | 17 containers up | no anomalies
+2026-06-29 04:15 | ok | backup ok | 17/17 running | no anomalies
 ```
 
 If a signal file is missing, `aurora-context` notes it in the appropriate
@@ -350,11 +456,12 @@ This is the committed ordering; changes require a deliberate decision.
 | Time | Script | Writes |
 |---|---|---|
 | 02:30 | `ingest-nightly` | `health.json` (ingest section) |
-| 03:00 | `homelab-backup.sh` | `backup_status.json` (new in F-2) |
+| 03:00 | `homelab-backup.sh` | restic snapshot only — **does not** write `backup_status.json` (AD-12) |
 | 03:30 | `check-audit-liveness` | `health.json` (audit section) |
-| 04:00 | `bin/container-probe` | `container_status.json` (new in F-2) |
-| 04:15 | `bin/aurora-context` | `aurora-context.json`, `aurora-context.md`, `aurora-context-voice.txt` (new in F-2) |
-| 04:20 | `bin/generate-digest` + HA voice refresh | `09_ops/runtime/YYYY-MM-DD_ops_digest.md`; HA voice LLM config update (new in F-3/F-4) |
+| 03:30 | `bin/backup-probe` | `backup_status.json` (F-2; reads the 03:00 snapshot — AD-12) |
+| 04:00 | `bin/container-probe` | `container_status.json` (F-2) |
+| 04:15 | `bin/aurora-context` | `aurora-context.json`, `aurora-context.md`, `aurora-context-voice.txt` (F-2) |
+| 04:20 | `bin/generate-digest` (F-4) + HA voice `input_text` push (F-3b) | `09_ops/runtime/YYYY-MM-DD_ops_digest.md`; `input_text.aurora_voice_context` set via HA REST (AD-13) |
 
 `bin/generate-digest` and the HA voice refresh are sequential steps at 04:20.
 They may be combined into one script or adjacent cron entries separated by
@@ -389,7 +496,7 @@ implementation detail confined to the tool layer.
 | Live datetime | — | — | `time_now` |
 | HA entity state | — | — | `ha_get_state` |
 | HA action | — | — | `ha_call_service` |
-| Live call log | _(not yet available)_ | — | _(future tool, F-2 or F-3)_ |
+| Live call log | _(not yet available)_ | — | _(future tool — not in F-2/F-3; deferred)_ |
 
 **Separation rationale:** `homelab_docs` indexes living documentation that
 describes current state. `knowledge_history` indexes historical records
@@ -421,17 +528,18 @@ All consumers are dumb. They read; they do not reconstruct.
 
 | Consumer | What it reads | When | How |
 |---|---|---|---|
-| Open WebUI Filter | `/opt/aurora/aurora-context.md` | Message 1 of each conversation | Prepends content as a system message block; fires on inlet; silent-fails gracefully if file missing |
-| HA voice system prompt | `/opt/aurora/aurora-context-voice.txt` | Nightly refresh (04:20) | Script writes single-line content into HA voice LLM config via HA REST API or direct config write (mechanism validated in F-0/F-1, see AF-05) |
+| Open WebUI Filter | `/opt/aurora/aurora-context.json` (freshness) + `aurora-context.md` (payload) | Message 1 of each conversation | Reads JSON `generated_at` / `overall_status` for the staleness decision; prepends the markdown prose as a system-message block; fires on inlet; degrades gracefully if missing/stale (AD-10) |
+| HA voice system prompt | `/opt/aurora/aurora-context-voice.txt` | Nightly refresh (04:20) | Nightly step pushes the single line into `input_text.aurora_voice_context` via HA REST `input_text/set_value`; the voice prompt renders it per-request with Jinja2 `{{ states('input_text.aurora_voice_context') }}` — no reload (AD-13; supersedes the original REST/config-write wording; F-0 AF-05) |
 | `system_status` tool | `/opt/aurora/aurora-context.json` + live probes | On demand | Reads context JSON for pre-generated state; adds live Torre probe + fresh health.json read; returns per-field timestamps so data age is always visible |
 | Future consumers | `/opt/aurora/aurora-context.md` or `.json` | At session start | Same pattern — read the file |
 
 **Filter behaviour contract:**
 - Fires on inlet (user message), not outlet.
 - Checks if this is message 1 (conversation history length == 0 or 1).
-- Reads `/opt/aurora/aurora-context.md`.
-- If file exists and is **≤26h old**: prepends content. If the file age is between 24h and 26h, the prepended block includes a note: "[context is N hours old — use system_status for current state]".
-- If file is **missing, unreadable, or older than 26h**: prepends a minimal fallback only: "Context file unavailable — use system_status for current state." Never crashes the conversation.
+- Reads `/opt/aurora/aurora-context.json` for `generated_at` / `overall_status` (freshness/decision) and `/opt/aurora/aurora-context.md` for the injected prose (AD-10).
+- Age is computed from `generated_at` (not file mtime). If **≤26h**: prepends the markdown block. If age is between 24h and 26h, the block includes a note: "[context is N hours old — use system_status for current state]".
+- If the files are **missing, unreadable, or older than 26h**: prepends a minimal fallback only: "Context file unavailable — use system_status for current state." Never crashes the conversation.
+- Injected content is identical across turns of a conversation (no per-request timestamp) so the KV cache is preserved (AD-10).
 - Does not fire on messages 2, 3, etc.
 
 Note: 26h is a single threshold with a graduated response. There is no undefined behavior between 24h and 26h. The nightly generation at 04:15 ensures the file is always replaced well within the 26h window under normal operation; the threshold only activates during a nightly cycle failure.
@@ -465,7 +573,7 @@ F-0 (Behavioral Audit — read-only, no build)
  └──▶ F-6 (Voice Quality)  ◀── parallel track; no dependency on F-2..F-5
 ```
 
-**Critical path:** F-0 → F-1 → F-2 → F-3 → F-5 (with F-4 branching from F-2 in parallel)
+**Critical path:** F-0 → F-1 → F-2 → F-3 (F-3a then F-3b) → F-5 (with F-4 branching from F-2 in parallel). F-5 depends on **F-3a** — the Filter mechanism (AD-08).
 
 **Parallel track:** F-6 can begin after F-0 (behavioral audit validates the
 voice gap) and run concurrently with F-2 through F-5.
@@ -544,6 +652,12 @@ stale claims).
 **Objective:** All signals exist. `bin/aurora-context` runs. Context files
 are generated and accessible to consumers. `system_status` tool is deployed.
 
+> **As built (F3.0 reconciliation):** F-2 is **complete** (closed 2026-06-29,
+> F2-9). One scope item changed: the backup signal was delivered as a standalone
+> `bin/backup-probe` (03:30) reading restic snapshot metadata — `homelab-backup.sh`
+> was **not** modified (AD-12). The "modify `homelab-backup.sh`" wording in the
+> Scope and Dependencies below is superseded.
+
 **Scope:**
 - Modify `homelab-backup.sh`: add JSON result write to
   `ai-stack/ingest/logs/backup_status.json` immediately after the restic
@@ -584,33 +698,81 @@ cycle after F-2 work begins.
 
 ---
 
-### F-3 — Situational Awareness Filter
+### F-3 — Situational Awareness (FROZEN at F3.0, 2026-06-29)
 
 **Objective:** Opening a conversation gives Aurora current lab state without
 any tool call.
 
+F-3 is split into **F-3a (chat Filter)** and **F-3b (HA voice)** (AD-08). The
+Filter behaviour contract in §7 is the authoritative mechanism spec; the
+decisions AD-08…AD-13 are binding. This sub-phase, its acceptance gates, and
+its milestones are **frozen** as of F3.0 — changes require a recorded revision
+(§15), not drift.
+
+#### F-3a — Open WebUI Awareness Filter
+
 **Scope:**
-- Write the Open WebUI Filter: Python Function (Filter type); inlet fires on
-  first message of each conversation; reads `/opt/aurora/aurora-context.md`;
-  prepends content as a system message; behaves per the Filter behaviour
-  contract in §7 (≤26h threshold, graduated response, never crashes). The
-  filter behaviour contract in §7 is the authoritative specification.
-- Write the HA voice context refresh script (the F-1 voice prompt update
-  becomes nightly): after `bin/aurora-context` runs at 04:15, step at 04:20
-  reads `aurora-context-voice.txt` and writes it into the HA voice LLM
-  configuration. Mechanism validated in F-0/F-1 (see AF-05).
-- Validate Filter behavior: message 1 receives context; messages 2+ do not;
-  conversation performance is not degraded; missing context file produces
-  fallback, not an error.
+- Implement the Open WebUI Filter as **committed source** at
+  `ai-stack/openwebui-tools/filters/aurora_context.py` (AD-09), installed via a
+  documented path, with an install + recovery note. No new runtime-only state.
+- Behaviour per §7: reads the JSON for freshness, injects the markdown payload,
+  message-1-only, ≤26h graduated/fallback, stable injection (AD-10, AD-11).
 
-**Success criterion:** Opening a conversation with "how is the lab?" produces
-an accurate answer from the injected context, without any tool call in the
-Open WebUI tool-call log. Aurora's response references the `generated_at`
-timestamp. HA voice correctly reflects the latest context on the first voice
-exchange of the day.
+**Acceptance gates (FROZEN):**
+- **G-F3-1** — New conversation, "¿cómo está el lab?" → accurate answer **from
+  the injected block**, **zero entries in the tool-call log**, response cites
+  `generated_at`. *(Behavioral efficacy — distinct from AF-01's mechanism check.)*
+- **G-F3-2** — Messages 2+ in the same conversation → no re-injection
+  (no duplication; verified in inlet logs).
+- **G-F3-3** — Degraded propagation → an artificially degraded context surfaces
+  in the first answer and Aurora points to `system_status` for live confirmation.
+- **G-F3-4** — Fallback → missing/unreadable/>26h file = minimal fallback line;
+  conversation never crashes.
+- **G-F3-5** — Graduated note appears for a 24–26h-old file.
+- **G-F3-6** — Intra-day boundary. Setup: inject an "ok" block, then create a
+  real fault after generation (e.g. stop a non-critical container). Trigger:
+  "¿puedes confirmar que todo sigue bien ahora mismo?". **Pass:** Aurora invokes
+  `system_status` (live) and answers from that result — it does **not** assert
+  the stale "ok" block as current.
+- **G-F3-7** — No routing regression: the 4/4 tool-routing baseline still passes
+  with the block present.
+- **Repro gate** — Filter source committed + install/recovery documented (AD-09).
 
-**Dependencies:** F-2 (context files must exist for the Filter to read);
-F-1 (system prompt must correctly reference and interpret the context block).
+#### F-3b — HA Voice Awareness Refresh
+
+**Scope (AD-13):**
+- Create `input_text.aurora_voice_context` (max_length 255, via YAML).
+- One-time: add Jinja2 `{{ states('input_text.aurora_voice_context') }}` to the
+  HA Ollama voice prompt.
+- Add the 04:20 nightly push: write `aurora-context-voice.txt` into the helper
+  via HA REST `input_text/set_value`. Requires an HA long-lived token in
+  `ai-stack/.env` (gitignored) — **this dependency arrives at F-3b** (AD-13),
+  not first at F-5.
+
+**Acceptance gate (FROZEN):**
+- **G-F3-8** — First voice exchange of the day reflects the latest
+  `aurora-context-voice.txt` via the helper + Jinja2; the nightly push is
+  verified end-to-end; the HA token never appears in any committed artifact.
+
+#### Frozen implementation milestones
+
+| Milestone | Content | Type |
+|---|---|---|
+| **F3.0** | Architecture refinement & freeze (this revision) | docs only — **current** |
+| **F3.1** | F-3a: entry-verify (installed F-1 prompt references the block; smoke-re-confirm AF-01 on the running 0.8.10 build; confirm `/opt/aurora/aurora-context.md` fresh in-container) → implement committed Filter → install → validate G-F3-1…G-F3-7 | build + validate |
+| **F3.2** | F-3b: `input_text` helper + Jinja2 prompt ref + 04:20 `set_value` push + HA token in `.env` → validate G-F3-8 | build + validate |
+| **F3.3** | Reconciliation & closeout: update the overview triad + this doc's F-3 status to complete; closeout log; STOP at git gate | docs + git |
+
+**Dependencies:** F-2 (context artifacts + `/opt/aurora` bind-mount +
+`system_status`) — **complete/verified**; F-1 (prompt must reference and
+interpret the block) — **verify at F3.1 entry**; F-0 AF-01 (Filter mechanism
+CONFIRMED), AF-05 (voice mechanism CONFIRMED+SUPERSEDED → AD-13), AF-07 (Torre
+probe CONFIRMED).
+
+**Mechanism vs behavior (binding):** AF-01 validated *delivery* (inlet / file /
+graceful degradation) against the old prompt. F-3a's gates validate *behavioral
+efficacy* with the current F-1 prompt + a real block — these are not the same
+check, and **G-F3-1 is not satisfied by AF-01**.
 
 ---
 
@@ -758,9 +920,9 @@ F-0 Behavioral Audit
         │                    F-4 (digest reads aurora-context.json),
         │                    F-5 (extends bin/aurora-context from F-2)
         │
-        ├──▶ F-3 Awareness Filter
+        ├──▶ F-3 Awareness  (F-3a Filter, then F-3b voice — AD-08)
         │       Prerequisite for: F-5 (home anomaly injection uses
-        │                         the same Filter mechanism)
+        │                         the F-3a Filter mechanism)
         │
         ├──▶ F-4 Operational Digest (parallel with F-3)
         │
@@ -775,6 +937,16 @@ F-0 Behavioral Audit
 Pre-identified findings for F-0 to validate. Each finding is either
 confirmed, disproved, or superseded by F-0's behavioral audit. No finding
 is assumed closed until F-0 explicitly closes it.
+
+> **Post-F-0 (2026-06-28):** F-0 is complete; the authoritative validation
+> outcomes are in
+> [`../09_logs/2026-06-28_phaseF_F0_audit_report.md`](../09_logs/2026-06-28_phaseF_F0_audit_report.md) §5.
+> The pre-mitigation column below is the *pre-F-0 plan* and is not maintained —
+> some items are superseded (e.g. AF-02's "until `homelab-backup.sh` is modified"
+> → AD-12; AF-07's `torre_status.json` fallback was unnecessary — the container
+> reaches Torre directly). **Caution:** the F-0 report reused IDs **AF-04** and
+> **AF-06** for different items than this pre-F-0 register — cross-reference by
+> description, not by number.
 
 | ID | Description | Severity | Pre-mitigation |
 |---|---|---|---|
@@ -839,7 +1011,7 @@ an explicit decision recorded in the relevant apply log.
 | `health.json` | Gitignored runtime state. Must not be committed. |
 | `aurora-context.json` / `aurora-context.md` / `aurora-context-voice.txt` | Generated runtime artifacts. Must not be committed. Add `ai-stack/aurora/` to `.gitignore` before the first `bin/aurora-context` run. |
 | Digest files (`09_ops/runtime/`) | Runtime artifacts. Must not be committed automatically. The nightly cron cycle never runs `git commit`, `git push`, or `git tag`. Digest files are gitignored and indexed by the `homelab_docs` fs corpus without git involvement (AD-07). |
-| HA REST API token (F-5) | Required by `bin/aurora-context` for the home state section. Stored in `ai-stack/.env` (gitignored). Never committed. Never appears in any context artifact, apply log, or documentation. Managed identically to other AMAROLAB secrets. |
+| HA REST API token (F-3b + F-5) | First required at **F-3b** for the voice `input_text/set_value` push (AD-13), then by `bin/aurora-context` at F-5 for the home-state section. Stored in `ai-stack/.env` (gitignored). Never committed. Never appears in any context artifact, apply log, or documentation. Managed identically to other AMAROLAB secrets. |
 | Embedding model | `intfloat/multilingual-e5-small` (384-dim) is locked per D-08. Do not change without a full re-embed migration of every collection. |
 | Allowlist discipline | `ha_call_service` domain allowlist is expanded only through per-domain gate validation (same process as Phase C). No domain is added speculatively. |
 | Aurora does not self-modify | Aurora cannot expand its own action surface. Tool allowlists are operator-defined and operator-revised. |
@@ -861,3 +1033,12 @@ are not accidentally implemented in Phase F.
 | Larger inference model (e.g., qwen2.5:14b or equivalent) | Real quality gap must be measured first; Torre upgrade path may change the tradeoffs | Phase G |
 | MyFreeTour knowledge corpus | Source path unknown (B-08 blocker) | When blocker resolves |
 | Multi-user Aurora | AMAROLAB is a single-operator system; no requirement exists | Future |
+
+---
+
+## 15. Revision Log
+
+| Date | Revision | Summary |
+|---|---|---|
+| 2026-06-28 | Authored (F-0 pre-work) | Original approved Phase F architecture. |
+| 2026-06-29 | **F3.0 — Architecture Refinement** | Reviewed the F-3 design; recorded the decision register (§4A) and AD-08…AD-13. Reconciled F-1/F-2 drift: backup signal is `bin/backup-probe` at 03:30, not `homelab-backup.sh` (AD-12; §6.1/§6.4); HA-voice mechanism is `input_text` + Jinja2 (AD-13; §7); `aurora-context.md` example replaced with real F-2 output (§6.2); §2 marked as a pre-F baseline (live state in CURRENT_STATE.md). Split F-3 into F-3a/F-3b; **froze** the F-3 architecture, acceptance gates (G-F3-1…G-F3-8), and milestones (F3.0→F3.3). No code/prompt/container/DB/Open WebUI changes. Next: operator approval before F3.1. |
