@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+"""
+install_function — install / update + activate an Amarolab Open WebUI Function.
+
+Open WebUI 0.8.10 stores Functions (Filters / Pipes / Actions) in `webui.db`,
+separately from Tools. This installer targets the *Functions* API, NOT the
+Tools API used by `install_tool`:
+
+    POST /api/v1/functions/create                  (or .../id/{id}/update)
+    POST /api/v1/functions/id/{id}/toggle          -> ensure is_active=True
+    POST /api/v1/functions/id/{id}/toggle/global   -> ensure is_global=True
+
+The function `type` (filter/pipe/action) is auto-detected by Open WebUI from
+the `class Filter|Pipe|Action` in the source (confirmed in F-0/AF-01). Function
+sources are NOT audit-helper-inlined (Functions are middleware, not LLM tools).
+
+A Filter must be both **active** and **global** to fire for every conversation.
+
+Usage:
+  install_function <path/to/function.py>     install/update, then ensure active+global
+  install_function --dry-run <path>          show payload, do not POST
+  install_function --status <path|id>        print current DB state, no changes
+
+Env overrides (same convention as install_tool):
+  AMAROLAB_ENV_FILE   path to .env with WEBUI_SECRET_KEY
+                      (default: /home/diego/homelab/ai-stack/.env)
+  OPENWEBUI_URL       default http://127.0.0.1:3000
+  OPENWEBUI_USER_ID   admin UUID (default: diego)
+  WEBUI_SECRET_KEY    direct override; if set, .env is not read
+
+Exit codes: 0 success | 1 source/network/install error | 2 auth/config error
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+import uuid
+from pathlib import Path
+
+try:
+    import jwt  # PyJWT
+    import requests
+except ImportError as e:
+    sys.exit(f"missing dep: {e}. install with: pip install --user PyJWT requests")
+
+ENV_FILE = Path(os.environ.get("AMAROLAB_ENV_FILE", "/home/diego/homelab/ai-stack/.env"))
+OPENWEBUI_URL = os.environ.get("OPENWEBUI_URL", "http://127.0.0.1:3000").rstrip("/")
+USER_ID = os.environ.get("OPENWEBUI_USER_ID", "3a49344e-acf6-41a1-b28d-8cce95c36c2a")
+
+
+def read_secret() -> str:
+    s = os.environ.get("WEBUI_SECRET_KEY")
+    if s:
+        return s
+    if not ENV_FILE.exists():
+        sys.exit(f"[config] WEBUI_SECRET_KEY not in env and {ENV_FILE} missing")
+    for line in ENV_FILE.read_text().splitlines():
+        if line.startswith("WEBUI_SECRET_KEY="):
+            return line.split("=", 1)[1].strip()
+    sys.exit(f"[config] WEBUI_SECRET_KEY not found in {ENV_FILE}")
+
+
+def mint_token(secret: str) -> str:
+    return jwt.encode({"id": USER_ID, "jti": str(uuid.uuid4())}, secret, algorithm="HS256")
+
+
+def parse_frontmatter(content: str) -> dict:
+    m = re.match(r'^\s*"""(.*?)"""', content, re.DOTALL)
+    if not m:
+        return {}
+    fm = {}
+    for line in m.group(1).splitlines():
+        line = line.strip()
+        if not line or ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        fm[k.strip()] = v.strip()
+    return fm
+
+
+def get_fn(headers: dict, fid: str):
+    return requests.get(f"{OPENWEBUI_URL}/api/v1/functions/id/{fid}", headers=headers, timeout=10)
+
+
+def toggle(headers: dict, fid: str, which: str):
+    suffix = "toggle/global" if which == "global" else "toggle"
+    return requests.post(f"{OPENWEBUI_URL}/api/v1/functions/id/{fid}/{suffix}", headers=headers, timeout=15)
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description="Install/update + activate an Amarolab Open WebUI Function.")
+    ap.add_argument("source", help="Path to the Function .py source (or an id with --status)")
+    ap.add_argument("--dry-run", action="store_true", help="Show payload, do not POST")
+    ap.add_argument("--status", action="store_true", help="Print current DB state, no changes")
+    args = ap.parse_args(argv)
+
+    src = Path(args.source)
+    fid = src.stem.lower() if src.suffix == ".py" else args.source.lower()
+    if not fid.isidentifier():
+        print(f"[source] {fid!r} is not a valid Python identifier", file=sys.stderr)
+        return 1
+
+    try:
+        secret = read_secret()
+    except SystemExit:
+        return 2
+    headers = {"Authorization": f"Bearer {mint_token(secret)}", "Content-Type": "application/json"}
+
+    if args.status:
+        r = get_fn(headers, fid)
+        print(f"GET {fid}: HTTP {r.status_code}")
+        if r.status_code == 200:
+            d = r.json()
+            print(json.dumps({k: d.get(k) for k in ("id", "name", "type", "is_active", "is_global", "updated_at")}, indent=2))
+        return 0
+
+    if src.suffix != ".py" or not src.exists():
+        print(f"[source] not found: {src}", file=sys.stderr)
+        return 1
+    content = src.read_text(encoding="utf-8")
+    fm = parse_frontmatter(content)
+    name = fm.get("title", fid)
+    description = fm.get("description", name)
+    manifest = {k: fm[k] for k in ("author", "author_url", "version", "license", "required_open_webui_version") if k in fm}
+    body = {"id": fid, "name": name, "content": content, "meta": {"description": description, "manifest": manifest}}
+
+    if args.dry_run:
+        print(f"# would install function id={fid} name={name!r} ({len(content)} chars)")
+        print(f"# description: {description}")
+        print(f"# manifest: {json.dumps(manifest)}")
+        return 0
+
+    # Verify auth + existence via the LIST endpoint. Open WebUI returns 401 for a
+    # missing function on the by-id route, so a by-id 401 is ambiguous; the list
+    # route returns 200 for any authenticated admin.
+    lst = requests.get(f"{OPENWEBUI_URL}/api/v1/functions/", headers=headers, timeout=10)
+    if lst.status_code == 401:
+        print("[auth] HTTP 401 on /functions/ — token rejected", file=sys.stderr)
+        return 2
+    if lst.status_code >= 300:
+        print(f"[list] HTTP {lst.status_code}: {lst.text[:300]}", file=sys.stderr)
+        return 1
+    existing_ids = {f.get("id") for f in (lst.json() or [])}
+    action = "update" if fid in existing_ids else "create"
+    endpoint = (
+        f"{OPENWEBUI_URL}/api/v1/functions/id/{fid}/update" if action == "update"
+        else f"{OPENWEBUI_URL}/api/v1/functions/create"
+    )
+    r = requests.post(endpoint, headers=headers, json=body, timeout=30)
+    if r.status_code >= 300:
+        print(f"[install] HTTP {r.status_code}: {r.text[:500]}", file=sys.stderr)
+        return 1
+    print(f"OK id={fid} name={name!r} action={action}")
+
+    # Ensure active + global (toggles flip state; only toggle if needed).
+    cur = get_fn(headers, fid).json()
+    if not cur.get("is_active"):
+        toggle(headers, fid, "active")
+    if not cur.get("is_global"):
+        toggle(headers, fid, "global")
+    final = get_fn(headers, fid).json()
+    print(f"state id={fid} is_active={final.get('is_active')} is_global={final.get('is_global')} type={final.get('type')}")
+    if not (final.get("is_active") and final.get("is_global")):
+        print("[warn] function is not active+global; a Filter must be both to fire", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
