@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+"""
+generate-digest — render the nightly operational digest from the Aurora context.
+
+Phase F / F-4 (F4.2). Reads the aggregated nightly context
+(ai-stack/aurora/aurora-context.json, produced by bin/aurora-context at 04:15)
+plus the ingest health file (ai-stack/ingest/logs/health.json) and writes one
+immutable, date-anchored markdown digest to:
+
+  09_ops/runtime/YYYY-MM-DD_ops_digest.md
+
+The digest is the source for the `ops_digests` Qdrant collection (AD-14): the
+next nightly ingest sync (02:30) indexes it, so "what happened on the night of
+<date>?" is retrievable via rag_search(ops_digests) ~a day later (AD-04).
+Same-night / live state stays the job of system_status, not this digest.
+
+Design — frozen architecture (04_ai_system/phase_f_architecture.md §9-F-4):
+  AD-15  schema limited to fields the signal layer actually produces, plus a
+         generated one-line `notable` deviation summary.
+  AD-17  date-anchored: the ISO date is in the filename, the H1, and a header
+         line, so dense+rerank retrieval can lock onto a specific night.
+  AD-18  built only from typed signal fields — never raw logs, env, or error
+         text — so no secret can enter the indexed corpus.
+
+Runs as diego from cron at 04:25 (after push-voice-context at 04:20). It never
+runs git: the digest is a gitignored runtime artifact (AD-07), picked up by the
+fs corpus without any git operation. Re-running for the same date overwrites the
+same file (idempotent); the ingest sync de-dupes by content_sha.
+
+Usage:
+  generate-digest             write today's digest
+  generate-digest --dry-run   render and print to stdout; write nothing
+"""
+
+import json
+import os
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+REPO_ROOT   = Path("/home/diego/homelab")
+CTX_JSON    = REPO_ROOT / "ai-stack/aurora/aurora-context.json"
+HEALTH_FILE = REPO_ROOT / "ai-stack/ingest/logs/health.json"
+RUNTIME_DIR = REPO_ROOT / "09_ops/runtime"
+
+STALE_HOURS = 26
+
+
+# ── Utilities (standalone, matching bin/aurora-context) ──────────────────────
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def iso(dt: datetime) -> str:
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def parse_ts(s) -> datetime | None:
+    if not s:
+        return None
+    try:
+        clean = re.sub(r"\.\d+", "", str(s))
+        clean = re.sub(r"Z$", "+00:00", clean)
+        return datetime.fromisoformat(clean).astimezone(timezone.utc)
+    except (ValueError, TypeError):
+        return None
+
+
+def ts_display(ts_str) -> str:
+    """'2026-06-30T02:30:13Z' → '2026-06-30 02:30 UTC'"""
+    if not ts_str:
+        return "unknown"
+    return str(ts_str)[:16].replace("T", " ") + " UTC"
+
+
+def write_atomic(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(content, encoding="utf-8")
+    with open(tmp, "rb") as f:
+        os.fsync(f.fileno())
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, path)
+
+
+def log(msg: str) -> None:
+    print(f"{iso(utcnow())} generate-digest: {msg}", file=sys.stderr)
+
+
+def read_json(path: Path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+# ── Render ───────────────────────────────────────────────────────────────────
+
+def render(date_str: str, generated_at: str, overall: str,
+           notable: str, sig_lines: list[str]) -> str:
+    parts = [
+        f"# Operational digest — {date_str}",
+        "",
+        f"- date: {date_str}",
+        f"- generated_at: {generated_at}",
+        f"- overall_status: {overall}",
+        "",
+        "## Notable",
+        notable,
+        "",
+        "## Signals",
+        *sig_lines,
+        "",
+    ]
+    return "\n".join(parts)
+
+
+def build_digest(ctx: dict | None, health: dict | None, now: datetime) -> tuple[str, str]:
+    """Pure render of typed signal fields (AD-18). Returns (date_str, markdown)."""
+    # Date anchor (AD-17): keyed to the context the digest summarises.
+    ctx_dt   = parse_ts((ctx or {}).get("generated_at"))
+    date_str = (ctx_dt or now).strftime("%Y-%m-%d")
+
+    if not ctx:
+        notable = "aurora-context.json unavailable at digest time — no operational signals recorded; use system_status for live state"
+        sig_lines = ["- Context: unavailable"]
+        return date_str, render(date_str, iso(now), "unknown", notable, sig_lines)
+
+    deviations: list[str] = []
+    overall = ctx.get("overall_status", "unknown")
+
+    # Context staleness honesty (AD-04): a stale context rendered as "ok" misleads.
+    if ctx_dt is not None:
+        age_h = (now - ctx_dt).total_seconds() / 3600
+        if age_h > STALE_HOURS:
+            deviations.append(f"context is {age_h:.0f}h old (no fresh nightly cycle)")
+
+    ingest     = ctx.get("ingest") or {}
+    backup     = ctx.get("backup") or {}
+    audit      = ctx.get("audit") or {}
+    containers = ctx.get("containers") or {}
+    anomalies  = (ctx.get("home") or {}).get("anomalies") or []
+    missing    = ctx.get("signals_missing") or []
+
+    # Ingest (+ last_successful_run_end from health.json, AD-15).
+    i_status = ingest.get("status", "unknown")
+    i_rc     = ingest.get("last_run_rc")
+    i_end    = ingest.get("last_run_end")
+    i_succ   = ((health or {}).get("ingest") or {}).get("last_successful_run_end")
+    if i_status == "ok":
+        ingest_line = f"ok — last run {ts_display(i_end)} (rc={i_rc}), last success {ts_display(i_succ)}"
+    else:
+        ingest_line = f"{i_status} — last run {ts_display(i_end)} (rc={i_rc})"
+        deviations.append(f"ingest {i_status} (rc={i_rc})")
+
+    # Backup (size/duration/prune are not produced — AD-12/AD-15).
+    b_status = backup.get("status", "unknown")
+    if b_status == "ok":
+        backup_line = f"ok — snapshot {backup.get('snapshot_id')} at {ts_display(backup.get('snapshot_time'))}"
+    else:
+        backup_line = b_status
+        deviations.append(f"backup {b_status}")
+
+    # Audit.
+    a_status = audit.get("status", "unknown")
+    a_age    = audit.get("age_days")
+    if a_status == "ok":
+        audit_line = f"ok — last entry age {a_age} days"
+    else:
+        audit_line = f"{a_status} — last entry age {a_age} days"
+        deviations.append(f"audit {a_status}")
+
+    # Containers.
+    c_count = containers.get("count")
+    c_all   = containers.get("all_running")
+    c_deg   = containers.get("degraded") or []
+    if c_all and c_count is not None:
+        containers_line = f"{c_count}/{c_count} running"
+    elif c_count is None:
+        containers_line = "signal missing"
+        deviations.append("container signal missing")
+    else:
+        containers_line = f"{c_count - len(c_deg)}/{c_count} running — stopped: {', '.join(c_deg)}"
+        deviations.append(f"containers stopped: {', '.join(c_deg)}")
+
+    # Home.
+    if anomalies:
+        home_line = f"anomalies: {', '.join(map(str, anomalies))}"
+        deviations.append(f"home anomalies: {', '.join(map(str, anomalies))}")
+    else:
+        home_line = "no anomalies"
+
+    # Signals missing.
+    missing_line = ", ".join(missing) if missing else "none"
+    if missing:
+        deviations.append(f"signals missing: {', '.join(missing)}")
+
+    sig_lines = [
+        f"- Ingest: {ingest_line}",
+        f"- Backup: {backup_line}",
+        f"- Audit: {audit_line}",
+        f"- Containers: {containers_line}",
+        f"- Home: {home_line}",
+        f"- Signals missing: {missing_line}",
+    ]
+    notable = "; ".join(deviations) if deviations else "Nominal — no deviations."
+    return date_str, render(date_str, iso(now), overall, notable, sig_lines)
+
+
+def main() -> int:
+    dry_run = "--dry-run" in sys.argv[1:]
+    now = utcnow()
+
+    ctx = read_json(CTX_JSON)
+    health = read_json(HEALTH_FILE)
+    if ctx is None:
+        log(f"warning: {CTX_JSON} unavailable — writing a degraded 'unknown' digest")
+
+    date_str, body = build_digest(ctx, health, now)
+    out_path = RUNTIME_DIR / f"{date_str}_ops_digest.md"
+
+    if dry_run:
+        log(f"DRY-RUN would write {out_path} ({len(body)} chars)")
+        sys.stdout.write(body)
+        return 0
+
+    write_atomic(out_path, body)
+    log(f"ok: wrote {out_path.name} ({len(body)} chars, overall={(ctx or {}).get('overall_status', 'unknown')})")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

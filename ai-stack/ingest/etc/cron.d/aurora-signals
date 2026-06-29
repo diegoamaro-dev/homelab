@@ -1,4 +1,4 @@
-# AMAROLAB — Aurora signal layer (Phase F, F-2 / F2-8; F-3b adds the 04:20 voice push)
+# AMAROLAB — Aurora signal layer (Phase F, F-2 / F2-8; F-3b adds the 04:20 voice push; F-4 adds the 04:25 digest)
 #
 # Source of truth: ai-stack/ingest/etc/cron.d/aurora-signals (tracked in git).
 # Install:
@@ -12,6 +12,7 @@
 #   04:00 container-probe (diego — docker group)                     -> container_status.json
 #   04:15 aurora-context     (diego — aggregates all signals)        -> aurora-context.{json,md,voice}
 #   04:20 push-voice-context (diego — F-3b)                          -> input_text.aurora_voice_context (HA REST set_value)
+#   04:25 generate-digest    (diego — F-4)                           -> 09_ops/runtime/YYYY-MM-DD_ops_digest.md (indexed into ops_digests on the next 02:30 sync)
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
@@ -19,3 +20,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 0  4 * * * diego /home/diego/homelab/ai-stack/ingest/bin/container-probe >> /home/diego/homelab/ai-stack/ingest/logs/aurora-signals.log 2>&1
 15 4 * * * diego /home/diego/homelab/ai-stack/ingest/bin/aurora-context     >> /home/diego/homelab/ai-stack/ingest/logs/aurora-signals.log 2>&1
 20 4 * * * diego /home/diego/homelab/ai-stack/ingest/bin/push-voice-context >> /home/diego/homelab/ai-stack/ingest/logs/aurora-signals.log 2>&1
+25 4 * * * diego /home/diego/homelab/ai-stack/ingest/bin/generate-digest    >> /home/diego/homelab/ai-stack/ingest/logs/aurora-signals.log 2>&1
