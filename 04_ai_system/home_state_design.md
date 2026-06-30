@@ -5,8 +5,9 @@ the home model; Aurora answers about any in-model object in a single exchange).
 Status: **Layer A (the §5 `# Home` frame) — IMPLEMENTED + verified 2026-06-30
 (G-F5-07); apply log
 [`../09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md`](../09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md).
-Layer B (the §4 `Home State` block) — DESIGN ONLY, not started (F5.2).** This document
-itself makes no runtime change; Layer A was installed separately per the apply log.
+Layer B (the §4 `Home State` block) — IMPLEMENTED 2026-06-30 (F5.2; apply log
+[`../09_logs/2026-06-30_phaseF_F5_2_applied.md`](../09_logs/2026-06-30_phaseF_F5_2_applied.md)).** This
+document itself makes no runtime change; Layers A and B were implemented separately per their apply logs.
 Last updated: 2026-06-30.
 Sources of record: [`home_model.md`](home_model.md) · [`phase_f_architecture.md`](phase_f_architecture.md)
 (§9-F-5, AD-01/02/11, **AD-20**) · [`AURORA_VISION.md`](AURORA_VISION.md) (§3, §4, §6, §7, §8).
@@ -84,7 +85,7 @@ proposed prompt text (§7) is layer A.
 
 ---
 
-## 4. Layer B — the dynamic `Home State` block (spec for F5.2)
+## 4. Layer B — the dynamic `Home State` block (F5.2 — implemented 2026-06-30)
 
 ### 4.1 Structure & ordering
 
@@ -319,4 +320,5 @@ match.
 > **Status (2026-06-30):** the **G-F5-07** step (Layer A — install the §5 `# Home`
 > frame into `params.system`) is **DONE + verified** — apply log
 > [`../09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md`](../09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md).
-> **F5.2** (Layer B — render the §4 block) remains **not started**.
+> **F5.2** (Layer B — render the §4 block) is **implemented 2026-06-30** — apply log
+> [`../09_logs/2026-06-30_phaseF_F5_2_applied.md`](../09_logs/2026-06-30_phaseF_F5_2_applied.md).

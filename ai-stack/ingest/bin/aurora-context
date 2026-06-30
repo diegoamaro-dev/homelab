@@ -20,8 +20,11 @@ import json
 import os
 import re
 import sys
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 LOGS_DIR       = Path("/home/diego/homelab/ai-stack/ingest/logs")
 AURORA_DIR     = Path("/home/diego/homelab/ai-stack/aurora")
@@ -31,9 +34,12 @@ CONTAINER_FILE = LOGS_DIR / "container_status.json"
 CTX_JSON       = AURORA_DIR / "aurora-context.json"
 CTX_MD         = AURORA_DIR / "aurora-context.md"
 CTX_VOICE      = AURORA_DIR / "aurora-context-voice.txt"
+ENV_FILE       = Path("/home/diego/homelab/ai-stack/.env")
 
 STALE_HOURS    = 26
 SCHEMA_VERSION = 1
+HA_TIMEOUT_S   = 10
+HOME_TZ        = ZoneInfo("Europe/Madrid")   # overnight window in host-local time (D8)
 
 
 # ── Utilities ──────────────────────────────────────────────────────────────
@@ -127,9 +133,179 @@ def read_health(now: datetime) -> tuple[dict | None, str, str]:
     return data, ingest_state, audit_state
 
 
+# ── Home model — Layer B (F5.2) ──────────────────────────────────────────────
+#
+# HOME RULES — transcribed from home_model.md §6 (objects) / §7 (token vocabulary).
+# home_model.md is the single source of truth; this is its machine encoding. Checks
+# run in the fixed §7 severity order (critical → high → medium → low; fixed order
+# within a tier) so identical inputs render byte-identically (deterministic). Anomaly
+# elements are plain string tokens only (AD-20 / AD-18); device detail for
+# device_battery_low appears in the Markdown rendering only, never in the token (D1).
+#
+#   zigbee_bridge_down     critical §6.1  binary_sensor.zigbee2mqtt_bridge_connection_state
+#   wan_down               high     §6.2  binary_sensor.rooter_estado_wan
+#   zigbee_permit_join_on  high     §6.1  switch.zigbee2mqtt_bridge_permit_join
+#   printer_on_overnight   medium   §6.3  switch.impresora_3d                  (00:00–06:00)
+#   awning_left_extended   medium   §6.4  cover.toldo                          (00:00–06:00)
+#   door_open_extended     medium   §6.5  binary_sensor.sensor_puerta_principal_contact (>15m)
+#   plant_water_warning    low      §6.6  sensor.sensor_planta_entrada_water_warning
+#   plant_soil_dry         low      §6.6  sensor.sensor_planta_entrada_soil_moisture (<20%)
+#   device_battery_low     low      §6.7  five battery devices (any low)
+#   ha_unavailable         degrade  §7    HA unreachable at generation (whole-block Unavailable)
+
+UNAVAIL = ("unavailable", "unknown")
+
+# device_battery_low surface — fixed home_model.md §6.7 order; (display_name, kind, entity_id)
+BATTERY_DEVICES = [
+    ("Main Door",      "flag", "binary_sensor.sensor_puerta_principal_battery_low"),
+    ("Main Door",      "pct",  "sensor.sensor_puerta_principal_battery"),
+    ("Entrance Plant", "cat",  "sensor.sensor_planta_entrada_battery_state"),
+    ("Pasillo motion", "pct",  "sensor.sensor_pasillo_battery"),
+    ("Entrada motion", "pct",  "sensor.sensor_entarda_battery"),
+    ("Desk button",    "pct",  "sensor.0x842712fffe3217d0_battery"),
+]
+BATTERY_PCT_FLOOR = 20                       # §6.7 / §8 — maintenance default (≤20 %)
+BATTERY_CAT_LOW   = ("low", "empty")
+
+
+def read_env(path: Path) -> dict:
+    """Parse only HA_BASE_URL + HA_LLAT from ai-stack/.env (mirrors push-voice-context)."""
+    wanted = {"HA_BASE_URL", "HA_LLAT"}
+    out: dict = {}
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        key = key.strip()
+        if key in wanted:
+            out[key] = val.strip().strip('"').strip("'")
+    return out
+
+
+def fetch_ha_states(base_url: str, token: str, timeout: int) -> dict:
+    """GET /api/states → {entity_id: state_object}. Raises on any failure (→ ha_unavailable)."""
+    req = urllib.request.Request(
+        f"{base_url}/api/states",
+        method="GET",
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    return {o["entity_id"]: o for o in data if isinstance(o, dict) and "entity_id" in o}
+
+
+def _state(states: dict, eid: str):
+    o = states.get(eid)
+    return o.get("state") if isinstance(o, dict) else None
+
+
+def _num(states: dict, eid: str):
+    """Numeric state, or None if absent/unavailable/unknown/non-numeric (never guess — D7)."""
+    s = _state(states, eid)
+    if s is None or s in UNAVAIL:
+        return None
+    try:
+        return float(s)
+    except (ValueError, TypeError):
+        return None
+
+
+def _battery_low_devices(states: dict) -> list[str]:
+    """Ordered, de-duplicated list of devices flagged low (§6.7). Never guesses (D7)."""
+    low: list[str] = []
+    for name, kind, eid in BATTERY_DEVICES:
+        if kind == "flag":
+            hit = _state(states, eid) == "on"
+        elif kind == "pct":
+            v = _num(states, eid)
+            hit = v is not None and v <= BATTERY_PCT_FLOOR
+        else:  # categorical
+            s = _state(states, eid)
+            hit = s is not None and s.lower() in BATTERY_CAT_LOW
+        if hit and name not in low:
+            low.append(name)
+    return low
+
+
+def detect_home(states: dict, now_utc: datetime, now_local: datetime) -> list[tuple[str, str]]:
+    """
+    Return ordered [(token, md_phrase)] for the real HA snapshot, in §7 severity order.
+    md_phrase carries the "[tier] …" prefix (home_state_design.md §4.4). Unavailable/
+    unknown readings never raise a token (D7), except zigbee_bridge_down where the model
+    counts 'unavailable' as down (home_model.md §6.1).
+    """
+    in_window = 0 <= now_local.hour < 6        # 00:00–06:00 local (D8; §8)
+    out: list[tuple[str, str]] = []
+
+    # zigbee_bridge_down — §6.1/§7 (critical); 'off' or 'unavailable' counts as down.
+    if _state(states, "binary_sensor.zigbee2mqtt_bridge_connection_state") in ("off", "unavailable"):
+        out.append(("zigbee_bridge_down", "[critical] Zigbee mesh down — Zigbee devices unavailable"))
+
+    # wan_down — §6.2/§7 (high); 'off' only (D7: not unavailable/unknown).
+    if _state(states, "binary_sensor.rooter_estado_wan") == "off":
+        out.append(("wan_down", "[high] internet (WAN) down"))
+
+    # zigbee_permit_join_on — §6.1/§7 (high, security).
+    if _state(states, "switch.zigbee2mqtt_bridge_permit_join") == "on":
+        out.append(("zigbee_permit_join_on", "[high] Zigbee pairing left open (security)"))
+
+    # printer_on_overnight — §6.3/§7 (medium); plug 'on' during the overnight window.
+    if in_window and _state(states, "switch.impresora_3d") == "on":
+        out.append(("printer_on_overnight", "[medium] 3D printer on overnight"))
+
+    # awning_left_extended — §6.4/§7 (medium); cover 'open' during the overnight window.
+    if in_window and _state(states, "cover.toldo") == "open":
+        out.append(("awning_left_extended", "[medium] awning left extended overnight"))
+
+    # door_open_extended — §6.5/§7 (medium); contact 'on' continuously > 15 min (last_changed).
+    if _state(states, "binary_sensor.sensor_puerta_principal_contact") == "on":
+        lc = parse_ts((states.get("binary_sensor.sensor_puerta_principal_contact") or {}).get("last_changed"))
+        if lc is not None and (now_utc - lc).total_seconds() > 15 * 60:
+            out.append(("door_open_extended", "[medium] main door open >15 min"))
+
+    # plant_water_warning — §6.6/§7 (low); water_warning != none.
+    pw = _state(states, "sensor.sensor_planta_entrada_water_warning")
+    if pw is not None and pw not in UNAVAIL and pw != "none":
+        out.append(("plant_water_warning", "[low] entrance plant needs water"))
+
+    # plant_soil_dry — §6.6/§7 (low); soil moisture < 20 %.
+    soil = _num(states, "sensor.sensor_planta_entrada_soil_moisture")
+    if soil is not None and soil < 20:
+        out.append(("plant_soil_dry", "[low] entrance plant soil dry (<20%)"))
+
+    # device_battery_low — §6.7/§7 (low); any of the five battery devices low. Device names
+    # live in the Markdown only; the JSON token stays the bare string (D1 / AD-20).
+    low_devs = _battery_low_devices(states)
+    if low_devs:
+        out.append(("device_battery_low", f"[low] low battery: {', '.join(low_devs)}"))
+
+    return out
+
+
+def render_home(items: list[tuple[str, str]], ha_unreachable: bool) -> tuple[list[str], list[str]]:
+    """
+    Map detection → (home_tokens for the JSON, md_block_lines for the .md), per
+    home_state_design.md §4.1–§4.3 / §6. Exactly one verdict: Healthy | Degraded | Unavailable.
+    """
+    if ha_unreachable:
+        tokens = ["ha_unavailable"]
+        block = ["", "Home State:", "Unavailable", "",
+                 "Reason:", "Home Assistant unreachable at last context generation."]
+    elif not items:
+        tokens = []
+        block = ["", "Home State:", "Healthy", "",
+                 "Attention:", "Nothing requiring operator action."]
+    else:
+        tokens = [tok for tok, _ in items]
+        block = ["", "Home State:", "Degraded", "", "Attention:"] + [f"- {ph}" for _, ph in items]
+    return tokens, block
+
+
 # ── Main ───────────────────────────────────────────────────────────────────
 
 def main() -> int:
+    dry_run = "--dry-run" in sys.argv[1:]
     now = utcnow()
 
     signals_missing: list[str] = []
@@ -287,6 +463,26 @@ def main() -> int:
             containers_md    = f"{running_n}/{count} running — stopped: {stopped_names}"
             containers_voice = f"{running_n}/{count}: {stopped_names} stopped"
 
+    # ── Home section (Layer B — F5.2) ──────────────────────────────
+    # Independent of overall_status (D2): home anomalies surface via the # Home frame,
+    # not the platform overall_status. Fail-soft: any HA failure → Unavailable (RF5-3),
+    # all other sections still render and the run still exits 0.
+    now_local = now.astimezone(HOME_TZ)
+    ha_unreachable = False
+    home_items: list[tuple[str, str]] = []
+    try:
+        env      = read_env(ENV_FILE)
+        base_url = (env.get("HA_BASE_URL") or "").rstrip("/")
+        token    = env.get("HA_LLAT") or ""
+        if not base_url or not token:
+            raise RuntimeError("HA_BASE_URL/HA_LLAT missing from env")
+        states     = fetch_ha_states(base_url, token, HA_TIMEOUT_S)
+        home_items = detect_home(states, now, now_local)
+    except Exception as exc:                       # noqa: BLE001 — fail-soft to Unavailable
+        ha_unreachable = True
+        print(f"aurora-context: home HA unreachable: {exc!r}", file=sys.stderr)
+    home_tokens, home_block = render_home(home_items, ha_unreachable)
+
     # ── Overall status ─────────────────────────────────────────────
     all_files_absent = health_absent and backup_absent and container_absent
     if all_files_absent:
@@ -305,7 +501,7 @@ def main() -> int:
         "backup":          backup_out,
         "audit":           audit_out,
         "containers":      containers_out,
-        "home":            {"anomalies": []},
+        "home":            {"anomalies": home_tokens},
         "signals_missing": signals_missing,
     }
 
@@ -323,6 +519,7 @@ def main() -> int:
     ]
     if signals_missing:
         md_parts.append(f"\nSignals missing: {', '.join(signals_missing)}")
+    md_parts += home_block                         # Home State block (Layer B — F5.2)
     md_text = "\n".join(md_parts) + "\n"
 
     # ── aurora-context-voice.txt ───────────────────────────────────
@@ -333,6 +530,17 @@ def main() -> int:
     if len(voice_line) > 200:
         voice_line = voice_line[:197] + "…"
 
+    # ── Dry-run: print the Home State block + tokens, write nothing (D5) ──
+    if dry_run:
+        print(f"home.anomalies = {json.dumps(home_tokens, ensure_ascii=False)}")
+        print("\n".join(home_block).lstrip("\n"))
+        print(
+            f"[dry-run] ha_unreachable={ha_unreachable} overall={overall}"
+            f" signals_missing={signals_missing} (no files written)",
+            file=sys.stderr,
+        )
+        return 0
+
     # ── Write all three outputs atomically ─────────────────────────
     write_atomic(CTX_JSON,  json.dumps(ctx_json_data, indent=2, ensure_ascii=False) + "\n")
     write_atomic(CTX_MD,    md_text)
@@ -341,7 +549,8 @@ def main() -> int:
     print(
         f"aurora-context: {overall}"
         f" signals_missing={signals_missing}"
-        f" degrades={degrades}",
+        f" degrades={degrades}"
+        f" home={home_tokens}",
         file=sys.stderr,
     )
     return 0

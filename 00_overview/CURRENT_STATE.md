@@ -10,7 +10,7 @@ Production:
 Operational
 
 Next milestone:
-F-4 closeout — three gates (G-F4-05 date-anchored ≥7 digests, G-F4-06 same-night honesty, G-F4-07 degraded night) close as real nightly digests accumulate; G-F4-08 empirical restic check is operator-gated. Operational memory is the dedicated `ops_digests` collection (AD-14 — **not** `homelab_docs`). See `04_ai_system/phase_f_architecture.md` §9 → F-4. (F-5 Home Intelligence is in progress — G-F5-07 Layer A done 2026-06-30; F-6 Voice Quality is unblocked.)
+F-4 closeout — three gates (G-F4-05 date-anchored ≥7 digests, G-F4-06 same-night honesty, G-F4-07 degraded night) close as real nightly digests accumulate; G-F4-08 empirical restic check is operator-gated. Operational memory is the dedicated `ops_digests` collection (AD-14 — **not** `homelab_docs`). See `04_ai_system/phase_f_architecture.md` §9 → F-4. (F-5 Home Intelligence is in progress — G-F5-07 Layer A + F5.2 Layer B done 2026-06-30, F5.3 pending; F-6 Voice Quality is unblocked.)
 
 Last completed:
 F-4 substrate + generator — F4.1 (`9063164a`) + F4.2 (`ac647e24`), 2026-06-30 — and **F4.3 implementation + reconciliation complete** (2026-06-30): the unattended 04:25 digest verified (`2026-06-30_ops_digest.md`); `ops_digests` retrieves the real 2026-06-29 digest top-1 (score 0.87); `generated_at` fidelity fix applied (generator fixed to AD-15; AD-15 unchanged). G-F4-01/02/03/04/09 PASS; G-F4-08 config verified (empirical restic pending the next backup); G-F4-05/06/07 intentionally pending real operational evidence (no synthetic fixtures). F-4 is not fully complete or fully validated. Closeout: `09_logs/2026-06-30_phaseF_F4_3_closeout.md`. Prior: F-3 — Situational Awareness (closed 2026-06-29, F3.3); F-2 (2026-06-29, F2-9).
@@ -295,9 +295,14 @@ Phase F shifts Aurora from reactive to aware. Architecture:
 
 Generated runtime artifacts (`ai-stack/aurora/`, signal JSON, `09_ops/runtime/`
 digests) are gitignored. **F-5 Home Intelligence — IN PROGRESS:** G-F5-07 Layer A
-(static `# Home` prompt frame) implemented + verified 2026-06-30 — apply log
-[`09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md`](../09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md);
-Layer B (`Home State:` block render) = F5.2, not started. F-6 Voice Quality is unblocked.
+(static `# Home` prompt frame) implemented 2026-06-30
+([`09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md`](../09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md));
+**F5.2 Layer B** (`bin/aurora-context` reads HA `/api/states`, detects home anomalies per
+`home_model.md`, populates `home.anomalies[]` + renders the `Home State:` block — Healthy/
+Degraded/Unavailable) implemented + validated on real data 2026-06-30, G-F5-02/05/06 ✓
+([`09_logs/2026-06-30_phaseF_F5_2_applied.md`](../09_logs/2026-06-30_phaseF_F5_2_applied.md)).
+F5.3 (real induced anomaly G-F5-03/04, optional `cover` G-F5-08) not started. F-6 Voice Quality
+is unblocked.
 
 ---
 
@@ -318,7 +323,8 @@ Primary tool-calling model:
   precedence directive added 2026-06-29 F3.1, static `# Home` frame added
   2026-06-30 G-F5-07 Layer A). Domain-based routing; all 6 tools described; the
   `# Home` section (after `# Context`) names the home objects/baselines and how to
-  read the dynamic `Home State:` block (Layer B / F5.2 — not yet rendered). No
+  read the dynamic `Home State:` block (Layer B / F5.2 — rendered by `bin/aurora-context`,
+  implemented 2026-06-30). No
   stale phase references.
 - **`aurora_context` Filter (F3.1):** Open WebUI Function (type `filter`),
   **active + global** in `webui.db.function`. Injects `aurora-context.md` from
