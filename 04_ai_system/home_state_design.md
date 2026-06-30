@@ -2,8 +2,11 @@
 
 Phase: **F-5 — Home Intelligence**. Gate: **G-F5-07** (system prompt references
 the home model; Aurora answers about any in-model object in a single exchange).
-Status: **DESIGN ONLY — proposed, not implemented.** No prompt/code/`aurora-context`
-change is made by this document.
+Status: **Layer A (the §5 `# Home` frame) — IMPLEMENTED + verified 2026-06-30
+(G-F5-07); apply log
+[`../09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md`](../09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md).
+Layer B (the §4 `Home State` block) — DESIGN ONLY, not started (F5.2).** This document
+itself makes no runtime change; Layer A was installed separately per the apply log.
 Last updated: 2026-06-30.
 Sources of record: [`home_model.md`](home_model.md) · [`phase_f_architecture.md`](phase_f_architecture.md)
 (§9-F-5, AD-01/02/11, **AD-20**) · [`AURORA_VISION.md`](AURORA_VISION.md) (§3, §4, §6, §7, §8).
@@ -159,12 +162,14 @@ happens; tokens never change for wording.
 
 ---
 
-## 5. Layer A — the static `# Home` prompt frame (proposed; G-F5-07)
+## 5. Layer A — the static `# Home` prompt frame (G-F5-07 — installed 2026-06-30)
 
 Compact (≈ 90–110 tokens added to the ~370-token F-1 prompt), placed adjacent to
 `# Context`. Names objects **by intent + baseline** only — **no entity_ids** (same
 principle as the F-1 corpus split: implementation names live in `home_model.md`,
-not the prompt). **Proposed text — not installed:**
+not the prompt). **Installed text (G-F5-07, 2026-06-30) — applied byte-for-byte to
+`params.system` as a new section after `# Context`; verified live in `webui.db` (see
+the apply log):**
 
 ```
 # Home
@@ -310,4 +315,8 @@ Any such change is gated future work and must not alter tokens, the
 gated steps — **G-F5-07** (install the §5 `# Home` frame) and **F5.2** (render the
 §4 `Home State` block + `home.anomalies[]`). This document is the spec both must
 match.
-```
+
+> **Status (2026-06-30):** the **G-F5-07** step (Layer A — install the §5 `# Home`
+> frame into `params.system`) is **DONE + verified** — apply log
+> [`../09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md`](../09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md).
+> **F5.2** (Layer B — render the §4 block) remains **not started**.
