@@ -443,7 +443,7 @@ this is architecture only. Outcomes:
 | Q3 | Does F-5 require an F-3a Filter change? | **No** — the Filter injects the full `aurora-context.md` (AD-11); a home line surfaces automatically. | AD-20 |
 | Q4 | Anomaly element representation (undefined in inherited design) | **Short typed tokens / small typed dicts; AD-18-safe; `generate-digest`-compatible.** | AD-20 |
 | Q5 | F-5↔F-4 coupling risk | **F-5 must preserve `aurora-context.json` schema (AD-19 cond-5).** | AD-20 |
-| Q6 | Home model scope | **Real current inventory only** (`switch.impresora_3d`, `cover.toldo`, Z2M bridge + chosen HA system entities); no modelling of absent devices. | §9-F-5 scope |
+| Q6 | Home model scope | **Real current inventory only**; no modelling of absent devices. *(F5.0 named a minimal example set — `switch.impresora_3d`, `cover.toldo`, Z2M bridge. **Reconciled at F5.1**: a reality check found a larger real inventory, so F5.1 published a **privacy-aware operational core** in `home_model.md`.)* | §9-F-5 scope; [`home_model.md`](home_model.md) |
 | Q7 | `cover` (toldo) control | **Out of core F-5** (surface-only); adding `ha_call_service` `cover` is an optional, separately gated step. | §9-F-5 scope |
 | Q8 | Is the anomaly-detection test "fabrication"? | **No** — inducing a *real* device state is functional validation (real, observable), distinct from fabricating historical digests; operator to confirm inducing a controlled real anomaly. | §9-F-5 / G-F5-03 |
 
@@ -1135,7 +1135,7 @@ known and accepted (AD-04). Independent of F-3 / F-5 / F-6.
 
 ---
 
-### F-5 — Home Intelligence (FROZEN at F5.0, 2026-06-30 — proposed; NOT IMPLEMENTED)
+### F-5 — Home Intelligence (FROZEN at F5.0; F5.1 `home_model.md` PUBLISHED 2026-06-30 — G-F5-01 satisfied; F5.2/F5.3 pending)
 
 **Objective:** Aurora has a defined home model, reasons about expected
 device states, and the Filter surfaces home anomalies automatically.
@@ -1199,6 +1199,21 @@ F-1 (system prompt references the home model).
 > optional, separately gated step. This sub-phase, its gates, and milestones are **proposed
 > for freeze** pending operator approval at the architecture gate.
 
+> **F5.1 reconciliation (2026-06-30) — PUBLISHED.** F5.0 was approved and frozen
+> (commit `c9acad51`); **F5.1 then published [`04_ai_system/home_model.md`](home_model.md)**
+> — the privacy-aware, object-first home cognitive model — and **G-F5-01 is satisfied**.
+> A reality check at F5.1 entry found the live inventory is larger than the minimal example
+> set above (`switch.impresora_3d`, `cover.toldo`, Z2M bridge), so the scope was reconciled
+> from "strict minimal devices" to a **privacy-aware operational core** (printer, awning,
+> Zigbee mesh, main door, entrance plant, WAN, daylight/time, plus cross-cutting battery
+> health and silent firmware), **excluding** presence/occupancy, persons and media/TV. The
+> F-5 principle is unchanged — *real current inventory only, no absent devices* — only the
+> device set is now the real, enumerated one (in `home_model.md`). **`cover`/toldo control
+> remains out of core F-5** (surface-only; optional, separately gated — G-F5-08). **AD-20
+> and every anomaly-token contract are preserved** (10 tokens; `home.anomalies[]` schema
+> unchanged; no F-3a Filter change). Documentation only — no code/prompt/tool/`aurora-context`
+> change. F5.2/F5.3 and G-F5-07 remain not started.
+
 **Risks (F5.0):**
 
 | ID | Risk | Mitigation |
@@ -1240,8 +1255,8 @@ F-1 (system prompt references the home model).
 
 | Milestone | Content | Type / gates |
 |---|---|---|
-| **F5.0** | Architecture review, refinement & freeze (this revision; §4C, AD-19/AD-20) | docs — **proposed; awaiting operator approval** |
-| **F5.1** | `home_model.md` (real inventory + baselines + anomaly rules, operator input) + system-prompt home summary | build + validate — G-F5-01, G-F5-07 |
+| **F5.0** | Architecture review, refinement & freeze (§4C, AD-19/AD-20) | docs — **frozen + published** (`c9acad51`, 2026-06-30) |
+| **F5.1** | `home_model.md` (real inventory + baselines + anomaly rules, operator input) — **published** (`55e0416a`); system-prompt home summary still pending | build + validate — **G-F5-01 ✓**; G-F5-07 pending |
 | **F5.2** | Extend `bin/aurora-context` (home section via HA REST; AD-20 schema-preserving) + validate one nightly cycle | build + validate — G-F5-02, G-F5-05, G-F5-06 |
 | **F5.3** | Anomaly-detection validation (real induced anomaly) + optional `cover` gate + closeout; **STOP at git gate** | build + docs — G-F5-03, G-F5-04, G-F5-08, repro |
 
@@ -1430,3 +1445,4 @@ are not accidentally implemented in Phase F.
 | 2026-06-30 | **F4.0 — F-4 Architecture Review & Freeze** | Reviewed the inherited F-4 design against the running system + `AURORA_VISION.md`. Recorded the decision register (§4B) and AD-14…AD-18. **Re-routed operational memory** from `homelab_docs` to a dedicated `ops_digests` collection (AD-14 — resolves the §6.5/§9-F-4 self-contradiction and the Vision §8 "memory ≠ knowledge" principle). **Cut the digest schema** to fields the F-2 signal layer actually produces + a `notable` line (AD-15; the inherited per-corpus-delta / backup-size / >5%-event schema is unbuildable from current signals). Made digests **durable** (restic-backed `09_ops/runtime/`, AD-16 — they are not regenerable and would otherwise be GC-erased on restore). Made retrieval **date-anchored** (AD-17) and the digest **secret-safe by construction** (AD-18). Moved `generate-digest` to the **04:25** cron slot (§6.4). Recorded the pre-existing `knowledge_history`-not-in-`rag_search`-enum drift as finding R-F4-A (§6.5). **Froze** the F-4 architecture, acceptance gates (G-F4-01…G-F4-09), and milestones (F4.1→F4.3). No code/collection/corpus/prompt/container/DB/git change. Next: operator approval before F4.1. |
 | 2026-06-30 | **F4.3 — F-4 validation & reconciliation (real-data-only)** | Session-start reality-check: F4.1 (`9063164a`) + F4.2 (`ac647e24`) were already implemented **and committed** — the §9-F-4 "NOT IMPLEMENTED" header was stale doc-drift, now reconciled (reality wins). The unattended **04:25** `generate-digest` cron fired overnight → `09_ops/runtime/2026-06-30_ops_digest.md` (schema-correct, `overall_status=ok`); `ops_digests` holds the real `2026-06-29` digest (3 pts) and retrieves it top-1 (score 0.87). **Generator fix (AD-15):** `bin/generate-digest` now sets the digest `generated_at` from `aurora-context.json` (`02:15:01Z`), not the digest run time (`02:25:01Z`); latest digest re-rendered and re-validated (schema + secret-scan + `generated_at` fidelity match). **AD-15 not amended** (operator decision). **Operator decision (2026-06-30) — real data only:** no synthetic digests / fabricated degraded nights; **G-F4-05** (≥7 date-anchored), **G-F4-06** (same-night honesty) and **G-F4-07** (degraded night) left **intentionally pending real operational evidence** and close naturally as nightly digests accumulate. **G-F4-08** empirical restic check operator-gated (pending the next backup). F-4 is **not fully complete or fully validated**. Gates passing on real data: G-F4-01/02/03/04/09 + repro. Triad reconciled. Closeout `2026-06-30_phaseF_F4_3_closeout.md`. STOP at git gate. |
 | 2026-06-30 | **F5.0 — F-5 Architecture Review & Freeze (proposed)** | Architecture only — F-5 **not implemented**. Recorded the **Concurrent Phase Progression** rule (PROJECT_RULES) and **AD-19** (an implementation-complete sub-phase whose only open items are passive validation gates does not block an independent next sub-phase) + **AD-20** (F-5 must preserve the F-4 `aurora-context.json`/digest contract; anomalies are short typed tokens; no F-3a Filter change). Added the **§4C** decision register. Reconciled §9-F-5: the `HA_LLAT` prerequisite is already met (F-3b); scope limited to the real home inventory (`switch.impresora_3d`, `cover.toldo`, Z2M bridge); `cover` control out of core (optional, separately gated). Proposed-frozen the F-5 risks (RF5-1…5), acceptance gates (G-F5-01…G-F5-08 + repro), and milestones (F5.1→F5.3). No code/collection/corpus/prompt/container/DB/git change. Next: operator approval at the architecture gate before F5.1. |
+| 2026-06-30 | **F5.1 — Home cognitive model published + architecture reconciliation** | Published [`04_ai_system/home_model.md`](home_model.md) (`55e0416a`) — the privacy-aware, **object-first** home cognitive model (core principle: *AURORA reasons about the home; HA is only the implementation layer*). 9 objects in a 7-field cognitive structure (Purpose / Operational Priority / Reasoning / Baseline / Anomaly Rules / Suggested Operator Actions / Implementation), grounded in the live `/api/states` inventory (no fabrication; battery surface 5/5). **Reconciled the F5.0 minimal-scope language** (§4C-Q6; §9-F-5 header + new F5.1 note; milestones table) to the **privacy-aware operational core** actually published — printer, awning, Zigbee mesh, main door, entrance plant, WAN, daylight/time + cross-cutting battery health & silent firmware; excludes presence/occupancy, persons, media/TV. RF5-2 confirmations applied (printer 00:00–06:00; awning retracted/manual; door >15 min; plant <20 %; battery = all Zigbee devices; firmware silent). **G-F5-01 satisfied.** `cover`/toldo control remains **out of core F-5**. **AD-20 and all 10 anomaly tokens unchanged.** Documentation only — no code/prompt/tool/`aurora-context` change. F5.2/F5.3 and G-F5-07 not started. |
