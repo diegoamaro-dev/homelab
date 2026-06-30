@@ -206,7 +206,11 @@ def build_digest(ctx: dict | None, health: dict | None, now: datetime) -> tuple[
         f"- Signals missing: {missing_line}",
     ]
     notable = "; ".join(deviations) if deviations else "Nominal — no deviations."
-    return date_str, render(date_str, iso(now), overall, notable, sig_lines)
+    # generated_at mirrors the context this digest summarises (AD-15) — the cycle's
+    # context-generation time, not the digest render time. ctx_dt is parsed from
+    # aurora-context.json above; fall back to now only if it is unparseable.
+    gen_at = iso(ctx_dt) if ctx_dt is not None else iso(now)
+    return date_str, render(date_str, gen_at, overall, notable, sig_lines)
 
 
 def main() -> int:

@@ -14,7 +14,7 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-06-29 (Phase D-1 closed; **Phase RTX-1
+Last updated: 2026-06-30 (Phase D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
 service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
@@ -23,8 +23,11 @@ doors now consume Torre's GPU Ollama via the `ollama-proxy`).
 All steps done: E-0..E-6; 13 findings resolved or accepted.
 **Phase F — Operational Intelligence — IN PROGRESS. F-0, F-1, F-2 and F-3
 (Situational Awareness) COMPLETE — F-3 closed 2026-06-29 (F3.3): F-3a chat
-Filter (G-F3-1…7) + F-3b HA-voice awareness (G-F3-8) both validated. Current
-active step: F-4 — Operational Digest + Memory Corpus (F-5/F-6 also unblocked).**
+Filter (G-F3-1…7) + F-3b HA-voice awareness (G-F3-8) both validated. F-4: F4.1
+(substrate) + F4.2 (generator) DONE + committed 2026-06-30; F4.3 implementation +
+reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08
+config-verified (empirical restic pending next backup), G-F4-05/06/07 intentionally
+pending real operational evidence; F-4 not fully closed (F-5/F-6 also unblocked).**
 
 ---
 
@@ -435,8 +438,16 @@ Sub-phases:
     [`09_logs/2026-06-29_phaseF_F3_2_applied.md`](../09_logs/2026-06-29_phaseF_F3_2_applied.md).
   * Closeout:
     [`09_logs/2026-06-29_phaseF_F3_closeout.md`](../09_logs/2026-06-29_phaseF_F3_closeout.md).
-* **F-4 — Operational Digest + Memory Corpus — NEXT.** nightly `09_ops/runtime/`
-  digest files indexed by `homelab_docs`.
+* **F-4 — Operational Digest + Memory Corpus — F4.1+F4.2 DONE + committed
+  2026-06-30; F4.3 implementation + reconciliation complete 2026-06-30.** `bin/generate-digest`
+  writes a dated digest to `09_ops/runtime/` at 04:25, indexed into the dedicated
+  `ops_digests` collection (384/Cosine — AD-14, **not** `homelab_docs`) on the next
+  02:30 sync. Unattended 04:25 run + real retrieval (2026-06-29 digest top-1 0.87)
+  verified; `generated_at` fidelity fix applied (AD-15). G-F4-01/02/03/04/09 PASS; G-F4-08
+  config verified (empirical restic pending next backup); G-F4-05/06/07 **intentionally
+  pending real operational evidence** (no synthetic digests / fabricated degraded nights —
+  operator decision). F-4 not fully closed. Closeout:
+  [`09_logs/2026-06-30_phaseF_F4_3_closeout.md`](../09_logs/2026-06-30_phaseF_F4_3_closeout.md).
 * **F-5 — Home Intelligence** — home model document; HA entity expansion;
   home anomaly injection via Filter. (Unblocked — depends on F-3a, now complete.)
 * **F-6 — Voice Quality** — Whisper upgrade; STT shim migration; latency

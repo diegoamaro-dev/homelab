@@ -5,7 +5,12 @@
   architecture, acceptance gates, and milestones were **FROZEN** at F3.0 (see
   §4A and §9 → F-3) and **delivered** at F3.1/F3.2 (G-F3-1…G-F3-8 pass).
   **F-4 architecture FROZEN at F4.0 (2026-06-30)** — review + refinement (see
-  §4B and §9 → F-4); awaiting operator approval before F4.1; **not implemented**.
+  §4B and §9 → F-4). **F4.1 (substrate) + F4.2 (generator) IMPLEMENTED and committed
+  2026-06-30; F4.3 implementation + reconciliation complete** (this revision) —
+  G-F4-01/02/03/04/09 PASS, the `generated_at` fidelity fix applied (AD-15), G-F4-08
+  config verified (empirical restic pending the next backup), and G-F4-05/06/07 left
+  **intentionally pending real operational evidence** (no synthetic fixtures — operator
+  decision 2026-06-30). F-4 is **not fully complete or fully validated**.
 - **Phase:** F — Operational Intelligence.
 - **Mission alignment:** [`AURORA_VISION.md`](AURORA_VISION.md) — read first.
 - **Authored:** F-0 pre-work, 2026-06-28.
@@ -915,7 +920,7 @@ check, and **G-F3-1 is not satisfied by AF-01**.
 
 ---
 
-### F-4 — Operational Digest and Memory Corpus (FROZEN at F4.0, 2026-06-30 — NOT IMPLEMENTED)
+### F-4 — Operational Digest and Memory Corpus (FROZEN at F4.0; F4.1+F4.2 IMPLEMENTED 2026-06-30; F4.3 in progress)
 
 **Objective:** Aurora answers "what happened on the night of <date>?" and "when
 did <X> last deviate?" from structured operational history retrieved via RAG —
@@ -924,8 +929,20 @@ knowledge corpora (`homelab_docs` / `knowledge_history`).
 
 This sub-phase, its data model, acceptance gates, and milestones are **frozen** as of
 F4.0. Changes require a recorded revision (§15), not drift. F4.0 refined the inherited
-design — see §4B and AD-14…AD-18. **No code, collection, corpus, prompt, container, DB
-or git change has been made; F-4 is architecture-only until operator approval of F4.1.**
+design — see §4B and AD-14…AD-18. **As built (F4.3, 2026-06-30):** F4.1 (retrieval
+substrate) and F4.2 (digest generator + 04:25 cron + restic durability) are IMPLEMENTED
+and committed — apply logs
+[`../09_logs/2026-06-30_phaseF_F4_1_applied.md`](../09_logs/2026-06-30_phaseF_F4_1_applied.md)
+and
+[`../09_logs/2026-06-30_phaseF_F4_2_applied.md`](../09_logs/2026-06-30_phaseF_F4_2_applied.md).
+F4.3 (this revision) is **implementation + reconciliation complete**: it validated every
+gate that **real operational data** supports (G-F4-01/02/03/04/09 + repro) and applied the
+`generated_at` fidelity fix (AD-15). It left **G-F4-05/06/07 intentionally pending real
+operational evidence** — no synthetic fixtures or fabricated degraded nights (operator
+decision 2026-06-30). G-F4-08 config is verified; its empirical restic check is
+operator-gated (pending the next backup). **F-4 is not fully complete or fully validated**
+until those gates close on real history. Closeout:
+[`../09_logs/2026-06-30_phaseF_F4_3_closeout.md`](../09_logs/2026-06-30_phaseF_F4_3_closeout.md).
 
 #### Operational-memory architecture (refined)
 
@@ -1035,10 +1052,10 @@ later enrichment (emit per-corpus counts from `ingest-nightly`), not frozen F-4.
 
 | Milestone | Content | Type / gates |
 |---|---|---|
-| **F4.0** | Architecture review, refinement & freeze (this revision; §4B, AD-14…AD-18) | docs — **DONE (frozen); awaiting operator approval** |
-| **F4.1** | Retrieval substrate: create `ops_digests` (E-6 framework) + `corpora.yaml` entry + extend `rag_search` enum + reinstall + validate empty-collection/enum | build + validate — **G-F4-03 (partial), G-F4-04** |
-| **F4.2** | Generator: `bin/generate-digest` (AD-15/17/18) + 04:25 cron + restic durability (AD-16) + validate one nightly cycle | build + validate — **G-F4-01, G-F4-02, G-F4-08, G-F4-09** |
-| **F4.3** | Retrieval validation + closeout: backfill ≥7 dated fixtures, validate date-anchored / degraded-night / same-night gates; reconcile triad + this doc; closeout log; **STOP at git gate** | build + docs — **G-F4-05, G-F4-06, G-F4-07, repro gate** |
+| **F4.0** | Architecture review, refinement & freeze (§4B, AD-14…AD-18) | docs — **DONE (frozen); approved** |
+| **F4.1** | Retrieval substrate: create `ops_digests` (E-6 framework) + `corpora.yaml` entry + extend `rag_search` enum + reinstall + validate empty-collection/enum | build + validate — **DONE 2026-06-30** (committed `9063164a`); G-F4-03 (partial), G-F4-04 |
+| **F4.2** | Generator: `bin/generate-digest` (AD-15/17/18) + 04:25 cron + restic durability (AD-16) + validate one nightly cycle | build + validate — **DONE 2026-06-30** (committed `ac647e24`); G-F4-01, G-F4-02, G-F4-09; G-F4-08 (config; empirical operator-gated) |
+| **F4.3** | Retrieval validation + reconciliation: validate with **real data only** (no synthetic fixtures — operator decision, supersedes the original "backfill ≥7 dated fixtures"); `generated_at` fidelity fix (AD-15); reconcile triad + this doc; closeout log; **STOP at git gate** | build + docs — **impl + reconciliation COMPLETE 2026-06-30**; G-F4-01/02/03/04/09 PASS + repro ✓; G-F4-08 config-verified (empirical pending next backup); **G-F4-05/06/07 intentionally pending real operational evidence** (F-4 not fully closed) |
 
 #### Rollback
 
@@ -1291,3 +1308,4 @@ are not accidentally implemented in Phase F.
 | 2026-06-29 | **F3.0 — Architecture Refinement** | Reviewed the F-3 design; recorded the decision register (§4A) and AD-08…AD-13. Reconciled F-1/F-2 drift: backup signal is `bin/backup-probe` at 03:30, not `homelab-backup.sh` (AD-12; §6.1/§6.4); HA-voice mechanism is `input_text` + Jinja2 (AD-13; §7); `aurora-context.md` example replaced with real F-2 output (§6.2); §2 marked as a pre-F baseline (live state in CURRENT_STATE.md). Split F-3 into F-3a/F-3b; **froze** the F-3 architecture, acceptance gates (G-F3-1…G-F3-8), and milestones (F3.0→F3.3). No code/prompt/container/DB/Open WebUI changes. Next: operator approval before F3.1. |
 | 2026-06-29 | **F3.3 — F-3 closeout / reconciliation** | Recorded F-3 as IMPLEMENTED + CLOSED: F-3a Open WebUI Filter (`aurora_context`, active+global) + F-3b HA voice awareness (`input_text.aurora_voice_context` + Jinja2 + 04:20 `push-voice-context`); all gates G-F3-1…G-F3-8 pass. Added the §9 "as built" note + milestone statuses (F3.0→F3.3 done) + status header, and recorded the **G-F3-1 `# Context` precedence** requirement (for G-F3-1 with tools offered) and the **F-1 HA-voice-identity-absent** finding (separate item). Overview triad reconciled in parallel. No code/prompt/DB/container changes in F3.3. Apply logs: F3_1, F3_2; closeout `2026-06-29_phaseF_F3_closeout.md`. STOP at git gate (operator review before publication). |
 | 2026-06-30 | **F4.0 — F-4 Architecture Review & Freeze** | Reviewed the inherited F-4 design against the running system + `AURORA_VISION.md`. Recorded the decision register (§4B) and AD-14…AD-18. **Re-routed operational memory** from `homelab_docs` to a dedicated `ops_digests` collection (AD-14 — resolves the §6.5/§9-F-4 self-contradiction and the Vision §8 "memory ≠ knowledge" principle). **Cut the digest schema** to fields the F-2 signal layer actually produces + a `notable` line (AD-15; the inherited per-corpus-delta / backup-size / >5%-event schema is unbuildable from current signals). Made digests **durable** (restic-backed `09_ops/runtime/`, AD-16 — they are not regenerable and would otherwise be GC-erased on restore). Made retrieval **date-anchored** (AD-17) and the digest **secret-safe by construction** (AD-18). Moved `generate-digest` to the **04:25** cron slot (§6.4). Recorded the pre-existing `knowledge_history`-not-in-`rag_search`-enum drift as finding R-F4-A (§6.5). **Froze** the F-4 architecture, acceptance gates (G-F4-01…G-F4-09), and milestones (F4.1→F4.3). No code/collection/corpus/prompt/container/DB/git change. Next: operator approval before F4.1. |
+| 2026-06-30 | **F4.3 — F-4 validation & reconciliation (real-data-only)** | Session-start reality-check: F4.1 (`9063164a`) + F4.2 (`ac647e24`) were already implemented **and committed** — the §9-F-4 "NOT IMPLEMENTED" header was stale doc-drift, now reconciled (reality wins). The unattended **04:25** `generate-digest` cron fired overnight → `09_ops/runtime/2026-06-30_ops_digest.md` (schema-correct, `overall_status=ok`); `ops_digests` holds the real `2026-06-29` digest (3 pts) and retrieves it top-1 (score 0.87). **Generator fix (AD-15):** `bin/generate-digest` now sets the digest `generated_at` from `aurora-context.json` (`02:15:01Z`), not the digest run time (`02:25:01Z`); latest digest re-rendered and re-validated (schema + secret-scan + `generated_at` fidelity match). **AD-15 not amended** (operator decision). **Operator decision (2026-06-30) — real data only:** no synthetic digests / fabricated degraded nights; **G-F4-05** (≥7 date-anchored), **G-F4-06** (same-night honesty) and **G-F4-07** (degraded night) left **intentionally pending real operational evidence** and close naturally as nightly digests accumulate. **G-F4-08** empirical restic check operator-gated (pending the next backup). F-4 is **not fully complete or fully validated**. Gates passing on real data: G-F4-01/02/03/04/09 + repro. Triad reconciled. Closeout `2026-06-30_phaseF_F4_3_closeout.md`. STOP at git gate. |

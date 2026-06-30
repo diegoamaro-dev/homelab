@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-06-29
+Last updated: 2026-06-30
 
 ## Purpose
 
@@ -192,6 +192,10 @@ Validated capabilities:
   F-3a) + HA voice `input_text.aurora_voice_context` rendered in the Ollama
   voice prompt (F-3b); Aurora reports lab state at conversation start with no
   tool call (Phase F-3)
+- **operational memory** — nightly `09_ops/runtime/` digests indexed into the
+  dedicated `ops_digests` collection (AD-14), retrievable via `rag_search`
+  (Phase F-4; F4.1+F4.2 done + committed 2026-06-30; F4.3 implementation + reconciliation
+  complete 2026-06-30 — G-F4-05/06/07 intentionally pending real operational evidence)
 
 Verified device:
 
@@ -313,7 +317,10 @@ Current phase:
 
 **Phase F — Operational Intelligence — IN PROGRESS (F-0/F-1/F-2/F-3
 complete; F-3 closed 2026-06-29 (F3.3) — F-3a chat Filter + F-3b voice
-awareness; current active step F-4). Phase D-1 (Voice) closed 2026-06-18.**
+awareness; F-4: F4.1+F4.2 done + committed 2026-06-30; F4.3 implementation +
+reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08 config-verified
+(empirical restic pending next backup), G-F4-05/06/07 intentionally pending real
+operational evidence; F-4 not fully closed). Phase D-1 (Voice) closed 2026-06-18.**
 
 Active follow-on: **Phase RTX-1 — Torre GPU node — CLOSED
 2026-06-27. RTX-1.4 (Tailscale-only) + RTX-1.5 (headless
@@ -375,7 +382,15 @@ F-0, F-1, F-2 and **F-3 (Situational Awareness) COMPLETE — F-3 closed
 injects `aurora-context.md` on message 1 (G-F3-1…7). F-3b: the HA helper
 `input_text.aurora_voice_context` + Jinja2 in the Ollama voice prompt +
 04:20 `push-voice-context` give the voice surface the same nightly context
-(G-F3-8). **Current active step: F-4 — Operational Digest + Memory Corpus.**
+(G-F3-8). **F-4 — Operational Digest + Memory Corpus: F4.1 (substrate) + F4.2 (generator)
+DONE + committed 2026-06-30; F4.3 implementation + doc reconciliation complete
+2026-06-30** — the unattended 04:25 digest verified, `ops_digests` retrieves the
+real 2026-06-29 digest top-1 (0.87), `generated_at` fidelity fix applied (AD-15).
+G-F4-01/02/03/04/09 PASS; G-F4-08 config verified (empirical restic pending the next
+backup); G-F4-05/06/07 **intentionally pending real operational evidence** (no synthetic
+digests / fabricated degraded nights — operator decision). F-4 is not fully complete or
+fully validated. F-4 closeout:
+`09_logs/2026-06-30_phaseF_F4_3_closeout.md`.
 F-3 closeout: `09_logs/2026-06-29_phaseF_F3_closeout.md`; F-2 closeout:
 `09_logs/2026-06-29_phaseF_F2_9_closeout.md`. Architecture document:
 [`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md).

@@ -1,7 +1,7 @@
 CURRENT STATUS
 
 Current phase:
-Phase F — Operational Intelligence — **IN PROGRESS.** F-0, F-1, F-2 and **F-3 (Situational Awareness) COMPLETE — F-3 closed 2026-06-29 (F3.3): F-3a chat Filter (G-F3-1…7) and F-3b HA-voice awareness (G-F3-8) both validated.** The nightly signal pipeline is validated, `system_status` is wired to `qwen2.5`, the `aurora_context` Open WebUI Filter is active+global, and the HA voice prompt renders the nightly context via `input_text.aurora_voice_context`. **Current active step: F-4 — Operational Digest + Memory Corpus.** Prior: Phase E COMPLETE 2026-06-28 (E-0..E-6).
+Phase F — Operational Intelligence — **IN PROGRESS.** F-0, F-1, F-2 and **F-3 (Situational Awareness) COMPLETE — F-3 closed 2026-06-29 (F3.3): F-3a chat Filter (G-F3-1…7) and F-3b HA-voice awareness (G-F3-8) both validated.** The nightly signal pipeline is validated, `system_status` is wired to `qwen2.5`, the `aurora_context` Open WebUI Filter is active+global, and the HA voice prompt renders the nightly context via `input_text.aurora_voice_context`. **Current active step: F-4 — Operational Digest + Memory Corpus — F4.1 (substrate) + F4.2 (generator) DONE + committed 2026-06-30; F4.3 implementation + doc reconciliation complete 2026-06-30. G-F4-01/02/03/04/09 PASS; G-F4-08 config verified (empirical restic pending the next backup); G-F4-05/06/07 intentionally pending real operational evidence (no synthetic digests / fabricated degraded nights — operator decision). F-4 is not fully complete or fully validated.** Prior: Phase E COMPLETE 2026-06-28 (E-0..E-6).
 
 Overall health:
 Stable
@@ -10,10 +10,10 @@ Production:
 Operational
 
 Next milestone:
-F-4 — Operational Digest + Memory Corpus — nightly `09_ops/runtime/` digest files indexed by `homelab_docs` for historical retrieval. See `04_ai_system/phase_f_architecture.md` §9 → F-4. (F-5 Home Intelligence and F-6 Voice Quality are also unblocked.)
+F-4 closeout — three gates (G-F4-05 date-anchored ≥7 digests, G-F4-06 same-night honesty, G-F4-07 degraded night) close as real nightly digests accumulate; G-F4-08 empirical restic check is operator-gated. Operational memory is the dedicated `ops_digests` collection (AD-14 — **not** `homelab_docs`). See `04_ai_system/phase_f_architecture.md` §9 → F-4. (F-5 Home Intelligence and F-6 Voice Quality are also unblocked.)
 
 Last completed:
-F-3 — Situational Awareness (closed 2026-06-29, F3.3). F-3a: `aurora_context` Open WebUI Filter (active+global) injects `aurora-context.md` on message 1; G-F3-1…7 pass (G-F3-1 after an operator-approved `# Context` precedence directive). F-3b: HA `input_text.aurora_voice_context` + Jinja2 in the Ollama voice prompt + 04:20 `push-voice-context`; G-F3-8 pass. Closeout: `09_logs/2026-06-29_phaseF_F3_closeout.md`. Apply logs: `09_logs/2026-06-29_phaseF_F3_1_applied.md`, `09_logs/2026-06-29_phaseF_F3_2_applied.md`. Prior: F-2 (2026-06-29, F2-9).
+F-4 substrate + generator — F4.1 (`9063164a`) + F4.2 (`ac647e24`), 2026-06-30 — and **F4.3 implementation + reconciliation complete** (2026-06-30): the unattended 04:25 digest verified (`2026-06-30_ops_digest.md`); `ops_digests` retrieves the real 2026-06-29 digest top-1 (score 0.87); `generated_at` fidelity fix applied (generator fixed to AD-15; AD-15 unchanged). G-F4-01/02/03/04/09 PASS; G-F4-08 config verified (empirical restic pending the next backup); G-F4-05/06/07 intentionally pending real operational evidence (no synthetic fixtures). F-4 is not fully complete or fully validated. Closeout: `09_logs/2026-06-30_phaseF_F4_3_closeout.md`. Prior: F-3 — Situational Awareness (closed 2026-06-29, F3.3); F-2 (2026-06-29, F2-9).
 
 Blocking issues:
 None
@@ -25,7 +25,7 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-06-29
+Last updated: 2026-06-30
 
 ---
 
@@ -234,8 +234,11 @@ Architecture amendment (DRAFT — merged at RTX-1.6):
 
 ### Phase F — Operational Intelligence
 
-Status: **F-0, F-1, F-2, F-3 COMPLETE. F-3 closed 2026-06-29 (F3.3). Current
-active step: F-4 — Operational Digest + Memory Corpus.**
+Status: **F-0, F-1, F-2, F-3 COMPLETE. F-3 closed 2026-06-29 (F3.3). F-4: F4.1
+(substrate) + F4.2 (generator) DONE + committed 2026-06-30; F4.3 implementation +
+reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08
+config-verified (empirical restic pending next backup), G-F4-05/06/07
+intentionally pending real operational evidence; F-4 not fully closed.**
 
 Phase F shifts Aurora from reactive to aware. Architecture:
 [`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md).
@@ -278,10 +281,20 @@ Phase F shifts Aurora from reactive to aware. Architecture:
   - Closeout:
     [`09_logs/2026-06-29_phaseF_F3_closeout.md`](../09_logs/2026-06-29_phaseF_F3_closeout.md).
 
-Generated runtime artifacts (`ai-stack/aurora/`, signal JSON) are
-gitignored. Next: **F-4** — nightly `09_ops/runtime/` operational digest
-indexed by `homelab_docs` (F-5 Home Intelligence and F-6 Voice Quality also
-unblocked).
+- **F-4 — Operational Digest + Memory Corpus** (F4.1+F4.2 done + committed
+  2026-06-30; F4.3 implementation + reconciliation complete 2026-06-30). `bin/generate-digest` writes a dated digest
+  to `09_ops/runtime/` at **04:25**, indexed into the dedicated `ops_digests` Qdrant
+  collection (384/Cosine — AD-14, **not** `homelab_docs`) on the next 02:30 sync (~22h
+  lag, AD-04). Unattended 04:25 run verified (`2026-06-30_ops_digest.md`); real
+  retrieval of the `2026-06-29` digest top-1 (0.87). `generated_at` fidelity fix applied
+  (AD-15). Gates G-F4-05 (≥7 digests), G-F4-06 (same-night honesty), G-F4-07 (degraded
+  night) **intentionally pending real operational evidence** (no synthetic digests /
+  fabricated degraded nights — operator decision); G-F4-01/02/03/04/09 PASS; G-F4-08
+  config verified (empirical restic pending the next backup). F-4 not fully closed. Closeout:
+  [`09_logs/2026-06-30_phaseF_F4_3_closeout.md`](../09_logs/2026-06-30_phaseF_F4_3_closeout.md).
+
+Generated runtime artifacts (`ai-stack/aurora/`, signal JSON, `09_ops/runtime/`
+digests) are gitignored. F-5 Home Intelligence and F-6 Voice Quality are unblocked.
 
 ---
 
@@ -390,6 +403,7 @@ RAG collections:
 
 - homelab_docs
 - knowledge_history
+- ops_digests (F-4 operational memory; 384/Cosine; AD-14)
 - guardian_cloud
 - ensambla2
 - infra_audits
@@ -653,10 +667,10 @@ Indexing operational status (verified 2026-06-29, Phase F F2-9):
 - Nightly sync: cron `30 2 * * *` (`diego` crontab), before the
   03:00 restic backup. Idempotent (per-chunk `content_sha`); GC of
   vanished files.
-- Live collection point counts (as of 2026-06-29; grow nightly as docs are
-  added): `homelab_docs` 1968 (excl. `09_logs/`) · `knowledge_history` 3029 ·
-  `guardian_cloud` 872 · `ensambla2` 419 · `infra_audits` 280 ·
-  `myfreetour` 0 (disabled).
+- Live collection point counts (as of 2026-06-30; grow nightly as docs are
+  added): `homelab_docs` 2088 (excl. `09_logs/`) · `knowledge_history` 3132 ·
+  `ops_digests` 3 (F-4 operational memory) · `guardian_cloud` 872 · `ensambla2` 419 ·
+  `infra_audits` 280 · `myfreetour` 0 (disabled).
 - Embedder `intfloat/multilingual-e5-small` (384-dim) / reranker
   `BAAI/bge-reranker-v2-m3`. Full contract:
   [`../04_ai_system/knowledge_platform_contract.md`](../04_ai_system/knowledge_platform_contract.md).
