@@ -233,6 +233,28 @@ When acting on this repository, every AI assistant should:
 
 ---
 
+# Concurrent Phase Progression
+
+An implementation-complete phase whose only open items are long-running
+**passive validation gates** — gates that close on real time / operational
+accrual, not on more implementation — does **not** block the start of the
+next independent phase, provided all of the following hold:
+
+1. The remaining gates require real time/accrual, not more implementation.
+2. The next phase has no dependency on those gates.
+3. The open gates remain tracked honestly (the phase is not declared complete).
+4. No completion tag is created prematurely.
+5. The next phase does not regress the still-accruing evidence.
+
+If any condition fails, the next phase stays blocked until it holds. The open
+gates continue as passive operational validation and close on their own real
+evidence; the phase earns its completion tag only when they pass for real.
+
+Origin: the F4 → F5 sequencing decision, 2026-06-30
+(`04_ai_system/phase_f_architecture.md` → AD-19).
+
+---
+
 # Phase Closeout Checklist
 
 A phase is only considered complete when all of the following are true:

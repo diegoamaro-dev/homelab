@@ -340,6 +340,43 @@ environment, or error output into the digest. No signal field carries a secret t
 (status, timestamps, snapshot ids, counts); this AD makes that a binding construction
 rule so a future signal change cannot silently leak a credential into RAG.
 
+### AD-19: An implementation-complete sub-phase with only passive validation gates does not block an independent next sub-phase.
+
+Formalizes the F4 → F5 sequencing decision (2026-06-30). When a sub-phase is implemented
+and live and its only open items are **passive validation gates** (they close on real
+accrual, not on more implementation), the next **independent** sub-phase may begin —
+subject to the five conditions in PROJECT_RULES → "Concurrent Phase Progression". Applied
+to F4 → F5:
+
+- **F-5 has no dependency on F-4** — F-5's prerequisites are F-1 / F-2 / **F-3a** (§8, §10,
+  AD-08); F-4 is a parallel branch (§9-F-4: "Independent of F-3 / F-5 / F-6").
+- **The open F-4 gates are evidence-accrual measurements** — G-F4-05/06/07 close on real
+  nightly digests (AD-04's accrual model), G-F4-08 on the next backup; none is unfinished
+  build.
+- **F-4 stays tracked honestly** — published as `phase-f4-foundation`, not `-complete`; no
+  premature completion tag.
+- **F-5 must not regress F-4's accruing evidence** — see AD-20.
+
+This is a *sequencing* decision, not a relaxation of any gate: F-4's gates still must pass
+on real evidence before F-4 is complete.
+
+### AD-20: F-5 must preserve the F-4 digest contract — the one F5↔F4 coupling.
+
+F-5 extends `bin/aurora-context` to populate `home.anomalies[]`, which `generate-digest`
+already consumes (AD-15: "empty until F-5 populates it"). To honour AD-19 condition 5 (no
+regression of F-4's accruing evidence), F-5 is bound to:
+
+1. **Preserve the `aurora-context.json` schema** — `schema_version`, and `home.anomalies`
+   as a JSON list — so `generate-digest` keeps producing valid digests.
+2. **Keep each anomaly element a short typed token** — e.g. `"printer_on_overnight"` — or a
+   small typed dict that stringifies safely; **never** a raw HA attribute payload. This
+   preserves AD-18 secret-safety by construction (device states like on/off or a cover
+   position are not secrets, but raw payloads are barred regardless).
+3. **Require no F-3a Filter change** — the Filter already injects the full
+   `aurora-context.md` block (AD-11), so a home/anomaly line is surfaced automatically at
+   conversation start. F-5 touches `bin/aurora-context` (F-2), `home_model.md`, and the
+   system prompt — not the Filter.
+
 ---
 
 ## 4A. F3.0 Architecture Refinement — Decision Register
@@ -390,6 +427,30 @@ These refinements **supersede** the inherited F-4 routing (AD-07 "indexed by
 AD-16). The F-4 architecture, acceptance gates (G-F4-01…G-F4-09), and milestones
 (F4.1→F4.3) are **FROZEN** as of F4.0. No code, collection, corpus, prompt, container,
 DB or git change was made in F4.0.
+
+---
+
+## 4C. F5.0 Architecture Review — Decision Register
+
+F5.0 (2026-06-30) reviewed the inherited §9-F-5 design against the running system, the
+current home inventory, and the F-2/F-3a/F-4 implementations. F-5 was **not implemented**;
+this is architecture only. Outcomes:
+
+| # | Question / inherited assumption | Decision | Captured in |
+|---|---|---|---|
+| Q1 | Does F-4's pending validation block F-5? | **No — F-5 may begin (parallel sibling).** | AD-19; §8/§10; PROJECT_RULES → Concurrent Phase Progression |
+| Q2 | HA token prerequisite ("before F-5 implementation begins") | **Already met** — `HA_LLAT` arrived at F-3b (AD-13), present in `ai-stack/.env`. | §9-F-5 deps |
+| Q3 | Does F-5 require an F-3a Filter change? | **No** — the Filter injects the full `aurora-context.md` (AD-11); a home line surfaces automatically. | AD-20 |
+| Q4 | Anomaly element representation (undefined in inherited design) | **Short typed tokens / small typed dicts; AD-18-safe; `generate-digest`-compatible.** | AD-20 |
+| Q5 | F-5↔F-4 coupling risk | **F-5 must preserve `aurora-context.json` schema (AD-19 cond-5).** | AD-20 |
+| Q6 | Home model scope | **Real current inventory only** (`switch.impresora_3d`, `cover.toldo`, Z2M bridge + chosen HA system entities); no modelling of absent devices. | §9-F-5 scope |
+| Q7 | `cover` (toldo) control | **Out of core F-5** (surface-only); adding `ha_call_service` `cover` is an optional, separately gated step. | §9-F-5 scope |
+| Q8 | Is the anomaly-detection test "fabrication"? | **No** — inducing a *real* device state is functional validation (real, observable), distinct from fabricating historical digests; operator to confirm inducing a controlled real anomaly. | §9-F-5 / G-F5-03 |
+
+The F-5 architecture, acceptance gates (G-F5-01…G-F5-08 + repro), and milestones
+(F5.1→F5.3) are **proposed for freeze** as of F5.0 — pending operator approval at the
+architecture gate. No code/collection/corpus/prompt/container/DB/git change was made in
+F5.0.
 
 ---
 
@@ -1074,7 +1135,7 @@ known and accepted (AD-04). Independent of F-3 / F-5 / F-6.
 
 ---
 
-### F-5 — Home Intelligence
+### F-5 — Home Intelligence (FROZEN at F5.0, 2026-06-30 — proposed; NOT IMPLEMENTED)
 
 **Objective:** Aurora has a defined home model, reasons about expected
 device states, and the Filter surfaces home anomalies automatically.
@@ -1124,6 +1185,65 @@ never appears in any committed file or context artifact.
 block; home anomalies are injected the same way as platform health);
 F-2 (F-5 extends `bin/aurora-context`, which F-2 introduces);
 F-1 (system prompt references the home model).
+
+> **F5.0 review (2026-06-30) — architecture only, NOT IMPLEMENTED.** Reviewed against the
+> running system. Reconciliations: (1) the HA long-lived token prerequisite is **already
+> met** — `HA_LLAT` arrived at F-3b (AD-13) and is present in `ai-stack/.env`; (2) F-5
+> requires **no F-3a Filter change** (AD-20 — the Filter injects the full context md,
+> AD-11); (3) F-5 is bound by **AD-20** to preserve the `aurora-context.json` schema so it
+> does not regress F-4's accruing digests (AD-19 cond-5). F-5 may begin while F-4's passive
+> gates accrue (AD-19). Scope is the **real current home inventory only**:
+> `switch.impresora_3d` (Sonoff S60ZBTPF), `cover.toldo` (Sonoff MINI-ZBRBS), the Z2M
+> bridge, and any chosen HA system entities — no modelling of absent devices. `cover`
+> control is **out of core F-5** (surface-only); adding `ha_call_service` `cover` is an
+> optional, separately gated step. This sub-phase, its gates, and milestones are **proposed
+> for freeze** pending operator approval at the architecture gate.
+
+**Risks (F5.0):**
+
+| ID | Risk | Mitigation |
+|---|---|---|
+| RF5-1 | `HA_LLAT` is non-admin — must be able to **read** the target entity states via HA REST `/api/states`. | Token has `states` access; confirm read scope on the real entities at F5.1 entry. |
+| RF5-2 | Anomaly definitions (baseline state + time-window rules) require the operator's knowledge of "normal". | F5.1 authors `home_model.md` baselines with operator input; no anomaly rule is invented. |
+| RF5-3 | `bin/aurora-context` now depends on HA reachability at 04:15. | Graceful degradation already specified — `home: {"anomalies": ["ha_unavailable"]}`; the digest still generates; the token never enters the digest (AD-18). |
+| RF5-4 | Regressing F-4's accruing evidence. | AD-20 — preserve the `aurora-context.json` schema; anomalies are short typed tokens only. |
+| RF5-5 | Scope creep into absent devices / autonomous action. | Model the real inventory only; Aurora **surfaces** anomalies, never acts (Vision §7; "What F-5 explicitly does not do"). |
+
+**Acceptance gates (proposed — freeze at F5.0):**
+
+- **G-F5-01** — `home_model.md` exists and is complete for the real current inventory: per
+  entity object_id, purpose, read/write, baseline state, anomaly rule.
+- **G-F5-02** — `bin/aurora-context` home section: one nightly cycle queries the real
+  entities via HA REST, compares to baseline, and writes `home.anomalies` (empty on a
+  nominal night) into `aurora-context.json` + `.md`; the existing schema is preserved
+  (AD-20) and `generate-digest` still produces a valid digest (no F-4 regression).
+- **G-F5-03** — *Real* anomaly detection: a **controlled real anomaly intentionally induced
+  by the operator for validation purposes** (e.g. the printer switched on overnight — a real,
+  observable device state) is detected and written to `home.anomalies`. This is **functional
+  validation, not fabricated operational evidence** — it induces a genuine device state; it
+  does **not** synthesize a historical digest (operator-confirmed 2026-06-30).
+- **G-F5-04** — The Filter surfaces that home anomaly automatically at the next
+  conversation start, with **no Filter change** (uses the F-3a injection — AD-11/AD-20).
+- **G-F5-05** — HA-unreachable degradation: with HA down at generation time, the home
+  section is `ha_unavailable`, the context still generates, and the digest still validates.
+- **G-F5-06** — No F-4 regression: `aurora-context.json` schema unchanged; `ops_digests`
+  digests still generate and index; `home.anomalies` carries only typed tokens (AD-18).
+- **G-F5-07** — The system prompt references the home model; Aurora answers about any
+  in-model entity in a single exchange (baseline from the model; live via `ha_get_state`).
+- **G-F5-08 (optional)** — If `cover` control is approved, per-domain gate validation for
+  `cover` (the toldo), mirroring the Phase C G-5 process; not core F-5.
+- **Repro gate** — `home_model.md` + `bin/aurora-context` changes committed with an
+  install/recovery note; `HA_LLAT` stays in `ai-stack/.env`, never committed, never in any
+  context artifact (§13).
+
+**Frozen implementation milestones (proposed):**
+
+| Milestone | Content | Type / gates |
+|---|---|---|
+| **F5.0** | Architecture review, refinement & freeze (this revision; §4C, AD-19/AD-20) | docs — **proposed; awaiting operator approval** |
+| **F5.1** | `home_model.md` (real inventory + baselines + anomaly rules, operator input) + system-prompt home summary | build + validate — G-F5-01, G-F5-07 |
+| **F5.2** | Extend `bin/aurora-context` (home section via HA REST; AD-20 schema-preserving) + validate one nightly cycle | build + validate — G-F5-02, G-F5-05, G-F5-06 |
+| **F5.3** | Anomaly-detection validation (real induced anomaly) + optional `cover` gate + closeout; **STOP at git gate** | build + docs — G-F5-03, G-F5-04, G-F5-08, repro |
 
 ---
 
@@ -1309,3 +1429,4 @@ are not accidentally implemented in Phase F.
 | 2026-06-29 | **F3.3 — F-3 closeout / reconciliation** | Recorded F-3 as IMPLEMENTED + CLOSED: F-3a Open WebUI Filter (`aurora_context`, active+global) + F-3b HA voice awareness (`input_text.aurora_voice_context` + Jinja2 + 04:20 `push-voice-context`); all gates G-F3-1…G-F3-8 pass. Added the §9 "as built" note + milestone statuses (F3.0→F3.3 done) + status header, and recorded the **G-F3-1 `# Context` precedence** requirement (for G-F3-1 with tools offered) and the **F-1 HA-voice-identity-absent** finding (separate item). Overview triad reconciled in parallel. No code/prompt/DB/container changes in F3.3. Apply logs: F3_1, F3_2; closeout `2026-06-29_phaseF_F3_closeout.md`. STOP at git gate (operator review before publication). |
 | 2026-06-30 | **F4.0 — F-4 Architecture Review & Freeze** | Reviewed the inherited F-4 design against the running system + `AURORA_VISION.md`. Recorded the decision register (§4B) and AD-14…AD-18. **Re-routed operational memory** from `homelab_docs` to a dedicated `ops_digests` collection (AD-14 — resolves the §6.5/§9-F-4 self-contradiction and the Vision §8 "memory ≠ knowledge" principle). **Cut the digest schema** to fields the F-2 signal layer actually produces + a `notable` line (AD-15; the inherited per-corpus-delta / backup-size / >5%-event schema is unbuildable from current signals). Made digests **durable** (restic-backed `09_ops/runtime/`, AD-16 — they are not regenerable and would otherwise be GC-erased on restore). Made retrieval **date-anchored** (AD-17) and the digest **secret-safe by construction** (AD-18). Moved `generate-digest` to the **04:25** cron slot (§6.4). Recorded the pre-existing `knowledge_history`-not-in-`rag_search`-enum drift as finding R-F4-A (§6.5). **Froze** the F-4 architecture, acceptance gates (G-F4-01…G-F4-09), and milestones (F4.1→F4.3). No code/collection/corpus/prompt/container/DB/git change. Next: operator approval before F4.1. |
 | 2026-06-30 | **F4.3 — F-4 validation & reconciliation (real-data-only)** | Session-start reality-check: F4.1 (`9063164a`) + F4.2 (`ac647e24`) were already implemented **and committed** — the §9-F-4 "NOT IMPLEMENTED" header was stale doc-drift, now reconciled (reality wins). The unattended **04:25** `generate-digest` cron fired overnight → `09_ops/runtime/2026-06-30_ops_digest.md` (schema-correct, `overall_status=ok`); `ops_digests` holds the real `2026-06-29` digest (3 pts) and retrieves it top-1 (score 0.87). **Generator fix (AD-15):** `bin/generate-digest` now sets the digest `generated_at` from `aurora-context.json` (`02:15:01Z`), not the digest run time (`02:25:01Z`); latest digest re-rendered and re-validated (schema + secret-scan + `generated_at` fidelity match). **AD-15 not amended** (operator decision). **Operator decision (2026-06-30) — real data only:** no synthetic digests / fabricated degraded nights; **G-F4-05** (≥7 date-anchored), **G-F4-06** (same-night honesty) and **G-F4-07** (degraded night) left **intentionally pending real operational evidence** and close naturally as nightly digests accumulate. **G-F4-08** empirical restic check operator-gated (pending the next backup). F-4 is **not fully complete or fully validated**. Gates passing on real data: G-F4-01/02/03/04/09 + repro. Triad reconciled. Closeout `2026-06-30_phaseF_F4_3_closeout.md`. STOP at git gate. |
+| 2026-06-30 | **F5.0 — F-5 Architecture Review & Freeze (proposed)** | Architecture only — F-5 **not implemented**. Recorded the **Concurrent Phase Progression** rule (PROJECT_RULES) and **AD-19** (an implementation-complete sub-phase whose only open items are passive validation gates does not block an independent next sub-phase) + **AD-20** (F-5 must preserve the F-4 `aurora-context.json`/digest contract; anomalies are short typed tokens; no F-3a Filter change). Added the **§4C** decision register. Reconciled §9-F-5: the `HA_LLAT` prerequisite is already met (F-3b); scope limited to the real home inventory (`switch.impresora_3d`, `cover.toldo`, Z2M bridge); `cover` control out of core (optional, separately gated). Proposed-frozen the F-5 risks (RF5-1…5), acceptance gates (G-F5-01…G-F5-08 + repro), and milestones (F5.1→F5.3). No code/collection/corpus/prompt/container/DB/git change. Next: operator approval at the architecture gate before F5.1. |
