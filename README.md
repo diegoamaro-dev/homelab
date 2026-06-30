@@ -8,8 +8,6 @@
   <img src="assets/logo/amarolab-logo.png" width="700" alt="AMAROLAB Logo">
 </p>
 
-# AMAROLAB
-
 ### Designing, building and documenting a production-grade AI Homelab.
 
 *Everything is self-hosted. Everything is documented. Everything is validated.*
@@ -46,9 +44,7 @@ This repository contains both the production infrastructure and the complete eng
 # Architecture
 
 <p align="center">
-
-<img src="assets/architecture.svg" width="900">
-
+  <img src="assets/diagrams/architecture.svg" width="900" alt="AMAROLAB Architecture Diagram">
 </p>
 
 ---
@@ -56,9 +52,7 @@ This repository contains both the production infrastructure and the complete eng
 # AURORA
 
 <p align="center">
-
-<img src="assets/aurora.svg" width="220">
-
+<img src="assets/logo/aurora-logo.png" width="220">
 </p>
 
 **AURORA** is the intelligence layer running on top of the infrastructure.

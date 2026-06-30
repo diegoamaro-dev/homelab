@@ -1,0 +1,101 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" rx="28" fill="#0B1020"/>
+
+  <defs>
+    <linearGradient id="bluePurple" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="50%" stop-color="#2563FF"/>
+      <stop offset="100%" stop-color="#D946EF"/>
+    </linearGradient>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <text x="600" y="58" text-anchor="middle" fill="white" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800">
+    AMAROLAB Architecture
+  </text>
+  <text x="600" y="90" text-anchor="middle" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="16">
+    Self-hosted AI infrastructure, home automation and operational intelligence
+  </text>
+
+  <!-- Internet / Router / LAN -->
+  <rect x="70" y="150" width="180" height="105" rx="18" fill="#111827" stroke="#334155"/>
+  <text x="160" y="188" text-anchor="middle" fill="#E2E8F0" font-family="Inter, Arial" font-size="18" font-weight="700">Internet</text>
+  <text x="160" y="220" text-anchor="middle" fill="#94A3B8" font-family="Inter, Arial" font-size="14">WAN</text>
+
+  <line x1="250" y1="202" x2="330" y2="202" stroke="url(#bluePurple)" stroke-width="4" marker-end="url(#arrow)"/>
+
+  <rect x="330" y="150" width="220" height="105" rx="18" fill="#111827" stroke="#334155"/>
+  <text x="440" y="188" text-anchor="middle" fill="#E2E8F0" font-family="Inter, Arial" font-size="18" font-weight="700">FRITZ!Box 5690 Pro</text>
+  <text x="440" y="220" text-anchor="middle" fill="#94A3B8" font-family="Inter, Arial" font-size="14">Router · Firewall · VPN</text>
+
+  <line x1="550" y1="202" x2="650" y2="202" stroke="url(#bluePurple)" stroke-width="4"/>
+
+  <rect x="650" y="150" width="180" height="105" rx="18" fill="#111827" stroke="#334155"/>
+  <text x="740" y="188" text-anchor="middle" fill="#E2E8F0" font-family="Inter, Arial" font-size="18" font-weight="700">LAN</text>
+  <text x="740" y="220" text-anchor="middle" fill="#94A3B8" font-family="Inter, Arial" font-size="14">Private Network</text>
+
+  <!-- UM790 Main Server -->
+  <rect x="705" y="315" width="390" height="290" rx="24" fill="#0F172A" stroke="#38BDF8" stroke-width="2" filter="url(#glow)"/>
+  <text x="900" y="355" text-anchor="middle" fill="white" font-family="Inter, Arial" font-size="24" font-weight="800">
+    UM790 Pro
+  </text>
+  <text x="900" y="382" text-anchor="middle" fill="#38BDF8" font-family="Inter, Arial" font-size="15" font-weight="700">
+    Main 24/7 Infrastructure Node
+  </text>
+
+  <text x="745" y="430" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Open WebUI</text>
+  <text x="745" y="460" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Home Assistant</text>
+  <text x="745" y="490" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Qdrant</text>
+  <text x="745" y="520" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Mosquitto</text>
+  <text x="745" y="550" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Zigbee2MQTT</text>
+
+  <text x="930" y="430" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Docker</text>
+  <text x="930" y="460" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Restic Backups</text>
+  <text x="930" y="490" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Operational Digests</text>
+  <text x="930" y="520" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Local RAG</text>
+  <text x="930" y="550" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• AURORA Context</text>
+
+  <!-- RTX Node -->
+  <rect x="115" y="340" width="335" height="190" rx="22" fill="#0F172A" stroke="#22C55E" stroke-width="2"/>
+  <text x="282" y="380" text-anchor="middle" fill="white" font-family="Inter, Arial" font-size="23" font-weight="800">
+    RTX 5070 Node
+  </text>
+  <text x="282" y="407" text-anchor="middle" fill="#22C55E" font-family="Inter, Arial" font-size="15" font-weight="700">
+    On-demand AI Compute
+  </text>
+
+  <text x="155" y="455" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Ollama GPU</text>
+  <text x="155" y="485" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Headless Service</text>
+  <text x="155" y="515" fill="#E2E8F0" font-family="Inter, Arial" font-size="15">• Tailscale-only Access</text>
+
+  <!-- Aurora Layer -->
+  <rect x="385" y="585" width="430" height="70" rx="22" fill="#111827" stroke="url(#bluePurple)" stroke-width="2"/>
+  <text x="600" y="625" text-anchor="middle" fill="white" font-family="Inter, Arial" font-size="22" font-weight="800">
+    AURORA Operational AI Assistant
+  </text>
+  <text x="600" y="647" text-anchor="middle" fill="#94A3B8" font-family="Inter, Arial" font-size="13">
+    Chat · Voice · RAG · Home Automation · Operational Memory
+  </text>
+
+  <!-- Connections -->
+  <line x1="740" y1="255" x2="900" y2="315" stroke="#38BDF8" stroke-width="3"/>
+  <line x1="450" y1="435" x2="705" y2="435" stroke="#22C55E" stroke-width="3" stroke-dasharray="8 8"/>
+  <text x="575" y="420" text-anchor="middle" fill="#86EFAC" font-family="Inter, Arial" font-size="13">
+    Tailscale / Private AI Compute
+  </text>
+
+  <line x1="600" y1="585" x2="900" y2="605" stroke="url(#bluePurple)" stroke-width="3"/>
+  <line x1="600" y1="585" x2="282" y2="530" stroke="url(#bluePurple)" stroke-width="3"/>
+
+  <!-- Bottom Legend -->
+  <text x="80" y="675" fill="#94A3B8" font-family="Inter, Arial" font-size="13">
+    Solid blue: core network · Green dashed: private compute path · Gradient: AURORA intelligence layer
+  </text>
+</svg>
