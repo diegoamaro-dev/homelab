@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-06-30
+Last updated: 2026-07-01
 
 ## Purpose
 
@@ -320,7 +320,7 @@ complete; F-3 closed 2026-06-29 (F3.3) — F-3a chat Filter + F-3b voice
 awareness; F-4: F4.1+F4.2 done + committed 2026-06-30; F4.3 implementation +
 reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08 config-verified
 (empirical restic pending next backup), G-F4-05/06/07 intentionally pending real
-operational evidence; F-4 not fully closed). Phase D-1 (Voice) closed 2026-06-18.**
+operational evidence; F-4 not fully closed. F-5 Home Intelligence IN PROGRESS — F5.1/F5.2 done; **F5.3 (2026-07-01) G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A awareness-consumption gap logged and deferred to a future gated phase). Phase D-1 (Voice) closed 2026-06-18.**
 
 Active follow-on: **Phase RTX-1 — Torre GPU node — CLOSED
 2026-06-27. RTX-1.4 (Tailscale-only) + RTX-1.5 (headless

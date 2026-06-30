@@ -10,13 +10,13 @@ Production:
 Operational
 
 Next milestone:
-F-4 closeout — three gates (G-F4-05 date-anchored ≥7 digests, G-F4-06 same-night honesty, G-F4-07 degraded night) close as real nightly digests accumulate; G-F4-08 empirical restic check is operator-gated. Operational memory is the dedicated `ops_digests` collection (AD-14 — **not** `homelab_docs`). See `04_ai_system/phase_f_architecture.md` §9 → F-4. (F-5 Home Intelligence is in progress — G-F5-07 Layer A + F5.2 Layer B done 2026-06-30, F5.3 pending; F-6 Voice Quality is unblocked.)
+F-4 closeout — three gates (G-F4-05 date-anchored ≥7 digests, G-F4-06 same-night honesty, G-F4-07 degraded night) close as real nightly digests accumulate; G-F4-08 empirical restic check is operator-gated. Operational memory is the dedicated `ops_digests` collection (AD-14 — **not** `homelab_docs`). See `04_ai_system/phase_f_architecture.md` §9 → F-4. (F-5 Home Intelligence is in progress — G-F5-07 Layer A + F5.2 Layer B done 2026-06-30; **F5.3 executed 2026-07-01 — G-F5-03 PASS, G-F5-04 FAIL (real validation)**; F-5 blocked on **R-F5-A** (awareness-consumption gap), deferred to a future gated phase; F-6 Voice Quality is unblocked.)
 
 Last completed:
 F-4 substrate + generator — F4.1 (`9063164a`) + F4.2 (`ac647e24`), 2026-06-30 — and **F4.3 implementation + reconciliation complete** (2026-06-30): the unattended 04:25 digest verified (`2026-06-30_ops_digest.md`); `ops_digests` retrieves the real 2026-06-29 digest top-1 (score 0.87); `generated_at` fidelity fix applied (generator fixed to AD-15; AD-15 unchanged). G-F4-01/02/03/04/09 PASS; G-F4-08 config verified (empirical restic pending the next backup); G-F4-05/06/07 intentionally pending real operational evidence (no synthetic fixtures). F-4 is not fully complete or fully validated. Closeout: `09_logs/2026-06-30_phaseF_F4_3_closeout.md`. Prior: F-3 — Situational Awareness (closed 2026-06-29, F3.3); F-2 (2026-06-29, F2-9).
 
 Blocking issues:
-None
+None for production/platform. **F-5 completion is blocked by R-F5-A** (awareness-consumption gap — the model routes status queries to tools instead of the injected Home State; `system_status` is home-blind); deferred to a future gated phase. See `09_logs/2026-07-01_phaseF_F5_3_applied.md`.
 # CURRENT_STATE
 
 Related documents:
@@ -25,7 +25,7 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-06-30
+Last updated: 2026-07-01
 
 ---
 
@@ -301,7 +301,12 @@ digests) are gitignored. **F-5 Home Intelligence — IN PROGRESS:** G-F5-07 Laye
 `home_model.md`, populates `home.anomalies[]` + renders the `Home State:` block — Healthy/
 Degraded/Unavailable) implemented + validated on real data 2026-06-30, G-F5-02/05/06 ✓
 ([`09_logs/2026-06-30_phaseF_F5_2_applied.md`](../09_logs/2026-06-30_phaseF_F5_2_applied.md)).
-F5.3 (real induced anomaly G-F5-03/04, optional `cover` G-F5-08) not started. F-6 Voice Quality
+**F5.3 executed 2026-07-01: G-F5-03 PASS, G-F5-04 FAIL (real validation)** — the F-3a Filter
+injects the Degraded `Home State` correctly, but the model routes status questions to tools
+(`system_status`, which is home-blind) instead of the injected block; logged as **R-F5-A**
+(awareness-consumption gap), **deferred to a future gated phase** (no fix/redesign this session).
+Apply log: [`09_logs/2026-07-01_phaseF_F5_3_applied.md`](../09_logs/2026-07-01_phaseF_F5_3_applied.md).
+Optional `cover` G-F5-08 not attempted. F-6 Voice Quality
 is unblocked.
 
 ---
@@ -820,3 +825,11 @@ token for the `amarolab` tunnel lives at
 6. **`cloudflared-amarolab` standalone apply log** —
    deployment validated through D-1.5 → G-D6 but no
    dedicated standalone log yet.
+7. **R-F5-A — Awareness-consumption gap (F-5 blocker)** —
+   G-F5-04 failed real validation (2026-07-01): the model routes
+   status queries to tools (`system_status`, home-blind) instead of
+   the injected `Home State` block (`# Routing` precedence over
+   `# Context`/`# Home`). Remedy touches the frozen F-1 `params.system`
+   and/or the `system_status` tool — **deferred to a future gated
+   phase**; no fix this session. See
+   `09_logs/2026-07-01_phaseF_F5_3_applied.md`.

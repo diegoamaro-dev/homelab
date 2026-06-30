@@ -14,7 +14,7 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-06-30 (Phase D-1 closed; **Phase RTX-1
+Last updated: 2026-07-01 (Phase D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
 service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
@@ -27,7 +27,7 @@ Filter (G-F3-1…7) + F-3b HA-voice awareness (G-F3-8) both validated. F-4: F4.1
 (substrate) + F4.2 (generator) DONE + committed 2026-06-30; F4.3 implementation +
 reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08
 config-verified (empirical restic pending next backup), G-F4-05/06/07 intentionally
-pending real operational evidence; F-4 not fully closed (F-5/F-6 also unblocked).**
+pending real operational evidence; F-4 not fully closed. F-5 IN PROGRESS — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A logged + deferred to a future gated phase; F-6 unblocked.**
 
 ---
 
@@ -448,8 +448,14 @@ Sub-phases:
   pending real operational evidence** (no synthetic digests / fabricated degraded nights —
   operator decision). F-4 not fully closed. Closeout:
   [`09_logs/2026-06-30_phaseF_F4_3_closeout.md`](../09_logs/2026-06-30_phaseF_F4_3_closeout.md).
-* **F-5 — Home Intelligence** — home model document; HA entity expansion;
-  home anomaly injection via Filter. (Unblocked — depends on F-3a, now complete.)
+* **F-5 — Home Intelligence** — IN PROGRESS. `home_model.md` (F5.1) + G-F5-07
+  Layer A + F5.2 Layer B done 2026-06-30. **F5.3 executed 2026-07-01: G-F5-03
+  PASS, G-F5-04 FAIL (real validation)** — the F-3a Filter injects the Degraded
+  Home State correctly, but the model routes status questions to tools
+  (`system_status`, home-blind) instead of the injected block. Logged as
+  **R-F5-A** (awareness-consumption gap), **deferred to a future gated phase**;
+  no fix/redesign applied. Apply log:
+  [`09_logs/2026-07-01_phaseF_F5_3_applied.md`](../09_logs/2026-07-01_phaseF_F5_3_applied.md).
 * **F-6 — Voice Quality** — Whisper upgrade; STT shim migration; latency
   baseline. Parallel track; no dependency on F-2..F-5.
 

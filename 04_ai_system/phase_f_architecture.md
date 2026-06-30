@@ -1135,7 +1135,7 @@ known and accepted (AD-04). Independent of F-3 / F-5 / F-6.
 
 ---
 
-### F-5 — Home Intelligence (FROZEN at F5.0; F5.1 `home_model.md` + G-F5-07 (Layer A) + F5.2 (Layer B) implemented 2026-06-30 — G-F5-01/02/05/06 ✓; F5.3 pending)
+### F-5 — Home Intelligence (FROZEN at F5.0; F5.1 `home_model.md` + G-F5-07 (Layer A) + F5.2 (Layer B) implemented 2026-06-30 — G-F5-01/02/05/06 ✓; **F5.3 validated 2026-07-01 — G-F5-03 PASS, G-F5-04 FAIL → R-F5-A, deferred to a future gated phase**)
 
 **Objective:** Aurora has a defined home model, reasons about expected
 device states, and the Filter surfaces home anomalies automatically.
@@ -1270,6 +1270,31 @@ F-1 (system prompt references the home model).
 > out of scope for F-5** (its own gate/freeze). No behavioural/code/architecture change; recorded
 > for the record only.
 
+> **F5.3 validation finding (2026-07-01) — R-F5-A: Awareness-consumption gap. Documentation only;
+> no fix, no AD/gate/frozen-design change.**
+> F5.3 ran the canonical real induced-anomaly validation (`printer_on_overnight`, awning closed,
+> 00:00–06:00 Europe/Madrid window, immediate baseline restore; **manual induction** by the
+> operator). Recorded as implementation reality:
+> - **Detector works — G-F5-03 PASS.** `bin/aurora-context` read live `/api/states`, compared to
+>   `home_model.md` baselines, and wrote exactly `home.anomalies=["printer_on_overnight"]` + the
+>   `Home State: Degraded` block (single clean token; awning negative-control held; no F-4 regression).
+> - **The Filter injects the correct Home State.** The F-3a `aurora_context` Filter injected the
+>   Degraded markdown on message 1 (`inject, fallback:false, chars:331`).
+> - **The model receives the injected context.** Open WebUI's non-destructive system-message merge
+>   (`add_or_update_system_message` → `update_message_content`) preserves the injected block in the
+>   model payload.
+> - **Routing precedence makes Aurora ignore it — G-F5-04 FAIL.** With correct context present, the
+>   model followed `params.system` `# Routing` (lab-health → `system_status`; HA-state →
+>   `ha_get_state`) over the `# Context`/`# Home` "answer from the block, no tool" instruction, so the
+>   live anomaly was not surfaced (Aurora replied "todo bien").
+> - **`system_status` is currently home-blind.** v0.2.0 reads only the platform sections of
+>   `aurora-context.json` (never `home.anomalies`; `overall_status` stays `ok`, D2), so even the tool
+>   path cannot surface a home anomaly.
+> - **Remedy intentionally deferred.** The fix (routing precedence and/or making `system_status`
+>   home-aware) touches the frozen F-1 `params.system` and the F-2 tool; it is **deferred to a future
+>   gated architecture phase** (operator decision, 2026-07-01). No fix or redesign in F-5.
+> Evidence + full root cause: [`../09_logs/2026-07-01_phaseF_F5_3_applied.md`](../09_logs/2026-07-01_phaseF_F5_3_applied.md). **F-5 is not complete.**
+
 ---
 
 ### F-6 — Voice Quality
@@ -1365,6 +1390,14 @@ is assumed closed until F-0 explicitly closes it.
 | AF-07 | Torre reachability probe from inside openwebui container. The live Torre HTTP probe in `system_status` requires network connectivity from inside the openwebui container to Torre's Tailscale address. This is not validated. | Low | Validate in F-0. If container-to-Tailscale routing does not work, the probe must run on the host and write a `torre_status.json` signal file instead. |
 | AF-08 | Runtime digest path not validated for fs-corpus indexing. AD-07 requires that untracked, gitignored files in `09_ops/runtime/` are picked up by the `homelab_docs` fs corpus. This is the assumed behavior of the `fs` corpus type but has not been confirmed in the running system. | Medium | Validate in F-0: write a test file to `09_ops/runtime/`, run `bin/ingest sync --collection homelab_docs`, confirm the file is indexed and retrievable via `bin/ingest search`. Close AF-08 only after retrieval is confirmed. |
 
+> **R-F5-A — Awareness-consumption gap (post-freeze implementation finding; F5.3, 2026-07-01).** The
+> F-3a Filter injects the correct Home State and the model receives it, but `params.system`
+> `# Routing` precedence makes Aurora prefer tool calls over the injected block, and `system_status`
+> is currently home-blind — so a real home anomaly is not surfaced (G-F5-04 FAIL; G-F5-03 PASS).
+> Documentation only; remedy **deferred to a future gated phase**. Full record: §9-F-5 +
+> [`../09_logs/2026-07-01_phaseF_F5_3_applied.md`](../09_logs/2026-07-01_phaseF_F5_3_applied.md).
+> (This register is the pre-F-0 plan; R-F5-A is noted here for discoverability only.)
+
 ---
 
 ## 12. Success Criteria — Phase F Complete
@@ -1458,3 +1491,4 @@ are not accidentally implemented in Phase F.
 | 2026-06-30 | **F5.1 — Home cognitive model published + architecture reconciliation** | Published [`04_ai_system/home_model.md`](home_model.md) (`55e0416a`) — the privacy-aware, **object-first** home cognitive model (core principle: *AURORA reasons about the home; HA is only the implementation layer*). 9 objects in a 7-field cognitive structure (Purpose / Operational Priority / Reasoning / Baseline / Anomaly Rules / Suggested Operator Actions / Implementation), grounded in the live `/api/states` inventory (no fabrication; battery surface 5/5). **Reconciled the F5.0 minimal-scope language** (§4C-Q6; §9-F-5 header + new F5.1 note; milestones table) to the **privacy-aware operational core** actually published — printer, awning, Zigbee mesh, main door, entrance plant, WAN, daylight/time + cross-cutting battery health & silent firmware; excludes presence/occupancy, persons, media/TV. RF5-2 confirmations applied (printer 00:00–06:00; awning retracted/manual; door >15 min; plant <20 %; battery = all Zigbee devices; firmware silent). **G-F5-01 satisfied.** `cover`/toldo control remains **out of core F-5**. **AD-20 and all 10 anomaly tokens unchanged.** Documentation only — no code/prompt/tool/`aurora-context` change. F5.2/F5.3 and G-F5-07 not started. |
 | 2026-06-30 | **G-F5-07 — static `# Home` prompt frame installed (Layer A)** | Installed the §5 `# Home` frame from [`home_state_design.md`](home_state_design.md) into Open WebUI `qwen2.5:7b-instruct` `params.system` (`webui.db`, runtime — not git), **append-only after `# Context`** (3 532 → 4 478 chars). Params-only `sqlite3` UPDATE; `meta.toolIds` (6 tools) + `base_model_id=NULL` (D-35) preserved by construction. Readback-verified 6/6; `docker restart openwebui` → healthy, `GET /api/version` 200; persisted across restart. **Layer B (dynamic `Home State:` block + `home.anomalies[]`) = F5.2, not started.** **AD-20, the F-3a Filter, `bin/aurora-context`, and all tools unchanged.** No git-tracked runtime artifact or secret committed (`webui.db` is outside the repo; AD-18 object-level phrasing only). Apply log `09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md`. STOP at git gate. |
 | 2026-06-30 | **F5.2 — Layer B dynamic Home State implemented (`bin/aurora-context`)** | Extended `bin/aurora-context` to read HA `/api/states` (`HA_BASE_URL`+`HA_LLAT` from gitignored `.env`; non-admin `states`; mirrors `push-voice-context`), detect home anomalies via an in-script `HOME_RULES` **transcription** of `home_model.md` §6/§7 (deterministic, fixed §7 severity order), populate `home.anomalies[]` (plain string tokens — D1/AD-20) and append the `Home State:` block (Healthy \| Degraded \| Unavailable) to `aurora-context.md` per `home_state_design.md` §4. `overall_status` stays **platform-only** (D2); `--dry-run` added (D5); fail-soft → `ha_unavailable` (RF5-3). **Validated on real data:** real `/api/states` (14/14 home entities present) → Healthy; JSON schema preserved (`schema_version=1`, list-of-strings); `generate-digest` valid (no F-4 regression); real closed-port → Unavailable. **G-F5-02/05/06 ✓** (G-F5-03/04 + optional G-F5-08 = F5.3, not started). **AD-20, the F-3a Filter, tools, `home_model.md`, the `aurora-context.json` schema, and the Layer A prompt unchanged.** Voice line unchanged (D3 — follow-up). Apply log `09_logs/2026-06-30_phaseF_F5_2_applied.md`. STOP at git gate. |
+| 2026-07-01 | **F5.3 — Home-anomaly validation (real induced anomaly)** | Ran the canonical real validation (`printer_on_overnight`, awning closed, 00:00–06:00 Europe/Madrid, immediate baseline restore; **manual induction** by the operator). **G-F5-03 PASS:** `bin/aurora-context` detected the live anomaly and wrote `home.anomalies=["printer_on_overnight"]` + the `Home State: Degraded` block (single clean token; no F-4 regression). **G-F5-04 FAIL (real validation):** the F-3a Filter injected the correct Degraded context and the model received it (non-destructive OWUI system-message merge), but `params.system` `# Routing` precedence made the model call tools (`system_status`, which is **home-blind**) instead of reading the injected block → the live anomaly was not surfaced. Logged as **R-F5-A (Awareness-consumption gap)** (§9-F-5 note + §11 pointer). **No fix, no redesign, no AD/gate/frozen-design change** — remedy **deferred to a future gated architecture phase** (operator decision). Documentation only. Apply log `09_logs/2026-07-01_phaseF_F5_3_applied.md`. STOP at git gate. |
