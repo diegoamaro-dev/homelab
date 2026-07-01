@@ -322,7 +322,7 @@ reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08 config-
 (empirical restic pending next backup), G-F4-05/06/07 intentionally pending real
 operational evidence; F-4 not fully closed. F-5 Home Intelligence IN PROGRESS — F5.1/F5.2 done; **F5.3 (2026-07-01) G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A awareness-consumption gap logged and deferred to a future gated phase). Phase D-1 (Voice) closed 2026-06-18.**
 
-**World Model architecture FROZEN 2026-07-01 (AD-21, `04_ai_system/world_model_architecture.md`) — Aurora's semantic baseline and the R-F5-A remedy. Implementation = Phase WM (WM-1→WM-7), not started; R-F5-A / F-5 close at WM-6. Freeze package prepared; git tag pending.**
+**World Model architecture FROZEN 2026-07-01 (AD-21, `04_ai_system/world_model_architecture.md`) — Aurora's semantic baseline and the R-F5-A remedy. Implementation = Phase WM (WM-1→WM-7); WM-1 `_schema/` foundation authored 2026-07-01 (uncommitted), WM-2 next; R-F5-A / F-5 close at WM-6.**
 
 Active follow-on: **Phase RTX-1 — Torre GPU node — CLOSED
 2026-06-27. RTX-1.4 (Tailscale-only) + RTX-1.5 (headless
@@ -368,11 +368,12 @@ Closeout document:
 
 ## Next Immediate Task
 
-**Current: World Model architecture FROZEN 2026-07-01 (AD-21).** The next implementation
-task is **Phase WM-1** (`_schema/` foundation) — **NOT started** (freeze package prepared,
-git tag pending). R-F5-A / F-5 close at WM-6. Freeze doc:
-`04_ai_system/world_model_architecture.md`; freeze log:
-`09_logs/2026-07-01_world_model_architecture_freeze.md`; roadmap: `ROADMAP.md` → Phase WM.
+**Current: World Model architecture FROZEN 2026-07-01 (AD-21).** **Phase WM-1**
+(`_schema/` foundation) **authored 2026-07-01** (uncommitted; apply log
+`09_logs/2026-07-01_WM1_schema_foundation_applied.md`) — schema, tokens, windows, archetype,
+README. The next task is **WM-2** (migrate `home_model.md` → literate `home/` entities;
+no new facts). R-F5-A / F-5 close at WM-6. Freeze doc:
+`04_ai_system/world_model_architecture.md`; roadmap: `ROADMAP.md` → Phase WM.
 
 Phase D-1 closed; **Phase RTX-1 closed 2026-06-27 —
 RTX-1.4 + RTX-1.5 + RTX-1.6 all complete.** The UM790 front

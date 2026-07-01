@@ -66,3 +66,6 @@ secret.yaml
 # Aurora runtime artifacts (F-2) — generated nightly, never committed
 ai-stack/aurora/
 09_ops/runtime/
+
+# World Model generated artifact (WM-3) — derived/regenerable, never canonical (AD-21 §4.8)
+04_ai_system/world_model/**/*.generated.json
