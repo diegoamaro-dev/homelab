@@ -27,7 +27,7 @@ Filter (G-F3-1…7) + F-3b HA-voice awareness (G-F3-8) both validated. F-4: F4.1
 (substrate) + F4.2 (generator) DONE + committed 2026-06-30; F4.3 implementation +
 reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08
 config-verified (empirical restic pending next backup), G-F4-05/06/07 intentionally
-pending real operational evidence; F-4 not fully closed. F-5 IN PROGRESS — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A logged + deferred to a future gated phase; F-6 unblocked. **World Model architecture FROZEN 2026-07-01 (AD-21) as the R-F5-A remedy + Aurora's semantic baseline; Phase WM (WM-1→WM-7) implementation underway — WM-1 `_schema/` foundation authored 2026-07-01 (uncommitted), WM-2 next.**
+pending real operational evidence; F-4 not fully closed. F-5 IN PROGRESS — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A logged + deferred to a future gated phase; F-6 unblocked. **World Model architecture FROZEN 2026-07-01 (AD-21) as the R-F5-A remedy + Aurora's semantic baseline; Phase WM (WM-1→WM-7) implementation underway — WM-1 `_schema/` foundation committed 2026-07-01 (`9fa4dad4`); WM-2 home/environment entities + `collectors.md` authored 2026-07-01 (uncommitted); WM-3 next.**
 
 ---
 
@@ -469,15 +469,17 @@ Sub-phases:
 [`../09_logs/2026-07-01_world_model_architecture_freeze.md`](../09_logs/2026-07-01_world_model_architecture_freeze.md).
 The World Model is Aurora's **single semantic representation** of its operational world; it is
 the **structural remedy for R-F5-A** (the awareness-consumption gap) and the substrate for
-future proactive intelligence. **WM-1 (`_schema/` foundation) authored 2026-07-01** (uncommitted; apply log
-`09_logs/2026-07-01_WM1_schema_foundation_applied.md`); WM-2 next. Each phase:
+future proactive intelligence. **WM-1 (`_schema/` foundation) committed 2026-07-01** (`9fa4dad4`;
+apply log `09_logs/2026-07-01_WM1_schema_foundation_applied.md`); **WM-2** (9 home/environment
+entities + `_schema/collectors.md`, F-WM1-a closed) authored 2026-07-01 (uncommitted; apply log
+`09_logs/2026-07-01_WM2_home_entities_applied.md`); WM-3 next. Each phase:
 real-data validation, documentation, **STOP at the git gate**.
 
 | Phase | Objective | Gate |
 |---|---|---|
 | WM-0 | Freeze (this baseline; AD-21; ROADMAP slot; triad; freeze log) | **docs done; git tag pending** |
-| WM-1 | `_schema/` foundation (entity schema, tokens, windows, archetypes, validation) | **docs authored 2026-07-01; git gate pending** |
-| WM-2 | Migrate `home_model.md` → literate `home/` entities (docs only, 1:1) | semantic equivalence |
+| WM-1 | `_schema/` foundation (entity schema, tokens, windows, archetypes, validation) | **committed 2026-07-01 (`9fa4dad4`)** |
+| WM-2 | Migrate `home_model.md` → literate `home/`+`environment/` entities + `collectors.md` (docs only, 1:1) | **semantic equivalence — docs done 2026-07-01 (G-WM2-1…10 pass); git gate pending** |
 | WM-3 | Loader/compiler; run parallel to `HOME_RULES` | real-data parity |
 | WM-4 | Evaluation engine consumes the model; retire `HOME_RULES` | AD-20 preserved; no F-4/F-3a regression |
 | WM-5 | Consumer convergence (Filter, home-aware `system_status`, voice line) | all surfaces home-aware |
