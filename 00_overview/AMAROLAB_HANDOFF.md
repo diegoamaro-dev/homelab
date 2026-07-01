@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-01
+Last updated: 2026-07-02
 
 ## Purpose
 
@@ -322,7 +322,7 @@ reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08 config-
 (empirical restic pending next backup), G-F4-05/06/07 intentionally pending real
 operational evidence; F-4 not fully closed. F-5 Home Intelligence IN PROGRESS — F5.1/F5.2 done; **F5.3 (2026-07-01) G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A awareness-consumption gap logged and deferred to a future gated phase). Phase D-1 (Voice) closed 2026-06-18.**
 
-**World Model architecture FROZEN 2026-07-01 (AD-21, `04_ai_system/world_model_architecture.md`) — Aurora's semantic baseline and the R-F5-A remedy. Implementation = Phase WM (WM-1→WM-7); WM-1 `_schema/` foundation committed 2026-07-01 (`9fa4dad4`); WM-2 home/environment entities + `collectors.md` authored 2026-07-01 (uncommitted); WM-3 next; R-F5-A / F-5 close at WM-6.**
+**World Model architecture FROZEN 2026-07-01 (AD-21, `04_ai_system/world_model_architecture.md`) — Aurora's semantic baseline and the R-F5-A remedy. Implementation = Phase WM (WM-1→WM-7); WM-1 `_schema/` foundation committed 2026-07-01 (`9fa4dad4`); WM-2 committed 2026-07-01 (`954735c1`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, git gate pending; WM-4 next; R-F5-A / F-5 close at WM-6.**
 
 Active follow-on: **Phase RTX-1 — Torre GPU node — CLOSED
 2026-06-27. RTX-1.4 (Tailscale-only) + RTX-1.5 (headless
@@ -372,10 +372,13 @@ Closeout document:
 (`_schema/` foundation) **committed 2026-07-01** (`9fa4dad4`; apply log
 `09_logs/2026-07-01_WM1_schema_foundation_applied.md`). **Phase WM-2** (migrate
 `home_model.md` → 9 literate `home/`+`environment/` entities + `_schema/collectors.md`,
-closing F-WM1-a; 1:1, no new facts) **authored 2026-07-01** (uncommitted; apply log
-`09_logs/2026-07-01_WM2_home_entities_applied.md`; G-WM2-1…10 pass, git gate pending).
-The next task is **WM-3** (loader/compiler `Parse → Resolve → Validate → Emit` + gitignored
-`world_model.generated.json`; real-data parity with `HOME_RULES`). R-F5-A / F-5 close at WM-6.
+closing F-WM1-a; 1:1, no new facts) **committed 2026-07-01** (`954735c1`, pushed; apply log
+`09_logs/2026-07-01_WM2_home_entities_applied.md`; G-WM2-1…10 pass). **Phase WM-3**
+(loader/compiler `Parse → Resolve → Normalize → Validate → Emit` under `_loader/` + gitignored
+`world_model.generated.json`; backend-agnostic AST INV-WM3-A) is **implemented 2026-07-02** —
+real-data parity with `HOME_RULES` **PASS** (engine-equivalence 32/32 + live `/api/states` match;
+apply log `09_logs/2026-07-02_WM3_loader_applied.md`), git gate pending.
+The next task is **WM-4** (evaluator cutover; retire `HOME_RULES`). R-F5-A / F-5 close at WM-6.
 Freeze doc: `04_ai_system/world_model_architecture.md`; roadmap: `ROADMAP.md` → Phase WM.
 
 Phase D-1 closed; **Phase RTX-1 closed 2026-06-27 —

@@ -33,6 +33,8 @@ world_model/
     firmware.md                 ← aspect (low); silent (firmware_* reserved — no token)
   environment/                  ← WM-2 environment region (1 entity)
     daylight-time.md            ← environment (low); context only, no token
+  _loader/                      ← WM-3 loader/compiler (Parse→Resolve→Normalize→Validate→Emit) + parity/ + tests/
+  world_model.generated.json    ← WM-3 emitted artifact (DERIVED · gitignored · regenerable · never canonical)
 ```
 
 Regions (frozen §4.1): `infrastructure` · `home` · `projects` · `operator` · `self` ·
@@ -53,8 +55,12 @@ explanatory. See [`_schema/entity.schema.md`](_schema/entity.schema.md).
   (closes **F-WM1-a**) and the §2.1 binding/roster clarifications to the schema (additive,
   `schema_version` still 1). **No loader, no runtime.** `home_model.md` remains the live source
   until WM-4. Apply log: [`../../09_logs/2026-07-01_WM2_home_entities_applied.md`](../../09_logs/2026-07-01_WM2_home_entities_applied.md).
-- **WM-3 (next):** the loader/compiler (`Parse → Resolve → Validate → Emit`) + the gitignored
-  `world_model.generated.json`; real-data parity with the current detector.
+- **WM-3 (done 2026-07-02; git gate pending):** the loader/compiler under `_loader/`
+  (`Parse → Resolve → Normalize → Validate → Emit`) + the gitignored `world_model.generated.json`.
+  Backend-agnostic rule AST (**INV-WM3-A**). Real-data parity with the live `HOME_RULES`
+  **PASS** — engine-equivalence 32/32 + a live `/api/states` match (incl. a real
+  `awning_left_extended`). `HOME_RULES` stays the live path until WM-4. Apply log:
+  [`../../09_logs/2026-07-02_WM3_loader_applied.md`](../../09_logs/2026-07-02_WM3_loader_applied.md).
 - **WM-4→WM-6:** cut over the evaluation engine, converge consumers, and close **G-F5-04**
   (the R-F5-A remedy).
 
