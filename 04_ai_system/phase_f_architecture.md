@@ -377,6 +377,21 @@ regression of F-4's accruing evidence), F-5 is bound to:
    conversation start. F-5 touches `bin/aurora-context` (F-2), `home_model.md`, and the
    system prompt — not the Filter.
 
+### AD-21: Aurora adopts the World Model as its semantic architectural baseline.
+
+**Ratified 2026-07-01.** Aurora's operational world is represented by a single semantic
+**World Model** (entities · baselines · relationships · priorities · boundaries), evaluated at
+`now` to produce Awareness and consumed by every surface as a projection. Full specification
+and invariants: [`world_model_architecture.md`](world_model_architecture.md) (FROZEN,
+Revision 2). AD-21 is the **remedy architecture for R-F5-A** (§9-F-5 / §11): the single-channel
+awareness gap is closed *structurally* (no consumer builds awareness from raw signals), and the
+F-4/F-3a `aurora-context.json` contract (AD-20) is **preserved**. R-F5-A itself **closes at
+WM-6** (Phase WM implementation — not started). AD-21 supersedes D2 (platform-only
+`overall_status`) via the World Model aggregate verdict. **No runtime/code/prompt change:**
+AD-21 is an architecture-baseline decision; implementation is Phase WM
+([`world_model_architecture.md`](world_model_architecture.md) §9). Freeze log:
+[`../09_logs/2026-07-01_world_model_architecture_freeze.md`](../09_logs/2026-07-01_world_model_architecture_freeze.md).
+
 ---
 
 ## 4A. F3.0 Architecture Refinement — Decision Register
