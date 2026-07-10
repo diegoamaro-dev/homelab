@@ -14,7 +14,7 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-07-02 (Phase D-1 closed; **Phase RTX-1
+Last updated: 2026-07-10 (Phase D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
 service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
@@ -27,7 +27,7 @@ Filter (G-F3-1…7) + F-3b HA-voice awareness (G-F3-8) both validated. F-4: F4.1
 (substrate) + F4.2 (generator) DONE + committed 2026-06-30; F4.3 implementation +
 reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08
 config-verified (empirical restic pending next backup), G-F4-05/06/07 intentionally
-pending real operational evidence; F-4 not fully closed. F-5 IN PROGRESS — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A logged + deferred to a future gated phase; F-6 unblocked. **World Model architecture FROZEN 2026-07-01 (AD-21) as the R-F5-A remedy + Aurora's semantic baseline; Phase WM (WM-1→WM-7) implementation underway — WM-1 `_schema/` foundation committed 2026-07-01 (`9fa4dad4`); WM-2 committed 2026-07-01 (`954735c1`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, git gate pending; WM-4 next.**
+pending real operational evidence; F-4 not fully closed. F-5 IN PROGRESS — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A logged + deferred to a future gated phase; F-6 unblocked. **World Model architecture FROZEN 2026-07-01 (AD-21) as the R-F5-A remedy + Aurora's semantic baseline; Phase WM (WM-1→WM-7) implementation underway — WM-1 `_schema/` foundation committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed); WM-4 next — not started.**
 
 ---
 
@@ -469,19 +469,22 @@ Sub-phases:
 [`../09_logs/2026-07-01_world_model_architecture_freeze.md`](../09_logs/2026-07-01_world_model_architecture_freeze.md).
 The World Model is Aurora's **single semantic representation** of its operational world; it is
 the **structural remedy for R-F5-A** (the awareness-consumption gap) and the substrate for
-future proactive intelligence. **WM-1 (`_schema/` foundation) committed 2026-07-01** (`9fa4dad4`;
-apply log `09_logs/2026-07-01_WM1_schema_foundation_applied.md`); **WM-2** entities + `_schema/collectors.md` **committed 2026-07-01** (`954735c1`, pushed; apply log
+future proactive intelligence. **WM-1 (`_schema/` foundation) committed 2026-07-01** (`6e97c3fb`;
+apply log `09_logs/2026-07-01_WM1_schema_foundation_applied.md`); **WM-2** entities + `_schema/collectors.md` **committed 2026-07-01** (`4c3e2a5d`, pushed; apply log
 `09_logs/2026-07-01_WM2_home_entities_applied.md`); **WM-3** loader/compiler **implemented 2026-07-02**
 — real-data parity with `HOME_RULES` **PASS** (engine-equivalence 32/32 + live `/api/states` match;
-apply log `09_logs/2026-07-02_WM3_loader_applied.md`), git gate pending; WM-4 next. Each phase:
-real-data validation, documentation, **STOP at the git gate**.
+apply log `09_logs/2026-07-02_WM3_loader_applied.md`), **committed + pushed (`8d653fea`) — git
+gate closed**; WM-4 next — **not started**. Each phase:
+real-data validation, documentation, **STOP at the git gate**. Hashes are the post-sanitization
+canonical hashes (history rewritten + republished 2026-07-10; see
+`09_logs/2026-07-10_repo_history_sanitization_reconciliation.md`).
 
 | Phase | Objective | Gate |
 |---|---|---|
-| WM-0 | Freeze (this baseline; AD-21; ROADMAP slot; triad; freeze log) | **docs done; git tag pending** |
-| WM-1 | `_schema/` foundation (entity schema, tokens, windows, archetypes, validation) | **committed 2026-07-01 (`9fa4dad4`)** |
-| WM-2 | Migrate `home_model.md` → literate `home/`+`environment/` entities + `collectors.md` (docs only, 1:1) | **semantic equivalence — docs done 2026-07-01 (G-WM2-1…10 pass); git gate pending** |
-| WM-3 | Loader/compiler (`_loader/`); run parallel to `HOME_RULES` | **real-data parity — PASS 2026-07-02 (git gate pending)** |
+| WM-0 | Freeze (this baseline; AD-21; ROADMAP slot; triad; freeze log) | **docs committed + pushed (`b43e8aad`); freeze tag still pending** |
+| WM-1 | `_schema/` foundation (entity schema, tokens, windows, archetypes, validation) | **committed 2026-07-01 (`6e97c3fb`)** |
+| WM-2 | Migrate `home_model.md` → literate `home/`+`environment/` entities + `collectors.md` (docs only, 1:1) | **semantic equivalence — docs done 2026-07-01 (G-WM2-1…10 pass); committed + pushed (`4c3e2a5d`)** |
+| WM-3 | Loader/compiler (`_loader/`); run parallel to `HOME_RULES` | **real-data parity — PASS 2026-07-02; committed + pushed (`8d653fea`) — git gate closed** |
 | WM-4 | Evaluation engine consumes the model; retire `HOME_RULES` | AD-20 preserved; no F-4/F-3a regression |
 | WM-5 | Consumer convergence (Filter, home-aware `system_status`, voice line) | all surfaces home-aware |
 | WM-6 | **Reopen & close G-F5-04** (real induced anomaly, chat + voice) | **R-F5-A / F-5 closed** |

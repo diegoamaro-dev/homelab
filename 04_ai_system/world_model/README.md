@@ -50,18 +50,18 @@ explanatory. See [`_schema/entity.schema.md`](_schema/entity.schema.md).
 ## Status — Phase WM
 
 - **WM-1 (done 2026-07-01):** `_schema/` foundation — schema, tokens, windows, archetype, README.
-- **WM-2 (this; done 2026-07-01):** migrated `home_model.md`'s 9 objects → **9 literate entities**
+- **WM-2 (done 2026-07-01; committed + pushed):** migrated `home_model.md`'s 9 objects → **9 literate entities**
   (`home/` ×8 + `environment/` ×1), docs-only and 1:1 (no new facts); added `_schema/collectors.md`
   (closes **F-WM1-a**) and the §2.1 binding/roster clarifications to the schema (additive,
   `schema_version` still 1). **No loader, no runtime.** `home_model.md` remains the live source
   until WM-4. Apply log: [`../../09_logs/2026-07-01_WM2_home_entities_applied.md`](../../09_logs/2026-07-01_WM2_home_entities_applied.md).
-- **WM-3 (done 2026-07-02; git gate pending):** the loader/compiler under `_loader/`
+- **WM-3 (done 2026-07-02; committed + pushed — git gate closed):** the loader/compiler under `_loader/`
   (`Parse → Resolve → Normalize → Validate → Emit`) + the gitignored `world_model.generated.json`.
   Backend-agnostic rule AST (**INV-WM3-A**). Real-data parity with the live `HOME_RULES`
   **PASS** — engine-equivalence 32/32 + a live `/api/states` match (incl. a real
   `awning_left_extended`). `HOME_RULES` stays the live path until WM-4. Apply log:
   [`../../09_logs/2026-07-02_WM3_loader_applied.md`](../../09_logs/2026-07-02_WM3_loader_applied.md).
-- **WM-4→WM-6:** cut over the evaluation engine, converge consumers, and close **G-F5-04**
-  (the R-F5-A remedy).
+- **WM-4→WM-6 (next; WM-4 not started):** cut over the evaluation engine, converge consumers,
+  and close **G-F5-04** (the R-F5-A remedy).
 
 Roadmap: [`../../00_overview/ROADMAP.md`](../../00_overview/ROADMAP.md) → Phase WM.
