@@ -132,6 +132,13 @@ Residual: the skew remains a **reproducibility** note (documented in the platfor
 contract), not a retrieval-correctness issue. If the stacks are upgraded in
 future, re-run this fixture before relocking.
 
+> **Addendum (2026-07-13, per the 2026-06-27 operator decision — folded into
+> the next doc reconciliation, no standalone commit):** this conclusion is
+> scoped to the **current embedding model (`intfloat/multilingual-e5-small`)
+> and retrieval pipeline** (E5 prefixes, dense top-30 → `bge-reranker-v2-m3` →
+> top-6). Any **embedding-model replacement** — not just a library-version
+> bump — invalidates it and requires re-running the fixture.
+
 ## 6. References
 
 - Fixture:

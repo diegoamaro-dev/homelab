@@ -4,9 +4,10 @@
   <window>` predicate (schema §3). `anomaly_rules` reference a window **by name only**; the
   definition (bounds + timezone) lives here.
 - **Authority:** conforms to [`../world_model_architecture.md`](../world_model_architecture.md)
-  §4.5. Bounds transcribed from `home_model.md` §6.3/§8, cross-checked against the live
+  §4.5. Bounds transcribed from `home_model.md` §6.3/§8, cross-checked against the then-live
   `HOME_RULES` in `ai-stack/ingest/bin/aurora-context` (`0 <= hour < 6` local — WM-1 gate
-  G-WM1-3).
+  G-WM1-3; `HOME_RULES` retired at WM-4 — windows are now evaluated tz-anchored from this
+  registry by `_evaluator/`).
 
 ---
 

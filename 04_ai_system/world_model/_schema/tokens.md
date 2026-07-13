@@ -4,10 +4,11 @@
   human rendering. `anomaly_rules[].token` in every entity must reference a token defined here;
   **severity is resolved here, never authored per rule** (schema §3).
 - **Authority:** conforms to [`../world_model_architecture.md`](../world_model_architecture.md)
-  §5 (token permanence); tokens + tiers transcribed from the live model of record
+  §5 (token permanence); tokens + tiers transcribed from the then-authoritative
   `home_model.md` §6/§7 and the rendering map `home_state_design.md` §4.4, cross-checked
-  against the live `HOME_RULES` in `ai-stack/ingest/bin/aurora-context` (WM-1 fidelity gate
-  G-WM1-2 — exact match).
+  against the then-live `HOME_RULES` in `ai-stack/ingest/bin/aurora-context` (WM-1 fidelity
+  gate G-WM1-2 — exact match; `HOME_RULES` retired at WM-4 — this registry is now the single
+  token source, compiled and evaluated via `_loader/` + `_evaluator/`).
 - **Permanence (§5):** this registry is **append-only**. A token is **never reused or
   repurposed** — Memory (digests) references tokens across years. A retired token stays,
   marked `reserved`.

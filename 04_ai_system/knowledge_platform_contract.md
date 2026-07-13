@@ -60,6 +60,13 @@ E2-b version action is **not** triggered. Evidence:
 [`../09_logs/2026-06-27_phaseE_E5a_drift_measurement.md`](../09_logs/2026-06-27_phaseE_E5a_drift_measurement.md).
 Re-run the fixture before relocking if either stack is upgraded.
 
+> **Scope of the "no drift" conclusion (clarified 2026-07-13, per the
+> 2026-06-27 operator decision):** the E5-a conclusion holds **only for the
+> current embedding model (`intfloat/multilingual-e5-small`) and retrieval
+> pipeline** (E5 prefixes, dense top-30 → `bge-reranker-v2-m3` → top-6). Any
+> **embedding-model replacement** — not just a library-version bump —
+> invalidates it and requires re-running the fixture.
+
 ---
 
 ## 3. Collection shape & payload schema

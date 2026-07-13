@@ -20,8 +20,9 @@ Output: backend-agnostic ast.Node objects (INV-WM3-A). No evaluation here.
 
 Reality-reconciliation (approved): the authored duration rule is
 `state == on for > 15m` — a comparison WITH a `for DURATION` suffix — which the
-frozen BNF's own example comment and the live detect_home both confirm. The
-suffix desugars to `And(Cmp, Duration)` on the same field.
+frozen BNF's own example comment and the then-live detect_home (retired at
+WM-4) both confirmed. The suffix desugars to `And(Cmp, Duration)` on the same
+field.
 """
 
 from __future__ import annotations

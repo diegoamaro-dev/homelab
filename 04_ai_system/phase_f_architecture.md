@@ -1284,6 +1284,10 @@ F-1 (system prompt references the home model).
 > `home_model.md` and the detector derive from, removing this manual duplication — **explicitly
 > out of scope for F-5** (its own gate/freeze). No behavioural/code/architecture change; recorded
 > for the record only.
+> **Resolved at WM-4 (2026-07-13):** that evolution shipped as the World Model (AD-21) —
+> the rules live in the literate `world_model/` entities, compiled by `_loader/` and
+> evaluated by `_evaluator/`; the in-script `HOME_RULES` transcription was **retired**
+> (`09_logs/2026-07-13_WM4_evaluator_cutover_applied.md`); `home_model.md` is now a redirect.
 
 > **F5.3 validation finding (2026-07-01) — R-F5-A: Awareness-consumption gap. Documentation only;
 > no fix, no AD/gate/frozen-design change.**

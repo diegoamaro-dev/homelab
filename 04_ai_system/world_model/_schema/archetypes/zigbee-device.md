@@ -10,8 +10,8 @@ defaults:
   An entity that declares `archetype: zigbee-device` merges these `defaults` unless it
   overrides them (schema §4). **No archetype-of-archetype** (deep inheritance rejected).
 - **Authority:** conforms to [`../../world_model_architecture.md`](../../world_model_architecture.md)
-  §4.4. Grounded in `home_model.md` §6 and the live `HOME_RULES` in
-  `ai-stack/ingest/bin/aurora-context` (WM-1 gate G-WM1-4).
+  §4.4. Grounded in `home_model.md` §6 and the then-live `HOME_RULES` in
+  `ai-stack/ingest/bin/aurora-context` (WM-1 gate G-WM1-4; `HOME_RULES` retired at WM-4).
 
 ## Shared default
 

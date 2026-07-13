@@ -1,20 +1,25 @@
 """
-snapshots.py — enumerated boundary /api/states snapshots for engine-equivalence.
+snapshots.py — enumerated boundary /api/states snapshots (engine regression).
 
-These are SYNTHETIC INPUTS used to prove two engines agree given identical input
-(compiled AST vs detect_home). They are NOT operational evidence and assert no
-real anomaly occurred — they exercise every rule branch, D7 handling, the
-duration and window boundaries, the battery kinds, and full-ordering.
-Real-data parity uses a real captured snapshot (oracle.real_snapshot()).
+SYNTHETIC INPUTS exercising every rule branch, D7 handling, the duration and
+window boundaries, the battery kinds, and full ordering. They are unit-test
+fixtures, NOT operational evidence, and assert no real anomaly occurred.
+
+Provenance: migrated 1:1 at WM-4 from the WM-3 parity harness
+(`_loader/parity/snapshots.py`, retired with `HOME_RULES`), made
+self-contained (no import of the live script). The expected outcomes in
+`expected.py` were frozen from the final differential run against the live
+`HOME_RULES` detector (G-WM4-1) — the retired oracle's last word.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
-from . import hostmod
+HOME_TZ = ZoneInfo("Europe/Madrid")
 
-# Real entity_ids (from the WM-2 bindings / detect_home).
+# Real entity_ids (from the WM-2 bindings).
 IDS = {
     "bridge": "binary_sensor.zigbee2mqtt_bridge_connection_state",
     "permit": "switch.zigbee2mqtt_bridge_permit_join",
@@ -33,15 +38,19 @@ IDS = {
 }
 
 
+def _iso(dt: datetime) -> str:
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def build_now(hour: int, minute: int = 0):
-    local = datetime(2026, 7, 2, hour, minute, tzinfo=hostmod.HOME_TZ)
+    local = datetime(2026, 7, 2, hour, minute, tzinfo=HOME_TZ)
     return local.astimezone(timezone.utc), local
 
 
 def nominal(now_utc: datetime) -> dict:
     def s(state: str, last_changed: str | None = None) -> dict:
         return {"state": state,
-                "last_changed": last_changed if last_changed is not None else hostmod.iso(now_utc)}
+                "last_changed": last_changed if last_changed is not None else _iso(now_utc)}
 
     return {
         IDS["bridge"]: s("on"),
@@ -62,8 +71,7 @@ def nominal(now_utc: datetime) -> dict:
 
 
 def _ago(now_utc: datetime, minutes: int) -> str:
-    from datetime import timedelta
-    return hostmod.iso(now_utc - timedelta(minutes=minutes))
+    return _iso(now_utc - timedelta(minutes=minutes))
 
 
 def cases() -> list[dict]:

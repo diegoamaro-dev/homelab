@@ -33,9 +33,14 @@ world_model/
     firmware.md                 ← aspect (low); silent (firmware_* reserved — no token)
   environment/                  ← WM-2 environment region (1 entity)
     daylight-time.md            ← environment (low); context only, no token
-  _loader/                      ← WM-3 loader/compiler (Parse→Resolve→Normalize→Validate→Emit) + parity/ + tests/
+  _loader/                      ← WM-3 loader/compiler (Parse→Resolve→Normalize→Validate→Emit) + tests/
+  _evaluator/                   ← WM-4 evaluation engine (compiled model + signals @ now → Awareness) + tests/
   world_model.generated.json    ← WM-3 emitted artifact (DERIVED · gitignored · regenerable · never canonical)
 ```
+
+Separation (WM-4, operator-ratified): **`_loader/` compiles, `_evaluator/`
+evaluates** — the loader never evaluates live state; the evaluator never
+invokes the loader (consumers read the emitted artifact, retain-last-good).
 
 Regions (frozen §4.1): `infrastructure` · `home` · `projects` · `operator` · `self` ·
 `environment`. One file per entity; `filename == <id>.md`; ids/tokens/fields per the naming
@@ -59,9 +64,19 @@ explanatory. See [`_schema/entity.schema.md`](_schema/entity.schema.md).
   (`Parse → Resolve → Normalize → Validate → Emit`) + the gitignored `world_model.generated.json`.
   Backend-agnostic rule AST (**INV-WM3-A**). Real-data parity with the live `HOME_RULES`
   **PASS** — engine-equivalence 32/32 + a live `/api/states` match (incl. a real
-  `awning_left_extended`). `HOME_RULES` stays the live path until WM-4. Apply log:
+  `awning_left_extended`). `HOME_RULES` stayed the live path until WM-4. Apply log:
   [`../../09_logs/2026-07-02_WM3_loader_applied.md`](../../09_logs/2026-07-02_WM3_loader_applied.md).
-- **WM-4→WM-6 (next; WM-4 not started):** cut over the evaluation engine, converge consumers,
-  and close **G-F5-04** (the R-F5-A remedy).
+- **WM-4 (done 2026-07-13):** evaluation cutover — the authoritative engine under `_evaluator/`
+  consumes the compiled artifact; `bin/aurora-context` renders home awareness from it
+  (INV-19); **`HOME_RULES` + the WM-3 parity harness retired** (the 32 parity snapshots
+  live on as the `_evaluator/tests/` regression suite, expectations frozen from the final
+  differential run). Differential validation: 32/32 synthetic + live real-data MATCH
+  (real `plant_water_warning`); full old-vs-new output equivalence (json/md/voice
+  byte-identical modulo timestamps); `aurora-context.json` schema preserved (AD-20 /
+  INV-18); `overall_status` stays platform-only until WM-5. `home_model.md` is now a
+  redirect. Apply log:
+  [`../../09_logs/2026-07-13_WM4_evaluator_cutover_applied.md`](../../09_logs/2026-07-13_WM4_evaluator_cutover_applied.md).
+- **WM-5→WM-6 (next):** consumer convergence (Filter, home-aware `system_status`, voice
+  line, §1.5 aggregate verdict), then reopen & close **G-F5-04** (the R-F5-A remedy).
 
 Roadmap: [`../../00_overview/ROADMAP.md`](../../00_overview/ROADMAP.md) → Phase WM.
