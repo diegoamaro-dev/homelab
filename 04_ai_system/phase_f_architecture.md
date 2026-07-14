@@ -469,6 +469,64 @@ F5.0.
 
 ---
 
+## 4D. Phase WM — Implementation Decision Register
+
+WM-5 (consumer convergence) implements the frozen §1.5 aggregate verdict **inside the
+deterministic evaluator** (`world_model/_evaluator/`); every surface becomes a pure projection
+(INV-19). One decision is required that the frozen architecture did **not** fully determine.
+
+### AD-WM5-1: `unknown`-region precedence in the aggregate verdict.
+
+**Ratified 2026-07-13.** Frozen [`world_model_architecture.md`](world_model_architecture.md)
+§1.5 defines the severity ladder and the ≥ medium escalation rule but is **silent on a region
+whose awareness is absent** (HA unreachable, compiled artifact unavailable, or all platform
+signals missing). AD-WM5-1 fills that gap without contradicting §1.5 or any WM-4 decision.
+
+**Decision.** `unknown` is a distinct, **non-escalating, "cannot-confirm-ok"** state on one
+total-ordered ladder used by the evaluator's `aggregate_verdict()`:
+
+```
+critical > high > medium  >  unknown  >  low > ok
+└──── escalate (≥ medium) ──┘          └ listed, not escalated ┘
+
+to_overall_status:  {critical,high,medium} → degraded | unknown → unknown | {low,ok} → ok
+world.verdict = max over the ladder of every region verdict (WM regions + injected `infrastructure`)
+```
+
+Rationale: an unobserved region may not be reported `ok` (*reality wins* — never fabricate),
+but an absence of information is not a ≥ medium deviation, so it is not `degraded` either. A
+known ≥ medium deviation outranks an unknown; an unknown outranks a known-low and ok.
+
+**Truth table** (region verdicts → `world.verdict` / `overall_status`):
+
+| home | infrastructure | world.verdict | overall_status |
+|---|---|---|---|
+| unknown | ok | unknown | unknown |
+| ok | unknown | unknown | unknown |
+| low | unknown | unknown | unknown |
+| unknown | medium | medium | degraded |
+| unknown | unknown | unknown | unknown |
+| low | ok | low | ok |
+| medium | ok | medium | degraded |
+| critical | medium | critical | degraded |
+
+**Conformance.** Does not contradict §1.5 (silent on `unknown`; escalation still fires only on
+≥ medium). Consistent with D-WM4-3 (WM-5 supersedes platform-only `overall_status`).
+**Preserves** the pre-existing "all platform signals absent → `overall_status = unknown`"
+behaviour (row 2). `ha_unavailable` present ⇒ `world.regions.home = unknown` (no tier);
+an individual entity `unavailable` reading is **not** region-unknown (D7 — predicate false or a
+tiered token). Supersedes the earlier informal WM-5 recommendation that home-unknown never
+affects `overall_status`.
+
+**Status.** Architecture ratified; implementation is Phase WM-5, developed additively
+(`evaluate_world()` authoritative; `evaluate_model()` retained as the compatibility shim;
+additive `world.verdict` / `world.regions`; `infrastructure` pseudo-region key stable into
+WM-7; `world.anomalies` deferred to the first second anomaly-producing region). AD-20 / INV-18 /
+INV-19 / B3 / D1 preserved. The runtime cron path stays byte-identical to committed WM-4 until
+**G-WM4-6** closes on the first unattended nightly cycle.
+
+---
+
 ## 5. Rejected Alternatives
 
 ### RA-01: Tool call only (no Filter)

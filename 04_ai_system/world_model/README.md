@@ -76,7 +76,14 @@ explanatory. See [`_schema/entity.schema.md`](_schema/entity.schema.md).
   INV-18); `overall_status` stays platform-only until WM-5. `home_model.md` is now a
   redirect. Apply log:
   [`../../09_logs/2026-07-13_WM4_evaluator_cutover_applied.md`](../../09_logs/2026-07-13_WM4_evaluator_cutover_applied.md).
-- **WM-5→WM-6 (next):** consumer convergence (Filter, home-aware `system_status`, voice
-  line, §1.5 aggregate verdict), then reopen & close **G-F5-04** (the R-F5-A remedy).
+- **WM-5 (done 2026-07-14; at the git gate):** consumer convergence — the §1.5 aggregate
+  verdict lives in `_evaluator/` (`evaluate_world` + `aggregate_verdict`; AD-WM5-1 `unknown`
+  precedence), and every surface projects it (INV-19). Additive `world.verdict` / `world.regions`
+  in `aurora-context.json` (`home.anomalies` unchanged — AD-20/INV-18); home-aware `system_status`
+  v0.3.0 (`webui.db` install operator-gated); home-aware voice line with the W-10 top-N cap.
+  Validated on real data (G-WM5-1…5); a low-only home stays `overall_status: ok` (§1.5 — "silence
+  is informative"). Apply log:
+  [`../../09_logs/2026-07-14_WM5_consumer_convergence_applied.md`](../../09_logs/2026-07-14_WM5_consumer_convergence_applied.md).
+- **WM-6 (next):** reopen & close **G-F5-04** on a real induced anomaly (chat + voice) — the R-F5-A closure.
 
 Roadmap: [`../../00_overview/ROADMAP.md`](../../00_overview/ROADMAP.md) → Phase WM.

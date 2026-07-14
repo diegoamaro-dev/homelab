@@ -55,7 +55,7 @@
 | Artifact-failure fail-soft rehearsal | **PASS** — artifact removed → home block Unavailable (truthful reason), platform sections intact, rc 0; artifact restored |
 | Test suites | **PASS** — `_loader` 19/19 · `_evaluator` 15/15 (incl. the 32-snapshot regression) |
 | First real production run post-cutover (attended) | **PASS** — 2026-07-13 14:37 UTC; `home.anomalies=["plant_water_warning"]`, schema intact, Filter serves the engine-produced context |
-| **G-WM4-6 first unattended nightly cycle** | **OPEN — close-when:** the 2026-07-14 04:15 `aurora-context` + 04:25 `generate-digest` cron runs produce a valid context + digest (real evidence; check `ai-stack/ingest/logs/aurora-signals.log` and `09_ops/runtime/2026-07-14_ops_digest.md` next morning) |
+| **G-WM4-6 first unattended nightly cycle** | **PASS — closed 2026-07-14.** Unattended cron cycle ran clean WM-4 code (cron path byte-identical to `476e0ae8`): `aurora-context` 2026-07-14T02:15:01Z → `overall ok`, `signals_missing=[]`, `home.anomalies=["awning_left_extended","plant_water_warning"]` (real evaluator output, not a fail-soft Unavailable), `schema_version` 1; `push-voice-context` 02:20:01Z HTTP 200; `generate-digest` 02:25:01Z → `09_ops/runtime/2026-07-14_ops_digest.md` (overall=ok). Evidence: `ai-stack/ingest/logs/aurora-signals.log`. **WM-4 complete.** |
 
 Artifact regenerated at entry (`python3 -m _loader.cli`, docs_commit `86ae969e`). Real HA
 snapshots used in-memory only, never persisted (AD-18). No synthetic evidence closes any gate;

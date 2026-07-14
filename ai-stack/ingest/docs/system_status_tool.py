@@ -1,9 +1,10 @@
 """
 title: System Status
 author: amarolab
-description: AMAROLAB homelab operational status — ingest pipeline, backup,
-             container health, Torre GPU reachability, and live system metrics.
-version: 0.2.0
+description: AMAROLAB homelab operational status — world verdict + home state,
+             ingest pipeline, backup, container health, Torre GPU reachability,
+             and live system metrics.
+version: 0.3.0
 """
 
 import json
@@ -17,6 +18,7 @@ from pathlib import Path
 import psutil
 
 AURORA_CTX    = Path("/opt/aurora/aurora-context.json")
+AURORA_MD     = Path("/opt/aurora/aurora-context.md")
 HEALTH_FILE   = Path("/opt/ingest/logs/health.json")
 TORRE_URL     = "http://100.91.154.124:11434/api/tags"
 TORRE_TIMEOUT = 3
@@ -79,6 +81,17 @@ def _live_system() -> str:
 
 
 # ── Context readers ────────────────────────────────────────────────────────
+
+def _read_home_block():
+    """Echo the rendered Home State block from the context md (WM-5 projection;
+    device detail lives in the md per D1). Returns the block text, or None."""
+    try:
+        md = AURORA_MD.read_text(encoding="utf-8")
+    except Exception:
+        return None
+    idx = md.find("Home State:")
+    return md[idx:].strip() if idx != -1 else None
+
 
 def _from_aurora_ctx(ctx, now):
     """Extract display strings from a parsed aurora-context.json dict."""
@@ -171,16 +184,25 @@ def _from_aurora_ctx(ctx, now):
     if all_running is False and deg:
         reasons.append(f"containers: {len(deg)} stopped ({', '.join(deg)})")
 
+    # WM-5: the home region verdict (already folded into overall_status by
+    # aurora-context). Surfaced here so a status query is never home-blind (R-F5-A).
+    world        = ctx.get("world") or {}
+    home_verdict = (world.get("regions") or {}).get("home")
+    if home_verdict in ("medium", "high", "critical"):
+        reasons.append(f"home: {home_verdict} anomaly")
+
     sig_miss_str = ", ".join(sig_miss) if sig_miss else "none"
 
     return {
-        "overall":    overall,
-        "reasons":    reasons,
-        "ingest":     ingest_line,
-        "backup":     backup_line,
-        "audit":      audit_line,
-        "containers": containers_line,
-        "sig_miss":   sig_miss_str,
+        "overall":       overall,
+        "world_verdict": world.get("verdict"),
+        "home_verdict":  home_verdict,
+        "reasons":       reasons,
+        "ingest":        ingest_line,
+        "backup":        backup_line,
+        "audit":         audit_line,
+        "containers":    containers_line,
+        "sig_miss":      sig_miss_str,
     }
 
 
@@ -226,13 +248,15 @@ def _from_health_fallback(now):
         audit_line  = "not available (health.json missing)"
 
     return {
-        "overall":    "partial",
-        "reasons":    ["aurora-context.json not mounted — backup and container signals unavailable"],
-        "ingest":     ingest_line,
-        "backup":     "not available (context not mounted)",
-        "audit":      audit_line,
-        "containers": "not available (context not mounted)",
-        "sig_miss":   "aurora-context.json",
+        "overall":       "partial",
+        "world_verdict": None,
+        "home_verdict":  None,
+        "reasons":       ["aurora-context.json not mounted — backup and container signals unavailable"],
+        "ingest":        ingest_line,
+        "backup":        "not available (context not mounted)",
+        "audit":         audit_line,
+        "containers":    "not available (context not mounted)",
+        "sig_miss":      "aurora-context.json",
     }
 
 
@@ -277,6 +301,7 @@ def _run() -> str:
 
     reason_block = "\n".join(f"  • {r}" for r in reasons)
     system_line  = _live_system()
+    home_block   = _read_home_block() or "Home State: (not available)"
 
     output = (
         f"AMAROLAB System Status — {now_str}\n"
@@ -294,6 +319,8 @@ def _run() -> str:
         f"Backup:      {data['backup']}\n"
         f"Audit:       {data['audit']}\n"
         f"Containers:  {data['containers']}\n"
+        f"\n"
+        f"{home_block}\n"
         f"\n"
         f"Signals missing: {data['sig_miss']}\n"
     )

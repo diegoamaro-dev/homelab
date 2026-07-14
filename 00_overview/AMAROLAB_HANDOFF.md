@@ -383,10 +383,17 @@ apply log `09_logs/2026-07-02_WM3_loader_applied.md`) — **committed + pushed (
 artifact; `bin/aurora-context` renders home awareness from it (INV-19); **`HOME_RULES` + the
 WM-3 parity harness retired** (32 snapshots → `_evaluator/tests/` regression suite);
 `home_model.md` → redirect; `aurora-context.json` schema preserved (AD-20/INV-18);
-`overall_status` platform-only until WM-5. G-WM4-1…5 PASS on real data; **G-WM4-6 (first
-unattended 04:15+04:25 nightly cycle) open — closes on 2026-07-14 real evidence** (apply log
-`09_logs/2026-07-13_WM4_evaluator_cutover_applied.md`). **STOPPED at the git gate (not
-committed/pushed/tagged).** The next task is **WM-5** (consumer convergence). R-F5-A / F-5 close at WM-6.
+`overall_status` platform-only until WM-5. **G-WM4-1…6 PASS — G-WM4-6 (first unattended
+04:15+04:25 nightly cycle) closed 2026-07-14 on real evidence; WM-4 committed + pushed
+(`476e0ae8`), complete** (apply log
+`09_logs/2026-07-13_WM4_evaluator_cutover_applied.md`). **Phase WM-5** (consumer convergence)
+is **implemented + validated 2026-07-14** — the §1.5 aggregate verdict lives in `_evaluator/`
+(`evaluate_world` / `aggregate_verdict`; AD-WM5-1 unknown precedence); additive
+`world.verdict` / `world.regions` (`home.anomalies` unchanged — AD-20/INV-18); home-aware
+`system_status` v0.3.0 (`webui.db` install operator-gated) + home-aware voice line (W-10 cap);
+G-WM5-1…5 real-data PASS — **STOPPED at the git gate** (apply log
+`09_logs/2026-07-14_WM5_consumer_convergence_applied.md`). The next task is **WM-6** (reopen &
+close G-F5-04). R-F5-A / F-5 close at WM-6.
 Freeze doc: `04_ai_system/world_model_architecture.md`; roadmap: `ROADMAP.md` → Phase WM.
 
 Phase D-1 closed; **Phase RTX-1 closed 2026-06-27 —

@@ -492,8 +492,8 @@ post-sanitization canonical hashes (history rewritten + republished 2026-07-10; 
 | WM-1 | `_schema/` foundation (entity schema, tokens, windows, archetypes, validation) | **committed 2026-07-01 (`6e97c3fb`)** |
 | WM-2 | Migrate `home_model.md` → literate `home/`+`environment/` entities + `collectors.md` (docs only, 1:1) | **semantic equivalence — docs done 2026-07-01 (G-WM2-1…10 pass); committed + pushed (`4c3e2a5d`)** |
 | WM-3 | Loader/compiler (`_loader/`); run parallel to `HOME_RULES` | **real-data parity — PASS 2026-07-02; committed + pushed (`8d653fea`) — git gate closed** |
-| WM-4 | Evaluation engine consumes the model; retire `HOME_RULES` | **implemented + validated 2026-07-13 — G-WM4-1…5 PASS (AD-20/INV-18 preserved; no F-4/F-3a regression); G-WM4-6 unattended cycle open (closes 2026-07-14); at the git gate** |
-| WM-5 | Consumer convergence (Filter, home-aware `system_status`, voice line) | all surfaces home-aware |
+| WM-4 | Evaluation engine consumes the model; retire `HOME_RULES` | **committed + pushed (`476e0ae8`); G-WM4-1…6 PASS — G-WM4-6 closed 2026-07-14 (first unattended cycle); WM-4 complete** |
+| WM-5 | Consumer convergence (Filter, home-aware `system_status`, voice line) | **implemented + validated 2026-07-14 — G-WM5-1…5 PASS on real data (§1.5 low-not-escalated proven; `system_status` webui.db install operator-gated); at the git gate** |
 | WM-6 | **Reopen & close G-F5-04** (real induced anomaly, chat + voice) | **R-F5-A / F-5 closed** |
 | WM-7+ | Extend regions (infrastructure, self, projects); foundation for proactive intelligence | per-region validation |
 

@@ -207,6 +207,26 @@ def render_home(items: list[tuple[str, str]],
     return tokens, block
 
 
+def render_voice_home(home_anoms: list, unavailable_reason: str | None, top_n: int = 2) -> str:
+    """
+    Compact home summary for the ≤200-char voice line (WM-5). Severity-ordered
+    top-N phrases + "+K more" (W-10 volume control); the caller applies the
+    overall ≤200 bound. Tier tags are stripped (the voice line already carries
+    the world verdict); device detail inside the phrase is retained (D1).
+    """
+    if unavailable_reason:
+        return "home unavailable"
+    if not home_anoms:
+        return "no anomalies"
+
+    def _terse(phrase: str) -> str:
+        return phrase.split("] ", 1)[-1] if phrase.startswith("[") else phrase
+
+    shown = "; ".join(_terse(a.phrase) for a in home_anoms[:top_n])
+    extra = len(home_anoms) - top_n
+    return f"{shown}; +{extra} more" if extra > 0 else shown
+
+
 # ── Main ───────────────────────────────────────────────────────────────────
 
 def main() -> int:
@@ -368,15 +388,15 @@ def main() -> int:
             containers_md    = f"{running_n}/{count} running — stopped: {stopped_names}"
             containers_voice = f"{running_n}/{count}: {stopped_names} stopped"
 
-    # ── Home section (World Model evaluation — WM-4) ───────────────
-    # Independent of overall_status (D2, held platform-only through WM-4; the §1.5
-    # aggregate verdict lands with consumer convergence at WM-5): home anomalies
-    # surface via the # Home frame, not the platform overall_status. Awareness is
-    # the compiled World Model evaluated at now (AD-21); the loader is never
-    # invoked here — this reads the emitted artifact (retain-last-good). Fail-soft:
-    # any HA or artifact failure → Unavailable (RF5-3), all other sections still
-    # render and the run still exits 0.
+    # ── Home section (World Model evaluation — WM-4/WM-5) ──────────
+    # Awareness is the compiled World Model evaluated at now (AD-21); the loader is
+    # never invoked here — this reads the emitted artifact (retain-last-good).
+    # WM-5: the home region verdict folds into world.verdict / overall_status below
+    # (§1.5 · AD-WM5-1). Fail-soft: any HA or artifact failure → Unavailable (RF5-3),
+    # all other sections still render and the run still exits 0.
     home_items: list[tuple[str, str]] = []
+    home_anoms: list = []
+    home_verdict: str = "unknown"          # home region verdict; unknown until a successful evaluation
     home_unavailable_reason: str | None = None
     if wm_engine is None:
         home_unavailable_reason = "World Model evaluator unavailable at last context generation."
@@ -394,27 +414,39 @@ def main() -> int:
                 token    = env.get("HA_LLAT") or ""
                 if not base_url or not token:
                     raise RuntimeError("HA_BASE_URL/HA_LLAT missing from env")
-                states     = fetch_ha_states(base_url, token, HA_TIMEOUT_S)
-                home_items = wm_engine.evaluate_model(artifact, states, now)
+                states       = fetch_ha_states(base_url, token, HA_TIMEOUT_S)
+                aw           = wm_engine.evaluate_world(artifact, states, now)
+                home_anoms   = [a for a in aw.anomalies if a.region == "home"]
+                home_items   = [(a.token, a.phrase) for a in home_anoms]
+                home_verdict = aw.region_verdicts.get("home", "ok")
             except Exception as exc:               # noqa: BLE001 — fail-soft to Unavailable
                 home_unavailable_reason = "Home Assistant unreachable at last context generation."
                 print(f"aurora-context: home HA unreachable: {exc!r}", file=sys.stderr)
     home_tokens, home_block = render_home(home_items, home_unavailable_reason)
 
-    # ── Overall status ─────────────────────────────────────────────
+    # ── World verdict + overall status (WM-5 · §1.5 · AD-WM5-1) ─────
+    # The §1.5 aggregate lives in the evaluator; aurora-context only supplies the
+    # not-yet-modelled platform signals as an injected `infrastructure` pseudo-region
+    # (a stable key into WM-7) and reads back the global verdict. `overall_status` is
+    # the coarse projection of `world.verdict` (AD-20 enum: ok | degraded | unknown).
     all_files_absent = health_absent and backup_absent and container_absent
-    if all_files_absent:
-        overall = "unknown"
-    elif degrades:
-        overall = "degraded"
+    infra_verdict = "unknown" if all_files_absent else ("medium" if degrades else "ok")
+    if wm_engine is not None:
+        world_regions = {"home": home_verdict, "infrastructure": infra_verdict}
+        world_verdict = wm_engine.aggregate_verdict(world_regions)
+        overall       = wm_engine.to_overall_status(world_verdict)
     else:
-        overall = "ok"
+        # evaluator import failed → home is Unavailable; report platform only (WM-4 fallback)
+        world_regions = {"infrastructure": infra_verdict}
+        world_verdict = infra_verdict
+        overall       = "unknown" if all_files_absent else ("degraded" if degrades else "ok")
 
     # ── aurora-context.json ────────────────────────────────────────
     ctx_json_data = {
         "schema_version":  SCHEMA_VERSION,
         "generated_at":    iso(now),
         "overall_status":  overall,
+        "world":           {"verdict": world_verdict, "regions": world_regions},
         "ingest":          ingest_out,
         "backup":          backup_out,
         "audit":           audit_out,
@@ -440,20 +472,29 @@ def main() -> int:
     md_parts += home_block                         # Home State block (Layer B — F5.2)
     md_text = "\n".join(md_parts) + "\n"
 
-    # ── aurora-context-voice.txt ───────────────────────────────────
-    anomalies_str = "no anomalies"
-    voice_line = (
-        f"{ts_hdr} | {overall} | {backup_voice} | {containers_voice} | {anomalies_str}"
-    )
-    if len(voice_line) > 200:
-        voice_line = voice_line[:197] + "…"
+    # ── aurora-context-voice.txt (WM-5: home-aware, deterministic ≤200 bound) ──
+    home_voice = render_voice_home(home_anoms, home_unavailable_reason)
+    voice_line = f"{ts_hdr} | {overall} | {backup_voice} | {containers_voice} | {home_voice}"
+    if len(voice_line) > 200:                       # W-10 volume control — semantic, not a byte chop
+        if home_unavailable_reason:
+            count_seg = "home unavailable"
+        elif not home_anoms:
+            count_seg = "no anomalies"
+        else:
+            count_seg = f"{len(home_anoms)} home anomalies"
+        voice_line = f"{ts_hdr} | {overall} | {backup_voice} | {containers_voice} | {count_seg}"
+        if len(voice_line) > 200:                   # last-resort byte guard (WM-4 behaviour)
+            voice_line = voice_line[:197] + "…"
 
     # ── Dry-run: print the Home State block + tokens, write nothing (D5) ──
     if dry_run:
         print(f"home.anomalies = {json.dumps(home_tokens, ensure_ascii=False)}")
         print("\n".join(home_block).lstrip("\n"))
+        print(f"\nworld.verdict = {world_verdict} | world.regions = {json.dumps(world_regions)}")
+        print(f"overall_status = {overall}")
+        print(f"voice = {voice_line}")
         print(
-            f"[dry-run] home_unavailable_reason={home_unavailable_reason!r} overall={overall}"
+            f"[dry-run] home_unavailable_reason={home_unavailable_reason!r}"
             f" signals_missing={signals_missing} (no files written)",
             file=sys.stderr,
         )

@@ -39,7 +39,10 @@ import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import NamedTuple
 from zoneinfo import ZoneInfo
+
+from .verdict import aggregate_verdict, to_overall_status, worst_verdict  # re-exported for consumers
 
 EVALUATOR_VERSION = "0.1.0"
 SUPPORTED_ARTIFACT_VERSIONS = (1,)
@@ -205,29 +208,69 @@ def _eval_fold(rule: dict, states: dict, now_utc: datetime, windows: dict):
     return fold["render_phrase_prefix"] + ", ".join(names)
 
 
-def evaluate_model(artifact: dict, states: dict, now_utc: datetime) -> list[tuple[str, str]]:
-    """
-    Ordered [(token, render_phrase)] for the snapshot at now_utc.
+class Anomaly(NamedTuple):
+    """One fired deviation, enriched for projection (WM-5)."""
+    token: str
+    phrase: str            # fully rendered "[tier] text"; device detail lives here (D1)
+    tier: str              # critical | high | medium | low — from the token registry
+    region: str
+    severity_rank: int
 
-    Pure function of its arguments (B3): no I/O, no live reads. Retired or
-    non-evaluable entities are excluded (lifecycle §3 — retirement is visible,
-    never evaluated).
+
+class Awareness(NamedTuple):
+    """The World Model evaluated at now (WM-5): anomalies + per-region verdicts."""
+    anomalies: list        # list[Anomaly], severity-ordered
+    region_verdicts: dict  # {region: worst active tier}; a region with no active anomaly is absent (⇒ "ok")
+
+
+def _tier_of(artifact: dict) -> dict[str, str]:
+    """token → severity tier, from the compiled registry (single-sourced in tokens.md)."""
+    return {t["token"]: t["tier"] for t in artifact["registries"]["tokens"] if t.get("tier")}
+
+
+def evaluate_world(artifact: dict, states: dict, now_utc: datetime) -> Awareness:
+    """
+    Awareness = the World Model evaluated at now (WM-5). Returns ordered
+    `Anomaly`s (token · phrase · tier · region · rank) plus per-region verdicts
+    (each region's worst active tier). Pure function of its arguments (B3): no
+    I/O, no live reads. Retired / non-evaluable entities are excluded (§3). The
+    GLOBAL verdict is the consumer's `aggregate_verdict(region_verdicts + any
+    injected pseudo-region)` call — kept out of here so the evaluator stays
+    unaware of non-model regions (e.g. the WM-5 `infrastructure` seam).
     """
     windows = artifact["registries"]["windows"]
-    fired: list[tuple[str, str, int]] = []
+    tier_of = _tier_of(artifact)
+    fired: list[Anomaly] = []
 
     for entity in artifact["entities"].values():
         if not entity.get("evaluable") or entity.get("status") != "active":
             continue
+        region = entity["region"]
         for rule in entity["anomaly_rules"]:
             if rule.get("kind") == "fold":
                 phrase = _eval_fold(rule, states, now_utc, windows)
                 if phrase is not None:
-                    fired.append((rule["token"], phrase, rule["severity_rank"]))
+                    fired.append(Anomaly(rule["token"], phrase, tier_of[rule["token"]],
+                                         region, rule["severity_rank"]))
             else:
                 ctx = HAContext(states, now_utc, _field_map(entity), windows)
                 if eval_node(rule["ast"], ctx):
-                    fired.append((rule["token"], rule["render_phrase"], rule["severity_rank"]))
+                    fired.append(Anomaly(rule["token"], rule["render_phrase"],
+                                         tier_of[rule["token"]], region, rule["severity_rank"]))
 
-    fired.sort(key=lambda t: t[2])                     # canonical emission order
-    return [(token, phrase) for token, phrase, _ in fired]
+    fired.sort(key=lambda a: a.severity_rank)                 # canonical emission order
+
+    region_verdicts: dict[str, str] = {}
+    for a in fired:
+        region_verdicts[a.region] = worst_verdict((region_verdicts.get(a.region, "ok"), a.tier))
+    return Awareness(anomalies=fired, region_verdicts=region_verdicts)
+
+
+def evaluate_model(artifact: dict, states: dict, now_utc: datetime) -> list[tuple[str, str]]:
+    """
+    Legacy projection — ordered `[(token, render_phrase)]` (WM-3/WM-4 shape).
+
+    Compatibility shim over `evaluate_world`; the 32-snapshot regression suite
+    pins this output byte-for-byte. New consumers use `evaluate_world`.
+    """
+    return [(a.token, a.phrase) for a in evaluate_world(artifact, states, now_utc).anomalies]
