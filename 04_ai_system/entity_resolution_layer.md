@@ -1,7 +1,14 @@
 # Entity Resolution Layer (ER-1) — ratified design
 
-- **Status:** **FROZEN 2026-07-16** (operator-ratified). Implementation is Phase **ER-1**
-  (ER-1.0 → ER-1.5); each sub-phase ends at a **STOP** git gate.
+- **Status:** **FROZEN 2026-07-16** (operator-ratified) — **Revision 2**. Implementation is
+  Phase **ER-1** (ER-1.0 → ER-1.5); each sub-phase ends at a **STOP** git gate.
+- **Amendments to the freeze** (a frozen design is amended only by a **gated, operator-ratified
+  decision** — never by silent drift):
+
+  | Rev | Date | Amendment | Ratified at |
+  |---|---|---|---|
+  | 1 | 2026-07-16 | Initial freeze — D-ER-1…10 + ER-1-C1 | ER-1.0 |
+  | **2** | **2026-07-16** | **D-ER-11** (alias shape mirrors `binding`) · **D-ER-12** (alias vs entity-identifier collision — check 12e) | **ER-1.1** |
 - **Role:** the deterministic bridge between natural language and real Home Assistant
   `entity_id`s, plus mandatory write verification. It is the remedy for the defect recorded in
   [`../09_logs/2026-07-14_ER1_entity_resolution_finding.md`](../09_logs/2026-07-14_ER1_entity_resolution_finding.md).
@@ -105,6 +112,8 @@ D-12 allowlist; the awareness pipeline; Guardian Cloud.
 | **D-ER-8** | **Frozen normalization spec**: casefold → NFKD → strip combining marks → collapse `[\s._-]+` to a single space → trim. `ñ → n` is accepted (negligible collision risk on device names). Determinism gates depend on this text being frozen. |
 | **D-ER-9** | **No write-surface restriction.** A syntactically valid HA `entity_id` follows the current path **exactly as today**. D-12 remains the **sole** authorization authority. The World Model registry is a **name-resolution convenience only** — never a write allowlist, never consulted to permit or deny. Any stronger restriction is a **future architectural decision**, out of ER-1 scope. |
 | **D-ER-10** | **Closed expected-state map** for verification: `turn_on → on`, `turn_off → off`, `open_cover → open`, `close_cover → closed`. Every other service returns **`applied_unverified`**. `toggle` is deferred (its expected state depends on a before-state that after-only verification does not have). |
+| **D-ER-11** *(Rev 2 — ratified at ER-1.1)* | **Aliases mirror the `binding` shape.** A **single-signal** entity uses a **flat alias list**; a **multi-signal** entity uses a **per-signal alias map**. **No implicit primary signal is introduced** — see §3.5. |
+| **D-ER-12** *(Rev 2 — ratified at ER-1.1)* | **Alias vs entity identifier (validation check 12e).** An alias **may** equal **its own** entity identifier; it **must never** collide with **another** entity's identifier — see §3.5. |
 
 ### 3.1 ER-1-C1 — mandatory write verification
 
@@ -177,6 +186,73 @@ id; it prevents the false success claim.** The write still reaches HA, HA still 
 and C1 reports honestly. Rate-limit budget is still consumed. This is the accepted trade for
 preserving an unrestricted write surface.
 
+### 3.5 D-ER-11 and D-ER-12 (Revision 2 — ratified 2026-07-16 at ER-1.1)
+
+Both are **architectural decisions, not implementation details**: the first fixes the shape of
+the authoritative naming surface, the second fixes what the resolver's closed lookup may
+legally contain. Neither existed at Revision 1 — authoring the real alias sets surfaced them.
+
+#### D-ER-11 — aliases mirror the `binding` shape
+
+**`aliases` takes the same single/multi duality `binding` already has (§2.1 of the schema):**
+
+- a **single-signal** entity uses a **flat alias list**, resolving to its reserved `state`
+  signal;
+- a **multi-signal** entity uses a **per-signal alias map**, one entry per named signal;
+- **no implicit primary signal is introduced.**
+
+**Why it was forced.** Two of the six bound entities — `entrance-plant`
+(`water_warning` + `soil_moisture`) and `zigbee-mesh` (`connection` + `permit_join`) — are
+multi-signal, and the schema is explicit that such a binding has **no implicit `state`**: every
+field is named. An entity-level alias on them would therefore have **no single `ha_entity` to
+resolve to**. The alternatives were both worse: inventing a "primary signal" would be arbitrary
+and would smuggle a guess into a resolver whose entire purpose is determinism, while deferring
+the two entities would silently shrink the ratified scope. **D-ER-1 specified the field but not
+its multi-signal shape; D-ER-11 closes that gap by reusing an existing contract pattern rather
+than adding a concept.**
+
+**Consequence:** a name that maps to more than one signal of the same entity (a bare
+*"planta"* — soil moisture, or watering warning?) is **deliberately not aliased**. A closed
+deterministic resolver must never guess; such a question is answered from the awareness block,
+not a tool call (§3.3).
+
+#### D-ER-12 — alias vs entity identifier (validation check 12e)
+
+**An alias may equal its own entity's identifier; it must never collide with another entity's
+identifier.**
+
+**Why it was forced.** The design draft presented at ratification proposed barring an alias
+from colliding with **any** entity identifier. Authoring the real sets disproved it: **4 of the
+6 bound entities have an alias equal to their own normalized id** — `awning`, `main door`,
+`zigbee mesh`, `internet uplink`. Those *are* the natural English names of those entities.
+Barring them would have gutted English coverage for **no safety gain**, because an alias equal
+to its **own** entity's identifier is a harmless redundancy: both denote the same thing, so no
+ambiguity exists. A collision with a **different** entity's identifier is the genuine hazard —
+a name denoting another modelled entity is almost certainly an authoring error — and that is
+what 12e now rejects.
+
+*(Recorded for accuracy: the over-restrictive wording was in the **design draft discussed at
+ratification**, never in this document. Revision 1 stated no check-12 semantics at all — the
+full ruleset was authored at ER-1.1.)*
+
+**Enforcement.** The full alias ruleset these decisions govern — shape, bounds, id-shape,
+global uniqueness, entity-identifier collision and archetype exclusion — is **authored into the
+entity schema contract at ER-1.1**
+([`world_model/_schema/entity.schema.md`](world_model/_schema/entity.schema.md)), which is the
+single source for the checks; the loader implements them **fail-loud** at **ER-1.2**. *(A
+precise section reference is deliberately omitted here: that contract text does not exist yet
+at this revision, and a freeze must not cite what is not present. It may be added once ER-1.1
+lands.)*
+
+One rule is stated here because it follows from **D-ER-8** rather than from the contract: the
+**id-shape** check is applied to the **raw authored** string. D-ER-8 collapses `.` into a
+space, so a *normalized* alias can never be id-shaped — testing the normalized form would be
+vacuous.
+
+**Authority is untouched.** Both decisions concern **naming and validation only**. Aliases
+neither widen nor narrow what Aurora may actuate: D-12 remains the sole authorization
+authority (**INV-17**), and the resolver is never consulted to permit or deny (**D-ER-9**).
+
 ---
 
 ## 4. Resolution order at the tool boundary
@@ -239,7 +315,7 @@ All gates close on **real evidence** — no synthetic fixtures, no fabricated fa
 
 | Gate | Condition |
 |---|---|
-| **G-ER-1** | Loader alias validation: the real tree compiles; an injected alias collision, an archetype-level alias, and an alias colliding with a real id are each rejected **fail-loud** |
+| **G-ER-1** | Loader alias validation against the schema contract's alias ruleset (check 12, authored at ER-1.1): the real tree compiles, and an injected **duplicate normalized alias**, **archetype-level alias**, **id-shaped alias**, and **collision with a *different* entity's identifier** (12e — D-ER-12) are each rejected **fail-loud**. *(An alias equal to its **own** entity's identifier is legal and must **not** be rejected — D-ER-12.)* |
 | **G-ER-2** | Resolution **determinism** across the canonical es + en phrase set; byte-stable registry across runs |
 | **G-ER-3a** | A non-id-shaped miss → `unknown_entity` + candidates, **zero HTTP calls**, audit line |
 | **G-ER-3b** | **Historical unverified writes must never again be reported as successful.** Every historical case (§1 — 13 calls across 7 non-existent ids) must now produce an honest **`verified` or `applied_unverified`** result instead of an unverified success claim. The service call is still issued exactly as today (D-ER-9); the acceptance is the **claim**, not the request |

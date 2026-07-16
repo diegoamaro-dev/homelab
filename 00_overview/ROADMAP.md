@@ -15,7 +15,9 @@ tracked by the Guardian Cloud project, not in this
 document.
 
 Last updated: 2026-07-16 (**Phase ER-1 — Deterministic Entity Resolution — design FROZEN
-2026-07-16**, ER-1.0 at the git gate; spec `04_ai_system/entity_resolution_layer.md`. Phase
+2026-07-16, now Revision 2**; ER-1.0 committed + pushed (`c147e632` → `38eb8262`); the
+Revision 2 amendment (D-ER-11 + D-ER-12) is at the git gate; spec
+`04_ai_system/entity_resolution_layer.md`. Phase
 D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
 service + RTX-1.6 endpoint swap (failover proxy, Torre
@@ -506,10 +508,14 @@ post-sanitization canonical hashes (history rewritten + republished 2026-07-10; 
 
 ## Phase ER-1 — Deterministic Entity Resolution
 
-**Design FROZEN 2026-07-16 (operator-ratified).** Full specification:
+**Design FROZEN 2026-07-16 (operator-ratified) — now Revision 2.** Full specification:
 [`../04_ai_system/entity_resolution_layer.md`](../04_ai_system/entity_resolution_layer.md);
 freeze log [`../09_logs/2026-07-16_ER1_freeze.md`](../09_logs/2026-07-16_ER1_freeze.md);
+**Rev 2 amendment log** [`../09_logs/2026-07-16_ER1_freeze_rev2.md`](../09_logs/2026-07-16_ER1_freeze_rev2.md);
 defect record [`../09_logs/2026-07-14_ER1_entity_resolution_finding.md`](../09_logs/2026-07-14_ER1_entity_resolution_finding.md).
+A frozen design is amended only by a **gated, operator-ratified decision** — never by silent
+drift: **Rev 1** = the initial freeze (ER-1.0); **Rev 2** = **D-ER-11** + **D-ER-12**, ratified
+2026-07-16 when authoring the ER-1.1 alias sets surfaced two gaps (spec §3.5).
 
 **Mission:** close the gap between natural language and real Home Assistant `entity_id`s, and
 make every write **honest**. ER-1 fixes two independent defects: natural-language requests do
@@ -538,12 +544,18 @@ Key ratified decisions (register: spec §3):
   `close_cover→closed`); every other service returns `applied_unverified`.
 * **D-ER-7 — `ARTIFACT_VERSION` stays 1** (additive `resolution` key) — a bump would silently
   degrade home awareness rather than fail loud, and quietly undo the WM-6 / G-F5-04 closure.
+* **D-ER-11 (Rev 2) — aliases mirror the `binding` shape.** Single-signal → flat alias list;
+  multi-signal → per-signal alias map; **no implicit primary signal** (a multi-signal binding
+  has no implicit `state`, so an entity-level alias would have no single target).
+* **D-ER-12 (Rev 2) — alias vs entity identifier.** An alias **may** equal **its own** entity's
+  identifier; it **must never** collide with **another** entity's identifier.
 
 Each sub-phase: real-data validation, documentation, **STOP at the git gate**.
 
 | Phase | Objective | Gate |
 |---|---|---|
-| ER-1.0 | Freeze (spec; decision register D-ER-1…10 + C1; ROADMAP slot; triad; freeze log). The 2026-07-14 defect record is committed separately, immediately before — history reads *defect discovered → design frozen* | **frozen 2026-07-16 — at the git gate** |
+| ER-1.0 | Freeze (spec; decision register D-ER-1…10 + C1; ROADMAP slot; triad; freeze log). The 2026-07-14 defect record is committed separately, immediately before — history reads *defect discovered → design frozen* | **frozen 2026-07-16 — committed + pushed**: defect record `c147e632` → architecture freeze `38eb8262` |
+| ER-1 Rev 2 | Freeze amendment — ratify **D-ER-11** (alias shape) + **D-ER-12** (alias vs entity identifier); correct the record on check-12 semantics | **ratified 2026-07-16 — at the git gate** (`09_logs/2026-07-16_ER1_freeze_rev2.md`) |
 | ER-1.1 | Schema `aliases` (additive, `schema_version` unchanged) + entity aliases (docs only) | G-ER-1 |
 | ER-1.2 | Loader: normalizer, validation, `resolution` registry + tests | G-ER-1, G-ER-2, G-ER-5 |
 | ER-1.3 | Projection emitter + `aurora-entities.json` runtime artifact | G-ER-6 |

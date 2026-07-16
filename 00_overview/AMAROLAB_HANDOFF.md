@@ -369,8 +369,12 @@ Closeout document:
 ## Next Immediate Task
 
 **Current: Phase ER-1 — Deterministic Entity Resolution — design FROZEN 2026-07-16
-(operator-ratified); ER-1.0 at the git gate. Next: ER-1.1** (schema `aliases`, additive,
-docs only; gate G-ER-1).
+(operator-ratified), now Revision 2. ER-1.0 is committed + pushed** (defect record
+`c147e632` → architecture freeze `38eb8262`); **the Revision 2 amendment — D-ER-11 (aliases
+mirror the `binding` shape) + D-ER-12 (an alias may equal its own entity identifier, never
+another's) — is at the git gate. Next: ER-1.1** (schema `aliases`, additive, docs only;
+gate G-ER-1). Rev 2 amendment log:
+[`../09_logs/2026-07-16_ER1_freeze_rev2.md`](../09_logs/2026-07-16_ER1_freeze_rev2.md).
 
 ER-1 closes the natural-language → `entity_id` gap **and** makes writes honest. Real audit
 evidence: **13 unverified writes across 7 non-existent entity ids were reported as
