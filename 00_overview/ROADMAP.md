@@ -556,7 +556,7 @@ Each sub-phase: real-data validation, documentation, **STOP at the git gate**.
 |---|---|---|
 | ER-1.0 | Freeze (spec; decision register D-ER-1…10 + C1; ROADMAP slot; triad; freeze log). The 2026-07-14 defect record is committed separately, immediately before — history reads *defect discovered → design frozen* | **frozen 2026-07-16 — committed + pushed**: defect record `c147e632` → architecture freeze `38eb8262` |
 | ER-1 Rev 2 | Freeze amendment — ratify **D-ER-11** (alias shape) + **D-ER-12** (alias vs entity identifier); correct the record on check-12 semantics | **ratified 2026-07-16 — at the git gate** (`09_logs/2026-07-16_ER1_freeze_rev2.md`) |
-| ER-1.1 | Schema `aliases` (additive, `schema_version` unchanged) + entity aliases (docs only) | G-ER-1 |
+| ER-1.1 | Schema `aliases` (additive, `schema_version` unchanged) + entity aliases (docs only) | **applied + validated 2026-07-16 — G-ER-1 PASS within ER-1.1 scope** (33 unique normalized aliases → 8 `ha_entity` targets across the 6 bound entities; `schema_version` unchanged; aliases proven **inert** — a fresh compile differs from the on-disk artifact only in `provenance.sha256`); **at the git gate** (`09_logs/2026-07-16_ER1_1_aliases_applied.md`). Fail-loud enforcement lands at ER-1.2 |
 | ER-1.2 | Loader: normalizer, validation, `resolution` registry + tests | G-ER-1, G-ER-2, G-ER-5 |
 | ER-1.3 | Projection emitter + `aurora-entities.json` runtime artifact | G-ER-6 |
 | ER-1.4a | Capture the v0.1.0 baseline, then `ha_get_state` v0.2.0 | G-ER-7 (read half) |

@@ -10,6 +10,7 @@ writable: false
 archetype: zigbee-device
 baseline: { state: closed }
 binding: { ha_entity: cover.toldo }
+aliases: [ "toldo", "awning" ]
 collector: ha-states
 anomaly_rules:
   - { token: awning_left_extended, condition: "state == open AND time in overnight" }

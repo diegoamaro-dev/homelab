@@ -8,6 +8,7 @@ schema_version: 1
 priority: high
 baseline: { state: on }
 binding: { ha_entity: binary_sensor.rooter_estado_wan }
+aliases: [ "internet", "conexión a internet", "internet uplink", "internet connection", "wan", "uplink" ]
 collector: ha-states
 anomaly_rules:
   - { token: wan_down, condition: "state == off" }

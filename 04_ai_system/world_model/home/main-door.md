@@ -9,6 +9,7 @@ priority: medium
 archetype: zigbee-device
 baseline: { state: off }
 binding: { ha_entity: binary_sensor.sensor_puerta_principal_contact }
+aliases: [ "puerta principal", "puerta", "main door", "front door", "door" ]
 collector: ha-states
 anomaly_rules:
   - { token: door_open_extended, condition: "state == on for > 15m" }

@@ -10,6 +10,9 @@ baseline: { conditions: [ "connection == on", "permit_join == off" ] }
 binding:
   connection: { ha_entity: binary_sensor.zigbee2mqtt_bridge_connection_state }
   permit_join: { ha_entity: switch.zigbee2mqtt_bridge_permit_join }
+aliases:
+  connection: [ "malla zigbee", "red zigbee", "zigbee", "zigbee mesh", "mesh" ]
+  permit_join: [ "permitir emparejamiento", "permit join", "pairing mode" ]
 collector: ha-states
 status_semantics: { unavailable: down }
 anomaly_rules:

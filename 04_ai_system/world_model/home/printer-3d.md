@@ -10,6 +10,7 @@ writable: true
 archetype: zigbee-device
 baseline: { state: off }
 binding: { ha_entity: switch.impresora_3d }
+aliases: [ "impresora 3D", "impresora", "3D printer", "printer" ]
 collector: ha-states
 anomaly_rules:
   - { token: printer_on_overnight, condition: "state == on AND time in overnight" }

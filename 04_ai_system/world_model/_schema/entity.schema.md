@@ -8,9 +8,14 @@
   this contract ever conflicts with it, the freeze wins and this file is corrected. A change
   to the *contract itself* is a `schema_version` event (§ Versioning) and, where it touches a
   frozen invariant, a gated architecture decision — never silent drift.
-- **`schema_version`: 1** (the initial contract era; unchanged by WM-2 — its clarifications are additive).
+- **`schema_version`: 1** (the initial contract era; unchanged by WM-2 or ER-1.1 — their
+  additions are additive).
 - **Status:** operative contract. WM-1 authored the foundation; **WM-2** added the §2.1
   binding/roster clarifications (additive; `schema_version` unchanged). The loader is **WM-3**.
+  **ER-1.1** added the optional **`aliases`** field (§2.2) — additive, `schema_version`
+  unchanged (§6: a new optional field is backward-compatible by construction). Its enforcement
+  (validation check 12) is authored here as the specification; the loader implements it at
+  **ER-1.2**. Design: [`../../entity_resolution_layer.md`](../../entity_resolution_layer.md).
 
 ---
 
@@ -41,6 +46,7 @@ an aspect, per Notes) · opt: optional.
 | `priority` | cond | `critical`·`high`·`medium`·`low` | required if the entity can deviate; drives severity ordering |
 | `baseline` | cond | `{state: …}` \| `{schedule: …}` \| `{conditions: […]}` | the exact "normal"; required if evaluable |
 | `binding` | cond | map: `ha_entity` \| `container` \| `corpus` \| `probe` \| `signal` | implementation link — **real ids live here, not in prose**; single- or named-multi-signal (§2.1) |
+| `aliases` | opt | list of strings (single-signal) \| map `signal` → list (multi-signal) | **ER-1** — natural names (es + en) for deterministic NL → `entity_id` resolution (§2.2). **Descriptive naming only: never a grant, never a gate (INV-17).** Mirrors `binding`'s shape (§2.1) |
 | `collector` | cond | signal-source id | which Collector supplies live state; required if evaluable |
 | `anomaly_rules` | cond | `[{ token, condition, window? }]` | deterministic deviation rules (§3 grammar); required if the entity can deviate |
 | `writable` | opt (`false`) | bool | **descriptive only; validated ⊆ the `ha_call_service` allowlist; never a grant (INV-17)** |
@@ -92,6 +98,48 @@ member tripping emits the token **once**; member names appear in the **rendering
 the token (AD-20 / D1); duplicates de-dup by name. A roster aspect's `baseline` (all members
 within their per-member normal) is documented in prose. The fold's mechanical evaluation is a
 **loader (WM-3)** concern; WM-2 records the roster and the intended semantics.
+
+### 2.2 Aliases (ER-1 additive — `schema_version` 1)
+
+`aliases` records the **natural names** (Spanish + English) by which a bound entity's signal is
+spoken about, so a request like *"enciende la impresora 3D"* resolves **deterministically** to
+the real `switch.impresora_3d` instead of an invented id. Authoritative source of natural
+names (**D-ER-1**); optional; **additive** (no `schema_version` bump — §6).
+
+**Shape mirrors `binding` (§2.1) — D-ER-11:**
+
+- **Single-signal binding** → a **flat list**; the aliases resolve to that binding's reserved
+  `state` signal.
+  ```yaml
+  binding: { ha_entity: switch.impresora_3d }
+  aliases: [ "impresora 3D", "impresora", "3D printer", "printer" ]
+  ```
+- **Named multi-signal binding** → a **map of `signal` → list**. There is **no implicit
+  `state`** on a multi-signal binding, so an entity-level alias would have no single target;
+  every alias names its signal explicitly.
+  ```yaml
+  binding:
+    connection:  { ha_entity: binary_sensor.zigbee2mqtt_bridge_connection_state }
+    permit_join: { ha_entity: switch.zigbee2mqtt_bridge_permit_join }
+  aliases:
+    connection:  [ "malla zigbee", "zigbee", "zigbee mesh" ]
+    permit_join: [ "permit join", "pairing mode" ]
+  ```
+
+**Normalization (D-ER-8 — frozen).** Aliases are authored in **natural form, accents and all**;
+the loader normalizes them: **casefold → NFKD → strip combining marks → collapse `[\s._-]+` to
+a single space → trim**. So `"Conexión a Internet"` → `"conexion a internet"`. `ñ → n` is
+accepted (negligible collision risk on device names). The **normalized** form is the lookup
+key; the authored form is retained for display.
+
+**Deliberately ambiguous names are not aliased.** Where a natural name maps to more than one
+signal of the same entity — e.g. a bare *"planta"* could mean either the plant's soil moisture
+or its watering warning — **no alias is authored**. A closed, deterministic resolver must never
+guess; such a question is answered from the awareness block, not by a tool call.
+
+**Authority.** Aliases describe **naming**, never authorization. They neither widen nor narrow
+what Aurora may actuate: the `ha_call_service` allowlist (D-12) remains the sole authority
+(**INV-17**), and the resolver is never consulted to permit or deny (**D-ER-9**).
 
 ## 3. Condition grammar (frozen §4.5 — closed)
 
@@ -156,6 +204,18 @@ violation (never emits a partial model).
 | 10 | **Version** | declared `schema_version` consistent with the fields used |
 | 11a | **Authorization (INV-17)** | `writable: true` ⇒ the entity's action surface is a subset of the `ha_call_service` allowlist; `writable`/`boundary` never grant beyond the enforced authorization |
 | 11b | **Duration/collector** | any entity with a `field for DURATION` rule must bind a `collector` that exposes `last_changed` |
+| 12 | **Aliases (ER-1)** | see §2.2 and the sub-checks below — fail-loud, like every other check |
+
+### 5.1 Check 12 — alias sub-checks (ER-1; enforced by the loader at ER-1.2)
+
+| # | Rule | Rationale |
+|---|---|---|
+| 12a | **Shape** — flat list for a single-signal `binding`; map `signal` → list for a multi-signal one; every map key must be a **declared** binding signal; an entity with **no `binding`** must not declare `aliases` | mirrors §2.1 (D-ER-11); aspects carry no binding (D-ER-6) |
+| 12b | **Type/bounds** — list of non-empty strings; each alias **2–64 chars after normalization** | bounded input |
+| 12c | **Not id-shaped** — no alias may match `^[a-z_]+\.[a-z0-9_]+$` **as authored** | id-shaped input never reaches the alias path (D-ER-2), so a literal id authored as an alias is **dead and misleading**. Checked on the **raw** string: normalization collapses `.` to a space, so a *normalized* alias can never be id-shaped — testing the normalized form would be meaningless |
+| 12d | **Globally unique** — no normalized alias may appear twice **anywhere in the model**, including across signals of the same entity | the lookup table is flat and closed; a duplicate is an ambiguity the resolver must never guess through |
+| 12e | **No cross-entity id collision** — an alias **may** equal its **own** entity's normalized `id` (harmless redundancy — e.g. `awning`), but **must not** equal a **different** entity's normalized `id` | Enforces **D-ER-12** (ER-1 freeze, Rev 2). An alias equal to its *own* entity's id denotes the same thing, so no ambiguity exists; one denoting *another* modelled entity is almost certainly an authoring error. Rationale of record: [`../../entity_resolution_layer.md`](../../entity_resolution_layer.md) §3.5 |
+| 12f | **No archetype-level aliases** — `aliases` in an archetype's `defaults` is rejected | archetype defaults are merged into every member (§4); an archetype alias would fan out and collide by construction. Aliases are **per-entity identity**, never inherited |
 
 ## 6. Versioning (frozen §5)
 

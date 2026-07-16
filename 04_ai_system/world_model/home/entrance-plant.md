@@ -11,6 +11,9 @@ baseline: { conditions: [ "water_warning == none", "soil_moisture >= 20" ] }
 binding:
   water_warning: { ha_entity: sensor.sensor_planta_entrada_water_warning }
   soil_moisture: { ha_entity: sensor.sensor_planta_entrada_soil_moisture }
+aliases:
+  water_warning: [ "aviso de riego", "riego de la planta", "plant water warning", "water warning" ]
+  soil_moisture: [ "humedad de la planta", "humedad del suelo", "plant moisture", "soil moisture" ]
 collector: ha-states
 anomaly_rules:
   - { token: plant_water_warning, condition: "water_warning != none" }
