@@ -406,8 +406,8 @@ The World Model **subsumes and structurally closes** this:
 - **Entity registry ends id-hallucination** — real entity_ids live in `binding`; Aurora can
   answer "that isn't an entity I model" instead of inventing ids.
 
-R-F5-A is remediated at **WM-4/WM-5** (§9); **G-F5-04 reopens and closes at WM-6** on a real
-induced anomaly across chat and voice. The earlier point-fix proposal (home-aware
+R-F5-A is remediated at **WM-4/WM-5** (§9); **G-F5-04 reopened and CLOSED at WM-6 (2026-07-16)** on a real
+induced anomaly across chat and voice — PASS on real evidence; **R-F5-A CLOSED; F-5 CLOSED** (closeout [`../09_logs/2026-07-16_WM6_G-F5-04_closeout.md`](../09_logs/2026-07-16_WM6_G-F5-04_closeout.md)). The earlier point-fix proposal (home-aware
 `system_status` + voice line + prompt reinforcement) is **subsumed**: those become the
 natural consequence of consumers reading the unified world evaluation.
 
@@ -452,7 +452,7 @@ gate** (operator approval before any commit/push/tag).
 | **WM-3** | Loader/compiler: Parse→Resolve→Validate→Emit; run **parallel** to `HOME_RULES` | **real-data parity** (M3) |
 | **WM-4** | Evaluation engine consumes the World Model; produce unified Awareness (platform + home co-equal); **retire `HOME_RULES`** | cutover; **awareness output preserves the `aurora-context.json` schema — no F-4/F-3a regression (AD-20 / INV-18)** |
 | **WM-5** | Consumer convergence (R-F5-A): every consumer a dumb projection — Filter, home-aware `system_status`, voice line | all surfaces home-aware |
-| **WM-6** | **Reopen & close G-F5-04** — real induced anomaly across chat + voice; reconcile triad; closeout | **G-F5-04 PASS on real evidence** |
+| **WM-6** | **Reopen & close G-F5-04** — real induced anomaly across chat + voice; reconcile triad; closeout | **DONE 2026-07-16 — G-F5-04 PASS on real evidence; R-F5-A / F-5 CLOSED** (`../09_logs/2026-07-16_WM6_G-F5-04_closeout.md`) |
 | **WM-7+** | Extend regions (infrastructure, self, projects); foundation for Phase G proactive intelligence | per-region validation |
 
 ---

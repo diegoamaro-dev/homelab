@@ -27,7 +27,7 @@ Filter (G-F3-1…7) + F-3b HA-voice awareness (G-F3-8) both validated. F-4: F4.1
 (substrate) + F4.2 (generator) DONE + committed 2026-06-30; F4.3 implementation +
 reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08
 config-verified (empirical restic pending next backup), G-F4-05/06/07 intentionally
-pending real operational evidence; F-4 not fully closed. F-5 IN PROGRESS — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A logged + deferred to a future gated phase; F-6 unblocked. **World Model architecture FROZEN 2026-07-01 (AD-21) as the R-F5-A remedy + Aurora's semantic baseline; Phase WM (WM-1→WM-7) implementation underway — WM-1 `_schema/` foundation committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed); WM-4 evaluator cutover implemented + validated 2026-07-13 — `HOME_RULES` retired, AD-20/INV-18 preserved, STOPPED at the git gate (G-WM4-6 unattended-cycle gate open, closes 2026-07-14); WM-5 next.**
+pending real operational evidence; F-4 not fully closed. F-5 **CLOSED 2026-07-16 (at WM-6)** — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL** → R-F5-A logged; **remedied by the World Model, closed at WM-6 — G-F5-04 PASS on real evidence (chat + voice); R-F5-A closed** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`); F-6 unblocked. **World Model architecture FROZEN 2026-07-01 (AD-21) as the R-F5-A remedy + Aurora's semantic baseline; Phase WM (WM-1→WM-7) implementation underway — WM-1 `_schema/` foundation committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed); WM-4 evaluator cutover implemented + validated 2026-07-13 — `HOME_RULES` retired, AD-20/INV-18 preserved, STOPPED at the git gate (G-WM4-6 closed 2026-07-14); WM-5 done 2026-07-14; **WM-6 done 2026-07-16 — G-F5-04 CLOSED / R-F5-A · F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`).**
 
 ---
 
@@ -448,13 +448,13 @@ Sub-phases:
   pending real operational evidence** (no synthetic digests / fabricated degraded nights —
   operator decision). F-4 not fully closed. Closeout:
   [`09_logs/2026-06-30_phaseF_F4_3_closeout.md`](../09_logs/2026-06-30_phaseF_F4_3_closeout.md).
-* **F-5 — Home Intelligence** — IN PROGRESS. `home_model.md` (F5.1) + G-F5-07
+* **F-5 — Home Intelligence** — **CLOSED 2026-07-16 (at WM-6; G-F5-04 PASS on real evidence, chat + voice; R-F5-A closed; closeout `09_logs/2026-07-16_WM6_G-F5-04_closeout.md`).** `home_model.md` (F5.1) + G-F5-07
   Layer A + F5.2 Layer B done 2026-06-30. **F5.3 executed 2026-07-01: G-F5-03
   PASS, G-F5-04 FAIL (real validation)** — the F-3a Filter injects the Degraded
   Home State correctly, but the model routes status questions to tools
   (`system_status`, home-blind) instead of the injected block. Logged as
-  **R-F5-A** (awareness-consumption gap), **deferred to a future gated phase**;
-  no fix/redesign applied. Apply log:
+  **R-F5-A** (awareness-consumption gap), **deferred to Phase WM (its remedy) — closed at WM-6, 2026-07-16**;
+  no fix/redesign in F-5 (the World Model is the structural fix). F5.3 apply log:
   [`09_logs/2026-07-01_phaseF_F5_3_applied.md`](../09_logs/2026-07-01_phaseF_F5_3_applied.md).
 * **F-6 — Voice Quality** — Whisper upgrade; STT shim migration; latency
   baseline. Parallel track; no dependency on F-2..F-5.
@@ -481,7 +481,7 @@ evaluates — architectural separation), `bin/aurora-context` renders home aware
 `_evaluator/tests/` regression suite), `home_model.md` → redirect, `aurora-context.json`
 schema preserved (AD-20/INV-18), `overall_status` platform-only until WM-5 (apply log
 `09_logs/2026-07-13_WM4_evaluator_cutover_applied.md`) — **STOPPED at the git gate**;
-G-WM4-6 (first unattended nightly cycle) open, closes on 2026-07-14 real evidence; WM-5 next.
+G-WM4-6 (first unattended nightly cycle) closed 2026-07-14; WM-5 (consumer convergence) done 2026-07-14; **WM-6 (close G-F5-04) done 2026-07-16 — G-F5-04 CLOSED / R-F5-A · F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`).
 Each phase: real-data validation, documentation, **STOP at the git gate**. Hashes are the
 post-sanitization canonical hashes (history rewritten + republished 2026-07-10; see
 `09_logs/2026-07-10_repo_history_sanitization_reconciliation.md`).
@@ -494,11 +494,11 @@ post-sanitization canonical hashes (history rewritten + republished 2026-07-10; 
 | WM-3 | Loader/compiler (`_loader/`); run parallel to `HOME_RULES` | **real-data parity — PASS 2026-07-02; committed + pushed (`8d653fea`) — git gate closed** |
 | WM-4 | Evaluation engine consumes the model; retire `HOME_RULES` | **committed + pushed (`476e0ae8`); G-WM4-1…6 PASS — G-WM4-6 closed 2026-07-14 (first unattended cycle); WM-4 complete** |
 | WM-5 | Consumer convergence (Filter, home-aware `system_status`, voice line) | **implemented + validated 2026-07-14 — G-WM5-1…5 PASS on real data (§1.5 low-not-escalated proven; `system_status` webui.db install operator-gated); at the git gate** |
-| WM-6 | **Reopen & close G-F5-04** (real induced anomaly, chat + voice) | **R-F5-A / F-5 closed** |
+| WM-6 | **Reopen & close G-F5-04** (real induced anomaly, chat + voice) | **DONE 2026-07-16 — G-F5-04 CLOSED, PASS (chat @ ai.amarolab.es + voice @ ha.amarolab.es/AURORA v1); R-F5-A / F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`) |
 | WM-7+ | Extend regions (infrastructure, self, projects); foundation for proactive intelligence | per-region validation |
 
-**R-F5-A and F-5 completion are carried under Phase WM** (they close at WM-6). The earlier
-"deferred to a future gated phase" for R-F5-A now resolves to **Phase WM**.
+**R-F5-A and F-5 completion were carried under Phase WM** (closed at WM-6, 2026-07-16). The earlier
+"deferred to a future gated phase" for R-F5-A resolved to **Phase WM** and is now **closed**.
 
 ---
 

@@ -84,6 +84,6 @@ explanatory. See [`_schema/entity.schema.md`](_schema/entity.schema.md).
   Validated on real data (G-WM5-1…5); a low-only home stays `overall_status: ok` (§1.5 — "silence
   is informative"). Apply log:
   [`../../09_logs/2026-07-14_WM5_consumer_convergence_applied.md`](../../09_logs/2026-07-14_WM5_consumer_convergence_applied.md).
-- **WM-6 (next):** reopen & close **G-F5-04** on a real induced anomaly (chat + voice) — the R-F5-A closure.
+- **WM-6 (done 2026-07-16):** reopened & **CLOSED G-F5-04** on a real induced anomaly (chat @ `ai.amarolab.es` + voice @ `ha.amarolab.es`/AURORA v1) — the R-F5-A closure; **R-F5-A / F-5 CLOSED**. Run 1 aborted (wrong endpoint, HA Assist) then corrected; findings F-LOCALE / F-VOICE-CONTRADICT / F-PLANT-FLAP / F-ASSIST-BLIND recorded. Closeout: [`../../09_logs/2026-07-16_WM6_G-F5-04_closeout.md`](../../09_logs/2026-07-16_WM6_G-F5-04_closeout.md).
 
 Roadmap: [`../../00_overview/ROADMAP.md`](../../00_overview/ROADMAP.md) → Phase WM.
