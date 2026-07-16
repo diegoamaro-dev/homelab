@@ -2,7 +2,19 @@
 
 > **Milestone:** Aurora Foundation Milestone  
 > **Date:** 2026-06-28  
-> **Status:** Stable baseline. Knowledge platform complete. Operational intelligence (Phase F) begins next.
+> **Status:** Historical record of the 2026-06-28 platform baseline — **extended, not replaced, by Phase F and WM-0…WM-6.** Current foundation record: [Aurora v1.0 Foundation (2026-07-16)](../09_logs/2026-07-16_AURORA_V1_FOUNDATION.md).
+
+---
+
+> **Update — 2026-07-16 (Aurora v1.0 Foundation).** This document remains the record of the
+> **2026-06-28 platform baseline** (knowledge platform, tool surface, F-1 system prompt). What it
+> anticipated below — *"Phase F will add situational awareness, operational memory, and home
+> intelligence"* — has since been delivered: **F-3** (situational awareness), **F-4** (operational
+> memory, implemented), and **F-5 + WM-0…WM-6** (home intelligence via the World Model, AD-21),
+> with **G-F5-04 closed and R-F5-A resolved at WM-6** (`b4fa1a5b`). This baseline was therefore
+> **extended — not replaced or invalidated**. Current foundation record:
+> [`../09_logs/2026-07-16_AURORA_V1_FOUNDATION.md`](../09_logs/2026-07-16_AURORA_V1_FOUNDATION.md)
+> (milestone commit `2cee8a00`).
 
 ---
 

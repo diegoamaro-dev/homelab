@@ -2,7 +2,7 @@
 
 - **Date:** 2026-07-16   **Type:** milestone / chapter closeout (documentation only)
 - **State of record:** `origin/main` @ `b4fa1a5b` (WM-6 — G-F5-04 closed).
-- **Status:** **PREPARED — not committed / pushed / tagged.** No code, prompt, tool, schema, loader, database or architecture change.
+- **Status:** **RECORDED — committed `2cee8a00`, pushed to `origin/main` (2026-07-16); tag pending.** No code, prompt, tool, schema, loader, database or architecture change.
 - **Authority:** [`../04_ai_system/AURORA_VISION.md`](../04_ai_system/AURORA_VISION.md) §1/§2/§9 · [`../00_overview/ROADMAP.md`](../00_overview/ROADMAP.md) · [`../04_ai_system/world_model_architecture.md`](../04_ai_system/world_model_architecture.md) (AD-21).
 
 ---
@@ -71,9 +71,11 @@ The enhancements above are sequenced so a hardened, trustworthy foundation comes
 
 ---
 
-## 7. Status & tag (recommendation only — not executed)
+## 7. Status & tag (tag pending)
 
-This document is prepared as the chapter closeout; **nothing is committed, pushed, or tagged.** Recommendation: after this document is committed and pushed, apply an **annotated** tag `aurora-v1.0-foundation` to that commit (see the accompanying review for the rationale and the alternative "wait" argument). Reconcile at the same time with the still-pending **WM-0 freeze tag** so tag policy is consistent.
+This document was **committed as `2cee8a00` and pushed to `origin/main`** (2026-07-16). **No tag has been created — the tag remains pending.**
+
+Recommendation: apply an **annotated** tag `aurora-v1.0-foundation` once the reconciliation this milestone triggered is complete — [`../04_ai_system/AURORA_FOUNDATION.md`](../04_ai_system/AURORA_FOUNDATION.md) (its status predated Phase F) and [`../00_overview/ARCHITECTURE_MILESTONES.md`](../00_overview/ARCHITECTURE_MILESTONES.md) (milestone registered) — so the tag points at a self-consistent state. Tagging milestones is established practice here (`aurora-foundation`, `phase-e-complete`, `phase-f3-complete`, `phase-f4-foundation`); tagging lapsed after 2026-06-30 and resumes with this milestone. Reconcile at the same time with the still-pending **WM-0 freeze tag** so tag policy is consistent.
 
 ---
 
