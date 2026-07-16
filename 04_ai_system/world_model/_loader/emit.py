@@ -17,7 +17,8 @@ import json
 import os
 from pathlib import Path
 
-from . import ARTIFACT_VERSION, LOADER_VERSION, SUPPORTED_SCHEMA_VERSIONS, ast
+from . import (ARTIFACT_VERSION, LOADER_VERSION, SUPPORTED_SCHEMA_VERSIONS, ast,
+               resolution)
 from .model import ParsedEntity, domain_of
 from .registry import Registries
 
@@ -164,6 +165,11 @@ def build(entities: list[ParsedEntity], reg: Registries, *, docs_commit: str | N
     regions: dict[str, int] = {}
     for e in entities:
         regions[e.region] = regions.get(e.region, 0) + 1
+    # ER-1: additive `resolution` registry. ARTIFACT_VERSION stays 1 (D-ER-7) —
+    # additive keys are ignored by the evaluator, whereas a version bump would
+    # silently degrade awareness instead of failing loud. Omitted entirely when no
+    # entity carries aliases, so the artifact is unchanged for an alias-free model.
+    res = resolution.build(entities)
     return {
         "_comment": _HEADER,
         "artifact_version": ARTIFACT_VERSION,
@@ -178,6 +184,7 @@ def build(entities: list[ParsedEntity], reg: Registries, *, docs_commit: str | N
         "emission_order": list(reg.emission_order),
         "entities": {e.id: _entity_json(e) for e in entities},
         "graph": _graph_json(entities),
+        **({"resolution": res} if res else {}),
         "stats": {
             "entities": len(entities),
             "active": sum(1 for e in entities if e.status == "active"),

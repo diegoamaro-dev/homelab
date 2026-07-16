@@ -15,11 +15,16 @@ byte-deterministic, and evaluation semantics are explicit. Exactly:
   N7 Ordering               : severity_rank/emission_order stamped; entities by id;
                               affects lists sorted.
   N8 Whitespace / id        : ids/tokens trimmed.
+  N9 Aliases (ER-1)         : authored aliases canonicalised to their lookup keys via
+                              the frozen D-ER-8 spec (`resolution.normalize_alias`), so
+                              Validate compares canonical forms (checks 12d/12e) and
+                              Emit is byte-deterministic. Naming only — never
+                              authorization (INV-17 / D-ER-9).
 """
 
 from __future__ import annotations
 
-from . import ast
+from . import ast, resolution
 from .model import ParsedEntity
 from .registry import Registries
 
@@ -54,6 +59,7 @@ def normalize(entities: list[ParsedEntity], reg: Registries) -> list[ParsedEntit
             elif e.baseline["kind"] == "state" and isinstance(e.baseline["state"], str):
                 e.baseline["state"] = e.baseline["state"].lower()
         e.affects = sorted(e.affects)                                                    # N7
+        e.aliases_normalized = resolution.normalized_pairs(e)                            # N9
 
     entities.sort(key=lambda x: x.id)                                                     # N7 (deterministic emit)
     return entities

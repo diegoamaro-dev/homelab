@@ -369,12 +369,23 @@ Closeout document:
 ## Next Immediate Task
 
 **Current: Phase ER-1 — Deterministic Entity Resolution — design FROZEN 2026-07-16
-(operator-ratified), now Revision 2. ER-1.0 is committed + pushed** (defect record
-`c147e632` → architecture freeze `38eb8262`); **the Revision 2 amendment — D-ER-11 (aliases
-mirror the `binding` shape) + D-ER-12 (an alias may equal its own entity identifier, never
-another's) — is at the git gate. Next: ER-1.1** (schema `aliases`, additive, docs only;
-gate G-ER-1). Rev 2 amendment log:
-[`../09_logs/2026-07-16_ER1_freeze_rev2.md`](../09_logs/2026-07-16_ER1_freeze_rev2.md).
+(operator-ratified), now Revision 2. Published:** defect record `c147e632` → architecture
+freeze `38eb8262` → **Revision 2 amendment** `3ebf59d1` (D-ER-11 aliases mirror the `binding`
+shape; D-ER-12 an alias may equal its own entity identifier, never another's) → **ER-1.1**
+`f983a04f` (additive `aliases` contract + the six bound entities' alias sets). **ER-1.2
+(loader) is implemented + validated and at the git gate**: D-ER-8 normalization, fail-loud
+check 12, and the additive `resolution` registry (33 aliases → 8 targets) — `LOADER_VERSION`
+0.2.0, **`ARTIFACT_VERSION` still 1**. **G-ER-1 CLOSED; G-ER-2 loader half PASS; G-ER-5
+implementation-validated but NOT closed** — operational non-regression evidence is pending the
+next unattended 04:15 cycle. **Next: ER-1.3** (projection emitter + `aurora-entities.json`;
+gate G-ER-6). Logs:
+[`../09_logs/2026-07-16_ER1_freeze_rev2.md`](../09_logs/2026-07-16_ER1_freeze_rev2.md) ·
+[`../09_logs/2026-07-16_ER1_1_aliases_applied.md`](../09_logs/2026-07-16_ER1_1_aliases_applied.md) ·
+[`../09_logs/2026-07-16_ER1_2_loader_applied.md`](../09_logs/2026-07-16_ER1_2_loader_applied.md).
+
+**Nothing has changed Aurora's behaviour yet.** The tools remain v0.1.0; the aliases are
+compiled but no consumer reads them; the 13 historical unverified writes would still be
+reported as successful today. ER-1 changes reality at **ER-1.4b**, when ER-1-C1 lands.
 
 ER-1 closes the natural-language → `entity_id` gap **and** makes writes honest. Real audit
 evidence: **13 unverified writes across 7 non-existent entity ids were reported as

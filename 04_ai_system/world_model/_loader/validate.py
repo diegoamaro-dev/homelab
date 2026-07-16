@@ -11,12 +11,19 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from . import ast, authorization
+from . import ast, authorization, resolution
 from .model import (BOUNDARIES, KINDS, PRIORITIES, REGIONS, STATUSES,
                     ParsedEntity, is_kebab, is_snake)
 from .registry import Registries
 
 SUPPORTED_SCHEMA_VERSIONS = (1,)
+
+# ER-1 check 12c — an alias must not be a literal HA entity_id. Mirrors the tool
+# boundary's grammar; id-shaped input never reaches the alias path (D-ER-2), so
+# such an alias would be dead and misleading.
+_ID_SHAPED = re.compile(r"^[a-z_]+\.[a-z0-9_]+$")
+_ALIAS_MIN_LEN = 2
+_ALIAS_MAX_LEN = 64
 
 
 class ValidationError(ValueError):
@@ -243,10 +250,85 @@ class _V:
                 if col is None or not col.exposes_last_changed:
                     self.err(f"{e.id}: duration rule requires a collector exposing last_changed")
 
+    # 12 ── Aliases (ER-1; schema §5.1 12a–12f) ───────────────────────────────
+    def aliases(self) -> None:
+        """Fail-loud alias validation. Naming only — an alias never grants or
+        denies anything (INV-17 / D-ER-9); D-12 remains the sole authority."""
+        # 12f — archetype-level aliases. Defaults are merged into every member, so
+        # an archetype alias would fan out and collide by construction. Aliases are
+        # per-entity identity, never inherited. (Resolve already keeps defaults out
+        # of `fm`, so this is defence in depth against a future refactor.)
+        for a in self.archetypes.values():
+            if "aliases" in a.defaults:
+                self.err(f"archetype {a.archetype_id!r}: archetype-level aliases are "
+                         f"rejected (12f) — aliases are per-entity identity")
+
+        seen: dict[str, tuple[str, str]] = {}          # normalized -> (entity, signal)
+        for e in self.entities:
+            raw = e.fm.get("aliases")
+            if raw is None:
+                continue
+
+            # 12a — shape mirrors `binding` (D-ER-11).
+            if e.binding_shape is None:
+                self.err(f"{e.id}: declares aliases but has no binding (12a)")
+                continue
+            if e.binding_shape == "single" and not isinstance(raw, list):
+                self.err(f"{e.id}: single-signal binding requires a flat alias list (12a)")
+                continue
+            if e.binding_shape == "multi" and not isinstance(raw, dict):
+                self.err(f"{e.id}: multi-signal binding requires a per-signal alias map "
+                         f"— there is no implicit `state` (12a, D-ER-11)")
+                continue
+
+            for signal, names in resolution.authored_map(e).items():
+                if signal not in e.binding_signals:
+                    self.err(f"{e.id}: alias signal {signal!r} is not a declared "
+                             f"binding signal (12a)")
+                    continue
+                # 12b — type/bounds.
+                if not isinstance(names, list) or not names:
+                    self.err(f"{e.id}/{signal}: aliases must be a non-empty list (12b)")
+                    continue
+                for n in names:
+                    if not isinstance(n, str) or not n.strip():
+                        self.err(f"{e.id}/{signal}: alias {n!r} must be a non-empty "
+                                 f"string (12b)")
+                        continue
+                    norm = resolution.normalize_alias(n)
+                    if not (_ALIAS_MIN_LEN <= len(norm) <= _ALIAS_MAX_LEN):
+                        self.err(f"{e.id}/{signal}: alias {n!r} normalizes to "
+                                 f"{len(norm)} chars (bounds {_ALIAS_MIN_LEN}-"
+                                 f"{_ALIAS_MAX_LEN}) (12b)")
+                    # 12c — not id-shaped. Checked on the RAW authored string:
+                    # D-ER-8 collapses `.` to a space, so a normalized alias can
+                    # never be id-shaped and testing it would be vacuous.
+                    if _ID_SHAPED.match(n.strip().casefold()):
+                        self.err(f"{e.id}/{signal}: alias {n!r} is id-shaped — a "
+                                 f"literal entity_id is a dead alias (12c, D-ER-2)")
+                    # 12d — global normalized uniqueness (the lookup table is flat).
+                    if norm in seen:
+                        o = seen[norm]
+                        self.err(f"alias collision {norm!r}: {o[0]}/{o[1]} and "
+                                 f"{e.id}/{signal} (12d)")
+                    else:
+                        seen[norm] = (e.id, signal)
+
+        # 12e — an alias MAY equal its OWN entity's identifier (harmless
+        # redundancy: both denote the same thing), but MUST NOT equal a DIFFERENT
+        # entity's identifier (D-ER-12).
+        for e in self.entities:
+            norm_id = resolution.normalize_alias(e.id)
+            owner = seen.get(norm_id)
+            if owner and owner[0] != e.id:
+                self.err(f"{owner[0]}/{owner[1]}: alias {norm_id!r} is a different "
+                         f"entity's identifier ({e.id!r}) (12e, D-ER-12)")
+
     def run(self) -> None:
         for check in (self.structural, self.grammar, self.token, self.referential,
                       self.safety, self.boundary, self.coverage, self.prose,
-                      self.lifecycle, self.version, self.authz, self.duration_collector):
+                      self.lifecycle, self.version, self.authz, self.duration_collector,
+                      self.aliases):
             check()
         if self.problems:
             raise ValidationError(self.problems)

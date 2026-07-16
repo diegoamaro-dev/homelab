@@ -14,6 +14,12 @@ Conforms to the frozen architecture (AD-21, world_model_architecture.md) and the
 operative schema contract (_schema/entity.schema.md). See INV-WM3-A in ast.py.
 """
 
-LOADER_VERSION = "0.1.0"
+# 0.2.0 (ER-1.2) — minor: additive. New validation contract (check 12, fail-loud)
+# + the additive `resolution` registry. No breaking change to any consumer.
+LOADER_VERSION = "0.2.0"
+# STAYS 1 (D-ER-7). `resolution` is additive. The evaluator pins
+# SUPPORTED_ARTIFACT_VERSIONS = (1,) and bin/aurora-context CATCHES an artifact
+# error and fails soft to "Home State: Unavailable" — so a bump would not fail
+# loud, it would silently degrade awareness nightly and undo the WM-6 closure.
 ARTIFACT_VERSION = 1
 SUPPORTED_SCHEMA_VERSIONS = (1,)

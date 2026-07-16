@@ -16,7 +16,9 @@ document.
 
 Last updated: 2026-07-16 (**Phase ER-1 — Deterministic Entity Resolution — design FROZEN
 2026-07-16, now Revision 2**; ER-1.0 committed + pushed (`c147e632` → `38eb8262`); the
-Revision 2 amendment (D-ER-11 + D-ER-12) is at the git gate; spec
+Revision 2 amendment (D-ER-11 + D-ER-12) committed + pushed (`3ebf59d1`); ER-1.1 (aliases
+contract) committed + pushed (`f983a04f`); **ER-1.2 (loader) implemented + validated — at the
+git gate**; spec
 `04_ai_system/entity_resolution_layer.md`. Phase
 D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
@@ -555,9 +557,9 @@ Each sub-phase: real-data validation, documentation, **STOP at the git gate**.
 | Phase | Objective | Gate |
 |---|---|---|
 | ER-1.0 | Freeze (spec; decision register D-ER-1…10 + C1; ROADMAP slot; triad; freeze log). The 2026-07-14 defect record is committed separately, immediately before — history reads *defect discovered → design frozen* | **frozen 2026-07-16 — committed + pushed**: defect record `c147e632` → architecture freeze `38eb8262` |
-| ER-1 Rev 2 | Freeze amendment — ratify **D-ER-11** (alias shape) + **D-ER-12** (alias vs entity identifier); correct the record on check-12 semantics | **ratified 2026-07-16 — at the git gate** (`09_logs/2026-07-16_ER1_freeze_rev2.md`) |
-| ER-1.1 | Schema `aliases` (additive, `schema_version` unchanged) + entity aliases (docs only) | **applied + validated 2026-07-16 — G-ER-1 PASS within ER-1.1 scope** (33 unique normalized aliases → 8 `ha_entity` targets across the 6 bound entities; `schema_version` unchanged; aliases proven **inert** — a fresh compile differs from the on-disk artifact only in `provenance.sha256`); **at the git gate** (`09_logs/2026-07-16_ER1_1_aliases_applied.md`). Fail-loud enforcement lands at ER-1.2 |
-| ER-1.2 | Loader: normalizer, validation, `resolution` registry + tests | G-ER-1, G-ER-2, G-ER-5 |
+| ER-1 Rev 2 | Freeze amendment — ratify **D-ER-11** (alias shape) + **D-ER-12** (alias vs entity identifier); correct the record on check-12 semantics | **ratified 2026-07-16 — committed + pushed** (`3ebf59d1`; `09_logs/2026-07-16_ER1_freeze_rev2.md`) |
+| ER-1.1 | Schema `aliases` (additive, `schema_version` unchanged) + entity aliases (docs only) | **applied + validated 2026-07-16 — G-ER-1 PASS within ER-1.1 scope** (33 unique normalized aliases → 8 `ha_entity` targets across the 6 bound entities; `schema_version` unchanged; aliases proven **inert** — a fresh compile differs from the on-disk artifact only in `provenance.sha256`); **committed + pushed** (`f983a04f`; `09_logs/2026-07-16_ER1_1_aliases_applied.md`). Fail-loud enforcement lands at ER-1.2 |
+| ER-1.2 | Loader: normalizer, validation, `resolution` registry + tests | **implemented + validated 2026-07-16 — at the git gate** (`09_logs/2026-07-16_ER1_2_loader_applied.md`). **G-ER-1 CLOSED** (check 12 fail-loud in the real loader; every fault class rejected by test) · **G-ER-2 loader half PASS** (D-ER-8 table-driven + byte-stable registry) · **G-ER-5 implementation-validated, NOT closed** — operational non-regression pending the next unattended 04:15 cycle. 42 loader + 36 evaluator tests green; `artifact_version` still 1; `LOADER_VERSION` → 0.2.0 |
 | ER-1.3 | Projection emitter + `aurora-entities.json` runtime artifact | G-ER-6 |
 | ER-1.4a | Capture the v0.1.0 baseline, then `ha_get_state` v0.2.0 | G-ER-7 (read half) |
 | ER-1.4b | `ha_call_service` v0.2.0 (resolution + ER-1-C1) | G-ER-2/3/4, G-ER-7 (write half) |

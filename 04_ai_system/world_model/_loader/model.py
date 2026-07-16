@@ -70,6 +70,9 @@ class ParsedEntity:
     baseline: dict | None = None        # normalized {kind, ...}
     binding_shape: str | None = None    # "single" | "multi" | None
     binding_signals: dict = field(default_factory=dict)   # name -> backend map
+    # ER-1: signal -> [(authored, normalized)], stamped by Normalize N9 (D-ER-8).
+    # Shape mirrors `binding` (D-ER-11): single-signal → the reserved "state" key.
+    aliases_normalized: dict = field(default_factory=dict)
     # resolved:
     depends_on: list[str] = field(default_factory=list)
     affects: list[str] = field(default_factory=list)

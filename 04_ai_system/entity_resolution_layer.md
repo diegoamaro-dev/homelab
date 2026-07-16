@@ -411,11 +411,29 @@ No database migration, no container change, no cron change, no awareness path to
 optional `environment/daylight-time.md`. **Not touched:** `home/battery.md`,
 `home/firmware.md` (aspects, no `binding`).
 
-**Loader (6 + 1 new)** — `_loader/resolution.py` (**new**), `parse.py`, `normalize.py`,
-`resolve.py`, `validate.py`, `emit.py`, `__init__.py`.
+**Loader (4 + 1 new)** — `_loader/resolution.py` (**new** — D-ER-8 normalization,
+shape-aware alias extraction, registry builder), `normalize.py` (N9), `model.py`
+(`aliases_normalized`), `validate.py` (check 12), `emit.py` (additive `resolution`),
+`__init__.py` (`LOADER_VERSION` → 0.2.0).
 
-**Loader tests (1 new + 2 extended)** — `tests/test_resolution.py` (**new**),
-`test_validate.py`, `test_emit_determinism.py`.
+**Loader tests (1 new)** — `tests/test_resolution.py` (**new**, 23 tests).
+
+> **Inventory corrected at ER-1.2 against the implementation** (an
+> implementation-inventory correction, **not** an architectural decision — the
+> decisions in §3 are unchanged). The first draft over-listed three files that
+> reality proved need no change:
+> - **`parse.py`** — frontmatter is loaded wholesale into `.fm`, so `aliases` is
+>   already available; alias *shape* is a validation concern (12a), not a
+>   parse-surface error.
+> - **`resolve.py`** — the archetype merge writes to `.archetype_applied` and
+>   **never** mutates `.fm`, so an archetype alias is structurally invisible to the
+>   registry (which reads only `.fm`). The explicit guard is check **12f** in
+>   `validate.py`, which runs **before** Emit — so nothing is ever written.
+> - **`test_emit_determinism.py`** — it serialises and compares the **whole**
+>   artifact, so it already covers any newly emitted key.
+>
+> `model.py` was **added** to the inventory (it carries the `aliases_normalized`
+> field stamped by N9).
 
 **Tools (2 + 1 new + 1 harness)** — `tools/ha_call_service.py` → **v0.2.0**,
 `tools/ha_get_state.py` → **v0.2.0**, `lib/entity_resolver.py` (**new**),
