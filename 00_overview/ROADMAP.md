@@ -14,7 +14,9 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-07-13 (Phase D-1 closed; **Phase RTX-1
+Last updated: 2026-07-16 (**Phase ER-1 — Deterministic Entity Resolution — design FROZEN
+2026-07-16**, ER-1.0 at the git gate; spec `04_ai_system/entity_resolution_layer.md`. Phase
+D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
 service + RTX-1.6 endpoint swap (failover proxy, Torre
 primary + UM790 fallback) all complete. The UM790 front
@@ -499,6 +501,65 @@ post-sanitization canonical hashes (history rewritten + republished 2026-07-10; 
 
 **R-F5-A and F-5 completion were carried under Phase WM** (closed at WM-6, 2026-07-16). The earlier
 "deferred to a future gated phase" for R-F5-A resolved to **Phase WM** and is now **closed**.
+
+---
+
+## Phase ER-1 — Deterministic Entity Resolution
+
+**Design FROZEN 2026-07-16 (operator-ratified).** Full specification:
+[`../04_ai_system/entity_resolution_layer.md`](../04_ai_system/entity_resolution_layer.md);
+freeze log [`../09_logs/2026-07-16_ER1_freeze.md`](../09_logs/2026-07-16_ER1_freeze.md);
+defect record [`../09_logs/2026-07-14_ER1_entity_resolution_finding.md`](../09_logs/2026-07-14_ER1_entity_resolution_finding.md).
+
+**Mission:** close the gap between natural language and real Home Assistant `entity_id`s, and
+make every write **honest**. ER-1 fixes two independent defects: natural-language requests do
+not resolve to the real id (the model invents plausible ids), and a write to a non-existent
+entity in a **live** HA domain returns 200 + an empty changed-states list, which
+`ha_call_service` v0.1.0 reports as `result_code:"ok"` — **13 unverified writes across 7
+non-existent ids were reported as successful** (real audit evidence; all 7 re-probed
+2026-07-16 → HTTP 404). The read path is **not** defective (`ha_get_state` already answers
+`not_found`).
+
+ER-1 **amends no frozen decision** — AD-21 §7 already anticipates the entity registry; ER-1
+implements that intent. **No architecture amendment.** Independent of Phase WM (WM validated
+awareness convergence; ER-1 covers actuation, which WM never validated). **Not WM-5.5** — no
+work is retroactively inserted into a published phase.
+
+Key ratified decisions (register: spec §3):
+
+* **D-ER-9 — no write-surface restriction.** A syntactically valid `entity_id` follows the
+  current path **exactly as today**; **D-12 remains the sole authorization authority**; the
+  World Model registry is a name-resolution convenience, **never a write allowlist**. Any
+  stronger restriction is a **future architectural decision**, out of ER-1 scope.
+* **ER-1-C1 — mandatory write verification (after-only).** A tool **must never claim success
+  unless the resulting HA state has actually been verified**. ER-1 does **not** change *when*
+  a POST is issued — only what the tool claims afterwards.
+* **D-ER-10 — closed expected-state map** (`turn_on→on`, `turn_off→off`, `open_cover→open`,
+  `close_cover→closed`); every other service returns `applied_unverified`.
+* **D-ER-7 — `ARTIFACT_VERSION` stays 1** (additive `resolution` key) — a bump would silently
+  degrade home awareness rather than fail loud, and quietly undo the WM-6 / G-F5-04 closure.
+
+Each sub-phase: real-data validation, documentation, **STOP at the git gate**.
+
+| Phase | Objective | Gate |
+|---|---|---|
+| ER-1.0 | Freeze (spec; decision register D-ER-1…10 + C1; ROADMAP slot; triad; freeze log). The 2026-07-14 defect record is committed separately, immediately before — history reads *defect discovered → design frozen* | **frozen 2026-07-16 — at the git gate** |
+| ER-1.1 | Schema `aliases` (additive, `schema_version` unchanged) + entity aliases (docs only) | G-ER-1 |
+| ER-1.2 | Loader: normalizer, validation, `resolution` registry + tests | G-ER-1, G-ER-2, G-ER-5 |
+| ER-1.3 | Projection emitter + `aurora-entities.json` runtime artifact | G-ER-6 |
+| ER-1.4a | Capture the v0.1.0 baseline, then `ha_get_state` v0.2.0 | G-ER-7 (read half) |
+| ER-1.4b | `ha_call_service` v0.2.0 (resolution + ER-1-C1) | G-ER-2/3/4, G-ER-7 (write half) |
+| ER-1.5 | Reconciliation + closeout | — |
+
+Gates **G-ER-1…7** (spec §6). **G-ER-3b:** *historical unverified writes must never again be
+reported as successful* — every historical case must produce an honest `verified` or
+`applied_unverified` result. **G-ER-6:** projection-failure rehearsal (G-D6 discipline).
+**G-ER-7:** backward compatibility — every operation that already works today with real HA
+entity_ids behaves equivalently before and after ER-1.
+
+Out of scope (explicit): the frozen F-1 `params.system`; the HA voice path (HA Assist has its
+own alias mechanism; the printer is intentionally not voice-exposed); D-12 allowlist changes;
+the awareness pipeline (INV-18 / AD-20 / INV-19 all hold).
 
 ---
 

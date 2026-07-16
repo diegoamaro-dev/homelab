@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-13
+Last updated: 2026-07-16 (Phase ER-1 design freeze — ER-1.0)
 
 ## Purpose
 
@@ -368,7 +368,30 @@ Closeout document:
 
 ## Next Immediate Task
 
-**Current: World Model architecture FROZEN 2026-07-01 (AD-21).** **Phase WM-1**
+**Current: Phase ER-1 — Deterministic Entity Resolution — design FROZEN 2026-07-16
+(operator-ratified); ER-1.0 at the git gate. Next: ER-1.1** (schema `aliases`, additive,
+docs only; gate G-ER-1).
+
+ER-1 closes the natural-language → `entity_id` gap **and** makes writes honest. Real audit
+evidence: **13 unverified writes across 7 non-existent entity ids were reported as
+successful** (`result_code:"ok"`; all 7 re-probed 2026-07-16 → HTTP 404). The read path is
+**not** defective (`ha_get_state` already answers `not_found`), so reads cut over before
+writes. ER-1 **amends no frozen decision** — AD-21 §7 already anticipates the entity registry;
+ER-1 implements it. **Independent of Phase WM; not WM-5.5.** Decisions of record: **D-ER-9**
+(no write-surface restriction — a valid `entity_id` follows the current path exactly as
+today; **D-12 stays the sole authorization authority**; anything stronger is a future
+architectural decision), **ER-1-C1** (mandatory after-only write verification — never claim
+success unless the resulting HA state was verified; *when* a POST is issued does not change),
+**D-ER-10** (closed expected-state map `turn_on→on` / `turn_off→off` / `open_cover→open` /
+`close_cover→closed`; all other services → `applied_unverified`), **D-ER-7**
+(`ARTIFACT_VERSION` stays 1 — a bump would silently degrade home awareness instead of failing
+loud). Gates G-ER-1…7; **G-ER-3b**: historical unverified writes must never again be reported
+as successful. Spec:
+[`../04_ai_system/entity_resolution_layer.md`](../04_ai_system/entity_resolution_layer.md);
+freeze log: [`../09_logs/2026-07-16_ER1_freeze.md`](../09_logs/2026-07-16_ER1_freeze.md);
+roadmap: [`ROADMAP.md`](ROADMAP.md) → Phase ER-1.
+
+**Prior: World Model architecture FROZEN 2026-07-01 (AD-21).** **Phase WM-1**
 (`_schema/` foundation) **committed 2026-07-01** (`6e97c3fb`; apply log
 `09_logs/2026-07-01_WM1_schema_foundation_applied.md`). **Phase WM-2** (migrate
 `home_model.md` → 9 literate `home/`+`environment/` entities + `_schema/collectors.md`,
