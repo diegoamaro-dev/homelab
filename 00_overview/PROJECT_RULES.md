@@ -164,6 +164,92 @@ Never document future architecture as if it already exists.
 
 ---
 
+# Hardware-Agnostic Platform
+
+**AMAROLAB is a hardware-agnostic platform.**
+
+```
+Aurora must never depend on specific hardware.
+Aurora depends on capabilities.
+Hardware provides capabilities.
+```
+
+A **capability** is something Aurora needs done (generate a reply, transcribe speech, embed
+a document). A **provider** is a thing that does it. Aurora names the first and never the
+second.
+
+Rules:
+
+1. **Aurora requests capabilities, never hardware.** No hostname, IP, GPU vendor,
+   accelerator name or machine nickname belongs in a tool, a prompt, the World Model, or an
+   awareness artifact. Hardware identity is legitimate in exactly two places: the provider
+   selection layer, whose job is to know, and documentation, whose job is to describe.
+
+2. **Hardware is an interchangeable implementation provider.** Providers may differ in
+   **speed, availability and cost**. They must **never differ in meaning**. Two
+   providers are interchangeable only if their outputs are equivalent for Aurora's purpose —
+   established on real data before use, never assumed from a shared API. A substitution that
+   changes what Aurora *means* is not a fallback; it is a silent behaviour change.
+
+3. **Infrastructure upgrades must extend Aurora, never redesign Aurora.** New infrastructure
+   is added by **registering a capability provider** — never by modifying Aurora. Migration
+   is a policy change; rollback is repointing selection. **If a hardware change forces an
+   edit to a tool, a prompt, the World Model or a schema, the architecture is wrong, not the
+   hardware** — that edit is the defect signal.
+
+4. **Provider selection must support automatic evolution.** Selection must be able to take
+   advantage of better hardware without Aurora being told: an equivalent, local, faster
+   provider should simply be preferred once registered. **Bounded to one fidelity tier** —
+   selection may automatically become *faster*, never automatically *different*. A
+   materially better or worse model is an operator decision on measured evidence, never a
+   side-effect of a machine appearing.
+
+5. **No provider, no invention.** Where an equivalent provider is unavailable, degrade
+   honestly or fail loud. Never substitute across fidelity tiers to manufacture an answer —
+   that trades a visible outage for an invisible behaviour change. Every capability Aurora
+   depends on has an always-on provider, or Aurora does without it honestly.
+
+6. **This rule grants hardware independence, not trust-boundary independence.** The two are
+   different axes; this rule moves only the first. **Compute providers may evolve freely;
+   they must remain inside the AMAROLAB trust boundary.** Aurora is **local-first** and this
+   rule does not touch that: *Everything local. No external LLM calls.* stands unaffected.
+   Inside the boundary: operator-controlled nodes — UM790, RTX workstation, NAS AI nodes,
+   Jetson, Ryzen AI, Apple Silicon, future NPUs, and operator-controlled remote nodes reached
+   over the AMAROLAB private network (VPN / Tailscale). **Excluded: third-party cloud
+   inference providers** — not because they are unanticipated hardware, but because they are
+   **not a hardware question at all**. The trust boundary is the **first filter on
+   candidates, never a preference**, and is never traded for speed. **Changing the trust
+   boundary is a separate architectural decision; this rule must never be cited as its
+   justification.**
+
+**Why.** Hardware is the most volatile layer AMAROLAB has; Aurora's tools, prompts, World
+Model and knowledge are the most durable. Coupling them lets the volatile layer destabilise
+the durable one, and makes every upgrade a risk to behaviour that took real gates and real
+evidence to establish. Aurora's design cost must scale with **capabilities**, not with
+**machines** — hardware growth is O(1) on Aurora, indefinitely.
+
+**The rule codifies existing practice.** RTX-1.6 already ran the experiment: a **≈17.6×**
+compute change (UM790 CPU → Torre RTX 5070) reached Aurora as an **endpoint change** — zero
+tools, prompts or model entries touched — validated across eleven gates. The `ollama-proxy`
+is the deployed instance: two providers, automatic fallback, the same model id on both sides.
+This is the same instinct as **AD-01** (awareness is a platform capability, not a UI plugin),
+applied at the opposite end: AD-01 decouples Aurora from its **consumers**; this decouples
+Aurora from its **providers**.
+
+**This rule authorizes no implementation.** It creates no phase, gate or backlog item. A
+capability with one provider needs no abstraction, and building one before a second provider
+exists is the overengineering *Infrastructure Philosophy* forbids. The principle is
+permanent; the machinery stays proportionate to the real provider count.
+
+Full architecture, capability contract, selection criteria, fallback states, migration
+recipe, risks and consequences:
+[`../01_architecture/hardware_agnostic_compute_architecture.md`](../01_architecture/hardware_agnostic_compute_architecture.md).
+
+**Origin:** operator direction, 2026-07-17, generalizing the RTX-1.6 endpoint swap
+(2026-06-27) from a one-off migration into a standing constraint.
+
+---
+
 # Current-State Rules
 
 CURRENT_STATE.md is the operational source of truth.
