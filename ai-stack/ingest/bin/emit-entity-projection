@@ -1,0 +1,259 @@
+#!/usr/bin/env python3
+"""
+emit-entity-projection — derive the Aurora entity projection from the compiled World Model.
+
+Phase ER-1.3. Consumer-side by **D-ER-5**: the loader emits the `resolution` registry
+*into* the compiled artifact and stays pure and in-tree; this script derives the runtime
+projection and owns the write into `ai-stack/aurora/` — the directory `bin/aurora-context`
+already owns.
+
+Input  : 04_ai_system/world_model/world_model.generated.json   (read-only, never written)
+Output : ai-stack/aurora/aurora-entities.json                  (gitignored runtime artifact)
+
+`ai-stack/aurora/` is bind-mounted **read-only** into the `openwebui` container at
+`/opt/aurora`. That mount is the ER-1.4 resolver's only channel to host-generated state —
+the World Model artifact is not visible in-container — which is why the projection must
+land here and nowhere else.
+
+NAMING ONLY — never authorization. The projection carries no authorization-adjacent field,
+so no consumer can mistake it for an allowlist. The `ha_call_service` allowlist (D-12,
+enforced at the tool boundary) remains the sole authority for what Aurora may actuate
+(INV-17), and the resolver is never consulted to permit or deny (D-ER-9).
+
+Not on the awareness path (INV-19): `bin/aurora-context` reads the *artifact* and never
+this projection, and this script never writes the artifact. ER-1.3 therefore introduces no
+new input to the nightly 04:15 cycle.
+
+Freshness — `00_overview/PROJECT_RULES.md` → *Content Provenance over Repository
+Chronology*:
+
+  * `provenance.resolution_sha256` — a canonical hash of the `resolution` block this
+    projection was derived from — is the **only** freshness authority. `--check` compares
+    it against the artifact's block as it now stands.
+  * `provenance.docs_commit` is **traceability only** and must never be read as freshness:
+    it goes stale on every unrelated commit while the content stays current.
+  * The hash covers the **`resolution` block**, not the artifact file. The loader stamps a
+    fresh `generated_at` on every run, so a whole-file hash would report stale after every
+    regeneration — including a no-op one.
+  * `--check` proves **one link of a two-link chain**: *docs → artifact* is the loader's
+    domain (`python3 -m _loader.cli --check`); *artifact → projection* is this script's. A
+    PASS means the projection matches the artifact **as it stands**, not that the artifact
+    matches the docs. Full-chain freshness requires both links.
+
+Exit codes:
+  0   emitted, or --check: projection current
+  2   FAIL LOUD — artifact missing / unreadable / carrying no valid `resolution` block.
+      Nothing written; the last-good projection is retained untouched.
+  3   --check only — projection absent, unreadable or stale. Re-run the emitter.
+
+Usage:
+  emit-entity-projection                        # derive + atomically write
+  emit-entity-projection --check                # compare only; writes nothing, ever
+  emit-entity-projection --artifact P --out Q   # overrides (G-ER-6 rehearsal uses these
+                                                # so the real artifact is never touched)
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+EMITTER_VERSION = "0.1.0"
+PROJECTION_VERSION = 1
+
+REPO = Path("/home/diego/homelab")
+DEFAULT_ARTIFACT = REPO / "04_ai_system" / "world_model" / "world_model.generated.json"
+DEFAULT_OUT = REPO / "ai-stack" / "aurora" / "aurora-entities.json"
+
+RC_OK = 0
+RC_FAIL_LOUD = 2
+RC_STALE = 3
+
+TAG = "emit-entity-projection"
+
+
+class ArtifactUnusable(Exception):
+    """The artifact cannot yield a projection. Fail loud; write nothing; retain last-good."""
+
+
+# ── Freshness ────────────────────────────────────────────────────────────────
+def canonical_sha256(block: dict) -> str:
+    """The freshness authority — a canonical hash of the `resolution` block.
+
+    Canonical form is fixed here and must never drift: `sort_keys=True`,
+    `ensure_ascii=False`, default separators. Emit and --check both hash through this
+    function, or the comparison they perform is meaningless.
+    """
+    return hashlib.sha256(
+        json.dumps(block, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+
+
+# ── Input ────────────────────────────────────────────────────────────────────
+def load_artifact(path: Path) -> dict:
+    if not path.exists():
+        raise ArtifactUnusable(f"artifact not found: {path}")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:                       # noqa: BLE001 — any parse fault is fatal
+        raise ArtifactUnusable(f"artifact is not readable JSON: {path} — {exc}") from exc
+    if not isinstance(data, dict):
+        raise ArtifactUnusable(f"artifact is not a JSON object: {path}")
+    return data
+
+
+def resolution_block(artifact: dict, path: Path) -> dict:
+    """The `resolution` block, or fail loud.
+
+    Ratified at ER-1.3: a missing or empty block is a **fail-loud** condition — never an
+    empty projection. An empty projection would silently turn every alias into a miss:
+    quieter than a stale one, and worse, because nothing would announce it. Silent
+    degradation is the defect class ER-1 exists to remove.
+
+    The block is absent whenever no entity carries aliases (`resolution.build()` returns
+    None) — which is also the shape of a loader rolled back below 0.2.0.
+    """
+    r = artifact.get("resolution")
+    if r is None:
+        raise ArtifactUnusable(
+            f"artifact carries no `resolution` block: {path} — refusing to emit an empty "
+            f"projection")
+    if not isinstance(r, dict):
+        raise ArtifactUnusable(f"`resolution` is not a JSON object: {path}")
+    for key in ("normalization", "aliases", "targets"):
+        if not r.get(key):
+            raise ArtifactUnusable(f"`resolution.{key}` is missing or empty: {path}")
+    return r
+
+
+# ── Projection ───────────────────────────────────────────────────────────────
+def build_projection(r: dict, artifact: dict) -> dict:
+    """The `resolution` block verbatim + provenance. Nothing else.
+
+    Verbatim is deliberate: the derivation stays auditable by diff, and "carries no
+    authorization field" stays structurally provable rather than argued. The rest of the
+    artifact (rules, graph, entity state) is awareness material the resolver must never
+    read — INV-19.
+    """
+    generator = artifact.get("generator") or {}
+    return {
+        "_comment": (
+            "GENERATED — DO NOT EDIT. Derived from world_model.generated.json by "
+            "ai-stack/ingest/bin/emit-entity-projection (ER-1.3). Regenerate; never "
+            "hand-edit (D-ER-4). Naming only: carries no authorization data and is never "
+            "an allowlist — D-12 is the sole authority (D-ER-9 / INV-17)."
+        ),
+        "projection_version": PROJECTION_VERSION,
+        "normalization": r["normalization"],
+        "aliases": r["aliases"],
+        "targets": r["targets"],
+        "stats": r.get("stats", {}),
+        "provenance": {
+            "_comment": (
+                "`resolution_sha256` is the ONLY freshness authority — see PROJECT_RULES.md "
+                "-> 'Content Provenance over Repository Chronology'. `docs_commit` is "
+                "TRACEABILITY ONLY and must NEVER be used as a freshness indicator: it goes "
+                "stale on every unrelated commit while the content stays current."
+            ),
+            "source": "world_model.generated.json",
+            "resolution_sha256": canonical_sha256(r),
+            "artifact_version": artifact.get("artifact_version"),
+            "loader_version": generator.get("loader_version"),
+            "docs_commit": generator.get("docs_commit"),
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "emitter_version": EMITTER_VERSION,
+        },
+    }
+
+
+def write_atomic(path: Path, content: str) -> None:
+    """Atomic replace, matching `bin/aurora-context`'s pattern (D-ER-5 — the consumer side
+    owns writes into `ai-stack/aurora/`).
+
+    The temp file is **pid-unique** rather than derived from the target's suffix. A
+    suffix-derived temp collides whenever two targets in one directory share a stem, and a
+    concurrent run can then publish one file's content under another file's name — see
+    finding **F-ER13-1**, recorded at ER-1.3 against `bin/aurora-context`. Same directory,
+    so `os.replace` is atomic: a reader sees the old inode or the new one, never a torn
+    file. On any failure the temp is removed, so a crashed run leaves no litter.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(content, encoding="utf-8")
+        with open(tmp, "rb") as f:
+            os.fsync(f.fileno())
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+# ── Modes ────────────────────────────────────────────────────────────────────
+def do_emit(artifact_path: Path, out_path: Path) -> int:
+    artifact = load_artifact(artifact_path)
+    r = resolution_block(artifact, artifact_path)
+    projection = build_projection(r, artifact)
+    write_atomic(out_path, json.dumps(projection, indent=2, ensure_ascii=False) + "\n")
+    stats = projection["stats"]
+    print(f"{TAG}: OK — wrote {out_path.name} ({stats.get('aliases')} aliases -> "
+          f"{stats.get('targets')} targets; resolution_sha256 "
+          f"{projection['provenance']['resolution_sha256'][:12]}…)", file=sys.stderr)
+    return RC_OK
+
+
+def do_check(artifact_path: Path, out_path: Path) -> int:
+    """Compare only — writes nothing, ever. Covers `artifact -> projection` and no other link."""
+    artifact = load_artifact(artifact_path)
+    expected = canonical_sha256(resolution_block(artifact, artifact_path))
+
+    if not out_path.exists():
+        print(f"{TAG}: STALE — projection absent: {out_path}", file=sys.stderr)
+        return RC_STALE
+    try:
+        projection = json.loads(out_path.read_text(encoding="utf-8"))
+        found = projection["provenance"]["resolution_sha256"]
+    except Exception as exc:                       # noqa: BLE001 — unreadable == regenerate
+        print(f"{TAG}: STALE — projection unreadable ({exc}); re-run to regenerate",
+              file=sys.stderr)
+        return RC_STALE
+
+    if found == expected:
+        print(f"{TAG}: OK — projection current (resolution_sha256 {expected[:12]}…)",
+              file=sys.stderr)
+        return RC_OK
+    print(f"{TAG}: STALE — projection {found[:12]}… != artifact {expected[:12]}…; "
+          f"re-run to regenerate", file=sys.stderr)
+    return RC_STALE
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(
+        prog=TAG,
+        description="Derive ai-stack/aurora/aurora-entities.json from the compiled World Model.")
+    ap.add_argument("--check", action="store_true",
+                    help="compare only; write nothing (rc 0 = current, 3 = stale/absent)")
+    ap.add_argument("--artifact", type=Path, default=DEFAULT_ARTIFACT,
+                    help="source artifact (default: the compiled World Model)")
+    ap.add_argument("--out", type=Path, default=DEFAULT_OUT,
+                    help="target projection (default: ai-stack/aurora/aurora-entities.json)")
+    args = ap.parse_args(argv)
+
+    try:
+        if args.check:
+            return do_check(args.artifact, args.out)
+        return do_emit(args.artifact, args.out)
+    except ArtifactUnusable as exc:
+        print(f"{TAG}: FAIL LOUD — {exc}", file=sys.stderr)
+        print(f"{TAG}: nothing written; last-good projection retained.", file=sys.stderr)
+        return RC_FAIL_LOUD
+
+
+if __name__ == "__main__":
+    sys.exit(main())

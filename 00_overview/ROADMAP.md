@@ -14,11 +14,12 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-07-16 (**Phase ER-1 — Deterministic Entity Resolution — design FROZEN
-2026-07-16, now Revision 2**; ER-1.0 committed + pushed (`c147e632` → `38eb8262`); the
+Last updated: 2026-07-17 (**Phase ER-1 — Deterministic Entity Resolution — design FROZEN
+2026-07-16, now Revision 3**; ER-1.0 committed + pushed (`c147e632` → `38eb8262`); the
 Revision 2 amendment (D-ER-11 + D-ER-12) committed + pushed (`3ebf59d1`); ER-1.1 (aliases
 contract) committed + pushed (`f983a04f`); **ER-1.2 (loader) committed + pushed (`b0fded73`) —
-G-ER-5 CLOSED 2026-07-17 on the first unattended 04:15 cycle**; spec
+G-ER-5 CLOSED 2026-07-17 on the first unattended 04:15 cycle**; **ER-1.3 (projection emitter +
+D-ER-13 / Revision 3) implemented + validated 2026-07-17 — G-ER-6 producer half CLOSED**; spec
 `04_ai_system/entity_resolution_layer.md`. Phase
 D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
@@ -510,14 +511,16 @@ post-sanitization canonical hashes (history rewritten + republished 2026-07-10; 
 
 ## Phase ER-1 — Deterministic Entity Resolution
 
-**Design FROZEN 2026-07-16 (operator-ratified) — now Revision 2.** Full specification:
+**Design FROZEN 2026-07-16 (operator-ratified) — now Revision 3.** Full specification:
 [`../04_ai_system/entity_resolution_layer.md`](../04_ai_system/entity_resolution_layer.md);
 freeze log [`../09_logs/2026-07-16_ER1_freeze.md`](../09_logs/2026-07-16_ER1_freeze.md);
 **Rev 2 amendment log** [`../09_logs/2026-07-16_ER1_freeze_rev2.md`](../09_logs/2026-07-16_ER1_freeze_rev2.md);
 defect record [`../09_logs/2026-07-14_ER1_entity_resolution_finding.md`](../09_logs/2026-07-14_ER1_entity_resolution_finding.md).
 A frozen design is amended only by a **gated, operator-ratified decision** — never by silent
 drift: **Rev 1** = the initial freeze (ER-1.0); **Rev 2** = **D-ER-11** + **D-ER-12**, ratified
-2026-07-16 when authoring the ER-1.1 alias sets surfaced two gaps (spec §3.5).
+2026-07-16 when authoring the ER-1.1 alias sets surfaced two gaps (spec §3.5); **Rev 3** =
+**D-ER-13** + the **G-ER-6 split** + content-derived projection freshness, ratified 2026-07-17 at
+ER-1.3 (spec §3.6, §6, §9).
 
 **Mission:** close the gap between natural language and real Home Assistant `entity_id`s, and
 make every write **honest**. ER-1 fixes two independent defects: natural-language requests do
@@ -551,6 +554,16 @@ Key ratified decisions (register: spec §3):
   has no implicit `state`, so an entity-level alias would have no single target).
 * **D-ER-12 (Rev 2) — alias vs entity identifier.** An alias **may** equal **its own** entity's
   identifier; it **must never** collide with **another** entity's identifier.
+* **D-ER-13 (Rev 3) — an aliased signal must bind `ha_entity`** (check 12a; ratifies finding
+  F-ER12-1). A signal bound to `container` / `corpus` / `probe` / `signal` has no HA id to
+  resolve to, so its alias would be **dead**. Unreachable on the real tree — ratified so the
+  rule states the constraint the registry **depends on**, not the one that happens to hold.
+  Naming/validation only; **INV-17 untouched**.
+* **Projection freshness is content-derived (Rev 3).** The host-side
+  `emit-entity-projection --check` is the canonical mechanism; `resolution_sha256` is the sole
+  authority; **`docs_commit` is traceability only and is never a freshness indicator**. Now a
+  permanent project rule — [`PROJECT_RULES.md`](PROJECT_RULES.md) → *Content Provenance over
+  Repository Chronology*.
 
 Each sub-phase: real-data validation, documentation, **STOP at the git gate**.
 
@@ -560,14 +573,18 @@ Each sub-phase: real-data validation, documentation, **STOP at the git gate**.
 | ER-1 Rev 2 | Freeze amendment — ratify **D-ER-11** (alias shape) + **D-ER-12** (alias vs entity identifier); correct the record on check-12 semantics | **ratified 2026-07-16 — committed + pushed** (`3ebf59d1`; `09_logs/2026-07-16_ER1_freeze_rev2.md`) |
 | ER-1.1 | Schema `aliases` (additive, `schema_version` unchanged) + entity aliases (docs only) | **applied + validated 2026-07-16 — G-ER-1 PASS within ER-1.1 scope** (33 unique normalized aliases → 8 `ha_entity` targets across the 6 bound entities; `schema_version` unchanged; aliases proven **inert** — a fresh compile differs from the on-disk artifact only in `provenance.sha256`); **committed + pushed** (`f983a04f`; `09_logs/2026-07-16_ER1_1_aliases_applied.md`). Fail-loud enforcement lands at ER-1.2 |
 | ER-1.2 | Loader: normalizer, validation, `resolution` registry + tests | **committed + pushed** (`b0fded73`; `09_logs/2026-07-16_ER1_2_loader_applied.md`). **G-ER-1 CLOSED** (check 12 fail-loud in the real loader; every fault class rejected by test) · **G-ER-2 loader half PASS** (D-ER-8 table-driven + byte-stable registry) · **G-ER-5 CLOSED 2026-07-17** — implementation validation **plus** operational non-regression on the first unattended 04:15 cycle after the artifact regeneration: awareness byte-equivalent to baseline, Home State `Degraded` (never `Unavailable`), zero `ArtifactError` (`09_logs/2026-07-17_ER1_2_G-ER-5_operational_closeout.md`). 42 loader + 36 evaluator tests green; `artifact_version` still 1; `LOADER_VERSION` → 0.2.0 |
-| ER-1.3 | Projection emitter + `aurora-entities.json` runtime artifact | G-ER-6 |
+| ER-1.3 | Projection emitter + `aurora-entities.json` runtime artifact; **D-ER-13** (check 12a — Rev 3) | **implemented + validated 2026-07-17** (`09_logs/2026-07-17_ER1_3_projection_applied.md`). **G-ER-6 producer half CLOSED** — artifact missing / corrupt / no-`resolution` ⇒ fail loud, nothing written, last-good retained byte-identical; stale / absent ⇒ honest `--check` (rc 3); consumer half open (ER-1.4). **D-ER-13 ratified — no behaviour change** (unreachable on the real tree; `resolution` hash unmoved). **G-ER-1 untouched** — its 2026-07-16 closure stands; gate history is not rewritten. 43 loader + 36 evaluator green; **`LOADER_VERSION` → 0.2.1** (patch — validation contract only; the live artifact keeps `loader_version` 0.2.0, the version that generated it — ER-1.3 does not regenerate); `artifact_version` still 1; artifact **not** touched, awareness unaffected by construction |
 | ER-1.4a | Capture the v0.1.0 baseline, then `ha_get_state` v0.2.0 | G-ER-7 (read half) |
 | ER-1.4b | `ha_call_service` v0.2.0 (resolution + ER-1-C1) | G-ER-2/3/4, G-ER-7 (write half) |
 | ER-1.5 | Reconciliation + closeout | — |
 
 Gates **G-ER-1…7** (spec §6). **G-ER-3b:** *historical unverified writes must never again be
 reported as successful* — every historical case must produce an honest `verified` or
-`applied_unverified` result. **G-ER-6:** projection-failure rehearsal (G-D6 discipline).
+`applied_unverified` result. **G-ER-6:** projection-failure rehearsal (G-D6 discipline) — **split at Rev 3** into a
+**producer half** (ER-1.3: the emitter fails loud and retains last-good; closed 2026-07-17) and
+a **consumer half** (ER-1.4: direct `entity_id` keeps working, alias resolution returns an honest
+`resolver_unavailable`), because the gate as written asserts behaviour **at the tool boundary**
+and no consumer of the projection exists until ER-1.4.
 **G-ER-7:** backward compatibility — every operation that already works today with real HA
 entity_ids behaves equivalently before and after ER-1.
 

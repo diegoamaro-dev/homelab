@@ -286,6 +286,17 @@ class _V:
                     self.err(f"{e.id}: alias signal {signal!r} is not a declared "
                              f"binding signal (12a)")
                     continue
+                # 12a (D-ER-13) — the aliased signal must bind `ha_entity`. The registry
+                # resolves an alias to a real HA entity_id; any other backend has no id
+                # to resolve to, so the alias would be dead. Unreachable on the current
+                # tree — every bound signal binds ha_entity — but the registry depends on
+                # it, so the check states it rather than assuming it.
+                backend = e.binding_signals.get(signal) or {}
+                if not backend.get("ha_entity"):
+                    bound = ", ".join(sorted(backend)) or "nothing"
+                    self.err(f"{e.id}: alias signal {signal!r} binds {bound}, not "
+                             f"ha_entity — the alias would be dead (12a, D-ER-13)")
+                    continue
                 # 12b — type/bounds.
                 if not isinstance(names, list) or not names:
                     self.err(f"{e.id}/{signal}: aliases must be a non-empty list (12b)")

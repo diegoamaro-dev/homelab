@@ -126,6 +126,11 @@ names (**D-ER-1**); optional; **additive** (no `schema_version` bump — §6).
     permit_join: [ "permit join", "pairing mode" ]
   ```
 
+**Only `ha_entity`-bound signals may be aliased (D-ER-13 — Rev 3).** The registry maps an alias
+to a real Home Assistant `entity_id`, so a signal bound to `container` / `corpus` / `probe` /
+`signal` has **no id to resolve to**: an alias on it would be **dead** — a name the resolver
+accepts and can never answer. Enforced fail-loud by check **12a**.
+
 **Normalization (D-ER-8 — frozen).** Aliases are authored in **natural form, accents and all**;
 the loader normalizes them: **casefold → NFKD → strip combining marks → collapse `[\s._-]+` to
 a single space → trim**. So `"Conexión a Internet"` → `"conexion a internet"`. `ñ → n` is
@@ -210,7 +215,7 @@ violation (never emits a partial model).
 
 | # | Rule | Rationale |
 |---|---|---|
-| 12a | **Shape** — flat list for a single-signal `binding`; map `signal` → list for a multi-signal one; every map key must be a **declared** binding signal; an entity with **no `binding`** must not declare `aliases` | mirrors §2.1 (D-ER-11); aspects carry no binding (D-ER-6) |
+| 12a | **Shape** — flat list for a single-signal `binding`; map `signal` → list for a multi-signal one; every map key must be a **declared** binding signal **that binds `ha_entity`**; an entity with **no `binding`** must not declare `aliases` | mirrors §2.1 (D-ER-11); aspects carry no binding (D-ER-6). The **`ha_entity`** requirement enforces **D-ER-13** (ER-1 freeze, Rev 3): the registry resolves an alias to a real HA `entity_id`, so a signal bound to `container` / `corpus` / `probe` / `signal` has no id to resolve to and its alias would be **dead**. Unreachable on the current tree — every bound signal binds `ha_entity` — and ratified so the rule states the constraint the registry **depends on**, not the one that merely happens to hold. Rationale of record: [`../../entity_resolution_layer.md`](../../entity_resolution_layer.md) §3.6 |
 | 12b | **Type/bounds** — list of non-empty strings; each alias **2–64 chars after normalization** | bounded input |
 | 12c | **Not id-shaped** — no alias may match `^[a-z_]+\.[a-z0-9_]+$` **as authored** | id-shaped input never reaches the alias path (D-ER-2), so a literal id authored as an alias is **dead and misleading**. Checked on the **raw** string: normalization collapses `.` to a space, so a *normalized* alias can never be id-shaped — testing the normalized form would be meaningless |
 | 12d | **Globally unique** — no normalized alias may appear twice **anywhere in the model**, including across signals of the same entity | the lookup table is flat and closed; a duplicate is an ambiguity the resolver must never guess through |

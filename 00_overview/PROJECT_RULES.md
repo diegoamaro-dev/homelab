@@ -1,6 +1,6 @@
 # PROJECT_RULES
 
-Last updated: 2026-06-27
+Last updated: 2026-07-17
 
 ---
 
@@ -243,6 +243,60 @@ Note: this rule and *Transient Operational Status* are complements, not exceptio
 each other. **Live state documents** (the triad) are reconciled to reality; **historical
 records** (`09_logs/`) are left exactly as written and corrected only by later
 documents.
+
+---
+
+# Content Provenance over Repository Chronology
+
+**Content provenance has priority over repository chronology.**
+
+A derived artifact is **fresh** when its content matches the content it was derived
+from — never when its timestamps or commit references merely look recent.
+
+Rules:
+
+1. **Canonical content hashes are the authority for freshness.** Whether a derived
+   artifact is current is decided by comparing a hash of the content it was derived
+   from against that source's content as it now stands. Nothing else decides it.
+
+2. **Commit hashes are traceability metadata only.** A commit reference records
+   *where a thing came from*, never *whether it is current*. It must **never** be used
+   as a freshness indicator. An artifact that carries one states that limit in place,
+   next to the field — a reader must not have to remember this rule to avoid the trap.
+
+3. **Hash the content that matters, not the container.** A hash is an authority only
+   if it moves when the meaning moves and stays still when it does not. A hash taken
+   over a whole file that also carries generation timestamps or unrelated sections
+   reports false staleness on every regeneration — that is chronology wearing a
+   content-hash disguise.
+
+4. **Freshness is only ever proven for the link that was checked.** A derivation chain
+   has one link per generation step. A check proves the link it compares and no other:
+   a stale-but-internally-consistent pair passes. Where a chain has more than one link,
+   each check states its scope, and full-chain freshness requires every link.
+
+**Why.** Chronology answers *when something ran*; content answers *what it says*. Only
+the second is what a consumer depends on. A chronological freshness signal goes false
+the moment any unrelated change lands, so it reports as stale the artifacts that are
+correct — and a check that cries wolf is ignored, which is worse than no check at all.
+
+This is the same insight as *Transient Operational Status*, expressed in metadata rather
+than prose. There, a document that asserts its own pending state is false the moment it
+lands; here, a stamp that asserts its own currency is false the moment the next commit
+lands. Both are a record claiming a truth it is not in a position to know.
+
+**The rule codifies existing practice.** `ai-stack/ingest` already decides re-indexing by
+per-chunk `content_sha`; the World Model loader already stamps per-entity
+`provenance.sha256` — and ER-1.1 proved its alias sets inert by observing that a fresh
+compile differed from the on-disk artifact **only** in those hashes. The rule names what
+the platform was already doing, and forbids the one shortcut that was about to break it.
+
+**Origin:** Phase ER-1.3, 2026-07-17. The compiled World Model artifact stamped
+`docs_commit: f983a04f` while `HEAD` was `f146683a` — two commits behind — yet its content
+was provably current: a fresh compile produced a byte-identical `resolution` block. Had
+`docs_commit` been taken as the freshness signal for the derived entity projection, that
+projection would have been **born stale**, and gone stale again at every subsequent commit,
+while being correct throughout. Chronology reported stale; content proved current.
 
 ---
 

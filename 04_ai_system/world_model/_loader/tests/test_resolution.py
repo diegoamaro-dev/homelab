@@ -134,6 +134,22 @@ class TestAliasValidation(unittest.TestCase):
             validate.validate(entities, arch, reg)
         self.assertIn("not a declared", str(cm.exception))
 
+    def test_alias_on_non_ha_entity_signal_rejected(self):
+        """D-ER-13 — an aliased signal must bind ha_entity, or the alias is dead.
+
+        Unreachable on the real tree (every bound signal binds ha_entity), so the
+        BACKEND is injected rather than the alias: zigbee-mesh's already-aliased
+        `permit_join` is rebound to a container, which carries no HA id to resolve
+        to. This is the F-ER12-1 hazard, ratified as D-ER-13 at ER-1.3.
+        """
+        entities, arch, reg = load_unvalidated()
+        by = {e.id: e for e in entities}
+        by["zigbee-mesh"].binding_signals["permit_join"] = {"container": "zigbee2mqtt"}
+        with self.assertRaises(validate.ValidationError) as cm:
+            validate.validate(entities, arch, reg)
+        self.assertIn("12a", str(cm.exception))
+        self.assertIn("D-ER-13", str(cm.exception))
+
     def test_alias_bounds_rejected(self):
         entities, arch, reg = load_unvalidated()
         by = {e.id: e for e in entities}

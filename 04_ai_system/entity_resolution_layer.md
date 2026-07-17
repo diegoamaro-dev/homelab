@@ -1,6 +1,6 @@
 # Entity Resolution Layer (ER-1) — ratified design
 
-- **Status:** **FROZEN 2026-07-16** (operator-ratified) — **Revision 2**. Implementation is
+- **Status:** **FROZEN 2026-07-16** (operator-ratified) — **Revision 3**. Implementation is
   Phase **ER-1** (ER-1.0 → ER-1.5); each sub-phase ends at a **STOP** git gate.
 - **Amendments to the freeze** (a frozen design is amended only by a **gated, operator-ratified
   decision** — never by silent drift):
@@ -9,6 +9,7 @@
   |---|---|---|---|
   | 1 | 2026-07-16 | Initial freeze — D-ER-1…10 + ER-1-C1 | ER-1.0 |
   | **2** | **2026-07-16** | **D-ER-11** (alias shape mirrors `binding`) · **D-ER-12** (alias vs entity-identifier collision — check 12e) | **ER-1.1** |
+  | **3** | **2026-07-17** | **D-ER-13** (an aliased signal must bind `ha_entity` — check 12a; ratifies finding F-ER12-1) · projection freshness is **content-derived, never commit-derived**, via a host-side `--check` (§9) · **G-ER-6 split** into a producer half (ER-1.3) and a consumer half (ER-1.4) | **ER-1.3** |
 - **Role:** the deterministic bridge between natural language and real Home Assistant
   `entity_id`s, plus mandatory write verification. It is the remedy for the defect recorded in
   [`../09_logs/2026-07-14_ER1_entity_resolution_finding.md`](../09_logs/2026-07-14_ER1_entity_resolution_finding.md).
@@ -114,6 +115,7 @@ D-12 allowlist; the awareness pipeline; Guardian Cloud.
 | **D-ER-10** | **Closed expected-state map** for verification: `turn_on → on`, `turn_off → off`, `open_cover → open`, `close_cover → closed`. Every other service returns **`applied_unverified`**. `toggle` is deferred (its expected state depends on a before-state that after-only verification does not have). |
 | **D-ER-11** *(Rev 2 — ratified at ER-1.1)* | **Aliases mirror the `binding` shape.** A **single-signal** entity uses a **flat alias list**; a **multi-signal** entity uses a **per-signal alias map**. **No implicit primary signal is introduced** — see §3.5. |
 | **D-ER-12** *(Rev 2 — ratified at ER-1.1)* | **Alias vs entity identifier (validation check 12e).** An alias **may** equal **its own** entity identifier; it **must never** collide with **another** entity's identifier — see §3.5. |
+| **D-ER-13** *(Rev 3 — ratified at ER-1.3)* | **An aliased signal must bind `ha_entity` (validation check 12a).** A signal bound to any other backend has no Home Assistant id to resolve to, so an alias on it would be **dead** — see §3.6. Ratifies finding **F-ER12-1**. |
 
 ### 3.1 ER-1-C1 — mandatory write verification
 
@@ -253,6 +255,40 @@ vacuous.
 neither widen nor narrow what Aurora may actuate: D-12 remains the sole authorization
 authority (**INV-17**), and the resolver is never consulted to permit or deny (**D-ER-9**).
 
+### 3.6 D-ER-13 (Revision 3 — ratified 2026-07-17 at ER-1.3)
+
+#### D-ER-13 — an aliased signal must bind `ha_entity`
+
+**Check 12a requires every alias map key to be a declared binding signal that binds
+`ha_entity`.**
+
+**Why it was forced.** As authored at ER-1.1, 12a required only that the key be a
+*declared* signal. But the registry maps an alias to a real Home Assistant `entity_id`, and
+a signal bound to `container` / `corpus` / `probe` / `signal` has **no id to resolve to** —
+so an alias on it would compile into a **dead** entry: a name the resolver accepts and can
+never answer. ER-1.2 discovered the gap (**F-ER12-1**) and guarded it **fail-loud** in
+`resolution.build()` (`ResolutionError`) rather than silently dropping a target — silent
+success being the exact defect ER-1 exists to kill — but **recorded** it instead of
+self-approving a change to a frozen check.
+
+**Reachability — stated honestly.** The rule is **unreachable against the real tree**: all
+eleven bound signals across the seven bound entities bind `ha_entity`. D-ER-13 therefore
+changes **no behaviour today**, and the compiled `resolution` block is byte-identical before
+and after. It is ratified because a validation rule must state the constraint the registry
+actually depends on — not the constraint that merely happens to hold. The
+`resolution.build()` guard **remains** as defence in depth; D-ER-13 turns its unreachability
+from a contingent fact about today's tree into a structural guarantee.
+
+**No gate history is rewritten.** **G-ER-1** closed 2026-07-16 on its Revision 2 condition
+and that closure **stands**: its four enumerated fault classes (12c, 12d, 12e, 12f) are
+untouched, and its *"the real tree compiles"* clause still holds — provably, since the
+tightened 12a cannot fire. D-ER-13's fault class is validated as an **ER-1.3 acceptance
+criterion**, never by reopening a gate that passed on real evidence.
+
+**Authority is untouched.** Like D-ER-11 and D-ER-12, this is **naming and validation
+only**. D-12 remains the sole authorization authority (**INV-17**); the resolver is never
+consulted to permit or deny (**D-ER-9**).
+
 ---
 
 ## 4. Resolution order at the tool boundary
@@ -299,7 +335,7 @@ above (D-ER-2 / §3.3): a valid id continues to HA as today; a natural-language 
 | **ER-1.0** | Freeze: ratify D-ER-1…10 + C1; spec; ROADMAP slot; triad; freeze log. *(The defect record lands in its own documentation commit immediately before, so history reads: defect discovered → design frozen.)* | — |
 | **ER-1.1** | Schema `aliases` + entity aliases (docs only, additive) | G-ER-1 |
 | **ER-1.2** | Loader: normalizer, validation, `resolution` registry, tests | G-ER-1, G-ER-2 (loader half), G-ER-5 |
-| **ER-1.3** | Projection emitter + runtime artifact | G-ER-6 |
+| **ER-1.3** | Projection emitter + runtime artifact; **D-ER-13** (check 12a — Rev 3) | G-ER-6 (**producer half**) |
 | **ER-1.4a** | **Capture the v0.1.0 baseline**, then `ha_get_state` v0.2.0 | G-ER-7 (read half) |
 | **ER-1.4b** | `ha_call_service` v0.2.0 (resolution + C1) | G-ER-2/3/4, G-ER-7 (write half) |
 | **ER-1.5** | Reconciliation + closeout | — |
@@ -321,7 +357,9 @@ All gates close on **real evidence** — no synthetic fixtures, no fabricated fa
 | **G-ER-3b** | **Historical unverified writes must never again be reported as successful.** Every historical case (§1 — 13 calls across 7 non-existent ids) must now produce an honest **`verified` or `applied_unverified`** result instead of an unverified success claim. The service call is still issued exactly as today (D-ER-9); the acceptance is the **claim**, not the request |
 | **G-ER-4** | Happy path via **exact id** and via **alias** → `ok` + `verified`; baseline `off` restored; refusal and rate-limit paths unchanged |
 | **G-ER-5** | **No WM/awareness regression**: loader (19) + evaluator (36) suites green; `aurora-context.json` byte-identical modulo timestamps; `artifact_version` still 1 |
-| **G-ER-6** | **Projection failure rehearsal**: projection missing / stale / corrupt ⇒ **direct `entity_id` reads and writes continue to work exactly as today** (primary assertion); alias resolution returns an honest `resolver_unavailable`; platform sections unaffected; no partial action |
+| **G-ER-6** | **Projection failure rehearsal** — **split into two halves at Rev 3** (ER-1.3), because the gate as written asserts behaviour **at the tool boundary**, and no consumer of the projection exists until ER-1.4. Closing it whole at ER-1.3 would claim a verification never performed |
+| **G-ER-6** *(producer half — **ER-1.3**)* | Artifact missing / corrupt / carrying no valid `resolution` block ⇒ the emitter **fails loud, writes nothing, and the last-good projection is retained byte-identical**; a stale or absent projection is reported honestly by the host-side `--check` (§9); atomic replace ⇒ never a torn file; **no partial action**. Awareness and the platform sections are unaffected **by construction** — ER-1.3 never writes the artifact and nothing on the awareness path reads the projection |
+| **G-ER-6** *(consumer half — **ER-1.4**)* | Projection missing / stale / corrupt ⇒ **direct `entity_id` reads and writes continue to work exactly as today** (primary assertion); alias resolution returns an honest `resolver_unavailable`; no partial action |
 | **G-ER-7** | **Backward compatibility** — corpus below |
 
 ### 6.1 G-ER-7 corpus (enumerated from real audit evidence)
@@ -390,11 +428,34 @@ No database migration, no container change, no cron change, no awareness path to
 
 ## 9. Residual risks
 
-- **Projection staleness** — the loader is run by hand, so a stale projection degrades **alias
-  resolution only** (direct ids are unaffected by D-ER-9). Mitigation: stamp the projection
-  with `docs_commit` + content hash; surface staleness at the tool boundary; G-ER-6 rehearses
-  it. Scheduling the regeneration is available but deferred (an operator decision — it would
-  require the fail-loud loader to run nightly).
+- **Projection staleness** — the loader and the emitter are both run by hand, so a stale
+  projection degrades **alias resolution only** (direct ids are unaffected by D-ER-9).
+  **Mitigation (Rev 3):** the projection is stamped with `resolution_sha256` — a canonical hash
+  of the `resolution` block it was derived from — and freshness is decided by the **host-side
+  `bin/emit-entity-projection --check`**, which compares that stamp against the artifact's
+  `resolution` block as it now stands. This is the **canonical** freshness mechanism.
+  - **Freshness is content-derived, never commit-derived.** `docs_commit` is carried for
+    **traceability only** and must never be read as a freshness signal — see
+    [`../00_overview/PROJECT_RULES.md`](../00_overview/PROJECT_RULES.md) → *Content Provenance
+    over Repository Chronology*. An artifact's `docs_commit` goes stale on every unrelated
+    commit while its content stays current, so it reports a staleness that does not exist.
+  - **The hash covers the `resolution` block, not the artifact file.** The loader stamps a
+    fresh `generated_at` on every non-`--reproducible` run, so a whole-file hash would report
+    stale after every regeneration — including a no-op one.
+  - **`--check` proves one link of a two-link chain.** *docs → artifact* is the loader's
+    domain; *artifact → projection* is the emitter's. A PASS means the projection matches the
+    artifact **as it stands** — not that the artifact matches the docs. Full-chain freshness
+    requires both links.
+  - **Not surfaced at the tool boundary.** The Open WebUI container mounts only `/opt/aurora`
+    and `/opt/ingest` (both read-only); the World Model artifact is **not** visible to it, so a
+    tool can never compute freshness. It may carry the projection's provenance into its audit
+    line, but it cannot render a verdict. *(Supersedes Rev 1's "surface staleness at the tool
+    boundary".)*
+  - **G-ER-6 (producer half)** rehearses missing / corrupt / no-`resolution` / stale / absent.
+
+  Scheduling the regeneration is available but deferred (an operator decision — it would
+  require the fail-loud loader to run nightly, and would place a writer of the artifact against
+  `bin/aurora-context`'s 04:15 read where today there is none).
 - **Latency** — C1 adds one HTTP GET per write (worst case 10 s vs 5 s at the 5 s timeout).
   A shorter verification timeout is an implementation option.
 - **Tool row scope** — only `qwen2.5` carries the `ha_*` tools (verified in `meta.toolIds`),
@@ -404,7 +465,13 @@ No database migration, no container change, no cron change, no awareness path to
 
 ## 10. File inventory
 
-**Schema (1)** — `world_model/_schema/entity.schema.md`.
+**Schema (1)** — `world_model/_schema/entity.schema.md` (check 12a tightened at ER-1.3 —
+D-ER-13).
+
+**Governance (1 — added at ER-1.3, Rev 3)** —
+[`../00_overview/PROJECT_RULES.md`](../00_overview/PROJECT_RULES.md) → *Content Provenance over
+Repository Chronology*: the permanent principle the §9 freshness mechanism implements. Recorded
+here because ER-1.3 authors it; the rule itself is project-wide and outlives ER-1.
 
 **Entities (6, additive)** — `home/printer-3d.md`, `home/awning.md`, `home/main-door.md`,
 `home/entrance-plant.md`, `home/zigbee-mesh.md`, `home/internet-uplink.md`;
@@ -414,7 +481,10 @@ optional `environment/daylight-time.md`. **Not touched:** `home/battery.md`,
 **Loader (4 + 1 new)** — `_loader/resolution.py` (**new** — D-ER-8 normalization,
 shape-aware alias extraction, registry builder), `normalize.py` (N9), `model.py`
 (`aliases_normalized`), `validate.py` (check 12), `emit.py` (additive `resolution`),
-`__init__.py` (`LOADER_VERSION` → 0.2.0).
+`__init__.py` (`LOADER_VERSION` → 0.2.0 at ER-1.2, **→ 0.2.1 at ER-1.3** — patch: D-ER-13
+tightens the validation contract with no output change. The **live artifact keeps
+`generator.loader_version` 0.2.0** until its next regeneration, which is correct — 0.2.0
+produced it; a version stamp is provenance, never freshness).
 
 **Loader tests (1 new)** — `tests/test_resolution.py` (**new**, 23 tests).
 
@@ -439,8 +509,9 @@ shape-aware alias extraction, registry builder), `normalize.py` (N9), `model.py`
 `tools/ha_get_state.py` → **v0.2.0**, `lib/entity_resolver.py` (**new**),
 `bin/install_tool` (generalise the single inline marker).
 
-**Projection (1 new)** — `ai-stack/ingest/bin/emit-entity-projection`;
-`etc/cron.d/aurora-signals` only if scheduled (operator-gated — root-owned).
+**Projection (1 new)** — `ai-stack/ingest/bin/emit-entity-projection` (emit + the `--check`
+freshness mechanism of §9); `etc/cron.d/aurora-signals` **not scheduled at ER-1.3** — deferred
+per §9 (operator-gated, root-owned).
 
 **Runtime artifacts** — `ai-stack/aurora/aurora-entities.json` (**new**, gitignored),
 `world_model.generated.json` (additive `resolution`), `webui.db` tool rows, audit log fields.

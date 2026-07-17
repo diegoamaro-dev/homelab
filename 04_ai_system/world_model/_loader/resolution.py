@@ -114,9 +114,10 @@ def build(entities: list[ParsedEntity]) -> dict | None:
             backend = e.binding_signals.get(signal) or {}
             eid = backend.get("ha_entity")
             if not eid:
-                # Unreachable: 12a requires a declared signal, and every aliased
-                # signal in the model binds ha_entity. Fail loud rather than drop a
-                # target silently — silent success is the defect ER-1 exists to kill.
+                # Unreachable: 12a requires an aliased signal to be declared AND to bind
+                # ha_entity (D-ER-13), and Validate runs before Emit. Kept as defence in
+                # depth — fail loud rather than drop a target silently; silent success is
+                # the defect ER-1 exists to kill.
                 raise ResolutionError(
                     f"{e.id}: aliased signal {signal!r} has no ha_entity to resolve to")
             targets.setdefault(eid, {
