@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-17 (Phase ER-1 — ER-1.3 projection emitter + D-ER-13 / freeze Revision 3)
+Last updated: 2026-07-17 (Phase ER-1 — ER-1.4a: v0.1.0 baseline + `ha_get_state` v0.2.0, the first cutover)
 
 ## Purpose
 
@@ -388,18 +388,39 @@ unmoved); **G-ER-6 producer half CLOSED**, consumer half open (ER-1.4); **G-ER-1
 closure stands, gate history is not rewritten**; 43 loader + 36 evaluator green;
 **`LOADER_VERSION` → 0.2.1** (patch — validation contract only; the live artifact keeps
 `loader_version` 0.2.0, the version that generated it — ER-1.3 does not regenerate). New
-permanent rule: `PROJECT_RULES.md` → **Content Provenance over Repository Chronology**. **Next: ER-1.4a**
-(capture the v0.1.0 baseline, then `ha_get_state` v0.2.0; G-ER-7 read half).
+permanent rule: `PROJECT_RULES.md` → **Content Provenance over Repository Chronology**.
+**ER-1.3 committed + pushed (`ed7a149c`).**
+
+**ER-1.4a — the first cutover — implemented + validated 2026-07-17** (log
+`09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md`). **`ha_get_state` is v0.2.0 in
+`webui.db`; the read path now resolves natural language** (`toldo` → `cover.toldo`,
+`impresora 3d` → `switch.impresora_3d`, `Conexión a Internet` →
+`binary_sensor.rooter_estado_wan`) via the new inline-only
+`ai-stack/openwebui-tools/lib/entity_resolver.py`. **G-ER-7 read half PASS** (a canonical
+`entity_id` is byte-identical to v0.1.0 — paired A/B run, volatility controlled) · **G-ER-6
+consumer half PASS on the read side** (a broken projection leaves direct ids working exactly
+as today; alias → `resolver_unavailable`). Root cause #2 fixed (the misleading `light.kitchen`
+docstring examples). `bin/install_tool` now resolves multiple `# @@AMAROLAB_INLINE:<name>@@`
+markers; `lib/audit_helper.py` gained an additive `extra` (spec §10 inventory corrected — an
+implementation-inventory correction, **not** an architectural decision).
+
+**Next: ER-1.4b** — `ha_call_service` v0.2.0 (resolution + ER-1-C1); G-ER-2/3/4, G-ER-7 write
+half, G-ER-6 consumer half (write side). **This is where ER-1 changes reality.** **Read
+F-ER14-1 first** (`CURRENT_STATE.md` pending item 10): the audit field `modelled` overstates
+what it verifies (`sun.sun` → `modelled: false` though `daylight-time.md` binds it); the name
+is frozen, so it is **recorded, not self-approved**, and an operator decision is wanted before
+ER-1.4b — that is when the field starts describing actuation rather than reads.
 Logs:
 [`../09_logs/2026-07-16_ER1_freeze_rev2.md`](../09_logs/2026-07-16_ER1_freeze_rev2.md) ·
 [`../09_logs/2026-07-16_ER1_1_aliases_applied.md`](../09_logs/2026-07-16_ER1_1_aliases_applied.md) ·
 [`../09_logs/2026-07-16_ER1_2_loader_applied.md`](../09_logs/2026-07-16_ER1_2_loader_applied.md) ·
 [`../09_logs/2026-07-17_ER1_2_G-ER-5_operational_closeout.md`](../09_logs/2026-07-17_ER1_2_G-ER-5_operational_closeout.md) ·
-[`../09_logs/2026-07-17_ER1_3_projection_applied.md`](../09_logs/2026-07-17_ER1_3_projection_applied.md).
+[`../09_logs/2026-07-17_ER1_3_projection_applied.md`](../09_logs/2026-07-17_ER1_3_projection_applied.md) ·
+[`../09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md`](../09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md).
 
-**Nothing has changed Aurora's behaviour yet.** The tools remain v0.1.0; the aliases are
-compiled and the projection is emitted, but **no consumer reads either**; the 13 historical
-unverified writes would still be reported as successful today. ER-1 changes reality at
+**Aurora's READ path changed at ER-1.4a; the WRITE path has not.** `ha_get_state` is v0.2.0
+and resolves natural language. **`ha_call_service` is still v0.1.0**, so the 13 historical
+unverified writes would still be reported as successful today. ER-1 changes that at
 **ER-1.4b**, when ER-1-C1 lands.
 
 ER-1 closes the natural-language → `entity_id` gap **and** makes writes honest. Real audit

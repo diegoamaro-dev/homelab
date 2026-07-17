@@ -2,13 +2,15 @@
 title: Amarolab ha_get_state
 author: amarolab
 author_url: https://github.com/amaroou
-description: Read one Home Assistant entity's current state and a curated, safe subset of its attributes. Call this when the user asks the on/off state or a current value of a specific HA entity (e.g., "is the kitchen light on?", "what's the lounge temperature?", "is the front door open?"). One entity per call; pass the canonical entity id (light.kitchen, sensor.lounge_temperature). HA writes are out of scope for this Tool — use ha_call_service for those.
-version: 0.1.0
+description: Read one Home Assistant entity's current state and a curated, safe subset of its attributes. Call this when the user asks the on/off state or a current value of a specific home device (e.g., "is the awning open?", "is the printer on?", "is the front door closed?"). One entity per call. Pass the everyday name the user actually said — in Spanish or English ("toldo", "impresora 3d", "puerta principal", "awning") — or a canonical entity id if you genuinely know it. Never invent an entity id: if the name is not recognised the Tool answers unknown_entity and lists what does exist. HA writes are out of scope for this Tool — use ha_call_service for those.
+version: 0.2.0
 license: MIT
 requirements:
 """
 
 # @@AMAROLAB_INLINE:audit_helper@@
+
+# @@AMAROLAB_INLINE:entity_resolver@@
 
 import json
 import os
@@ -19,7 +21,13 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
-# Phase C contract — locked.
+# Phase C contract — locked. The grammar itself is unchanged at v0.2.0;
+# its ROLE changed. It was a validity gate: anything not matching was
+# rejected `bad_entity_id`. It is now the id-shape test of the ER-1
+# resolution ladder (spec §4 step 4) — a match continues to Home
+# Assistant exactly as today, and a non-match is a natural name that
+# goes to the resolver instead of being rejected.
+#
 # Entity-id grammar follows Home Assistant's documented form
 # `<domain>.<object_id>` with lowercase letters, digits, and
 # underscores. Length bound keeps a misbehaving caller from sending
@@ -198,34 +206,90 @@ class Tools:
 
     def ha_get_state(self, entity_id: str) -> str:
         """
-        Read one Home Assistant entity's current state and a curated, safe subset of its attributes. Call this whenever the user asks the on/off state or a current value of a specific HA entity (e.g., "is the kitchen light on?", "what's the lounge temperature?", "is the front door open?"). For multi-entity queries, call this once per entity_id. Do not pass area names or domain names — only canonical entity ids are supported in v1. HA writes are out of scope; if the user asks you to change an HA state, that belongs to ha_call_service when it ships.
+        Read one Home Assistant entity's current state and a curated, safe subset of its attributes. Call this whenever the user asks the on/off state or a current value of a specific home device (e.g., "is the awning open?", "is the printer on?", "is the front door closed?", "how is the plant doing?"). For multi-entity queries, call this once per entity. HA writes are out of scope; if the user asks you to change an HA state, that belongs to ha_call_service.
 
-        :param entity_id: Home Assistant entity id in lowercase domain.object_id form (e.g. "light.kitchen", "sensor.lounge_temperature"). Must match `^[a-z_]+\\.[a-z0-9_]+$` and be 3-128 characters.
-        :return: JSON string with keys entity_id, state, friendly_name, last_changed, last_updated, attributes (safe subset only), result_code. On error or missing entity: {"error": "...", "code": "..."} or {"entity_id": "...", "code": "not_found"}.
+        :param entity_id: The device the user means. Pass the everyday name they actually used, in Spanish or English — "toldo", "impresora 3d", "puerta principal", "awning", "front door" — and this Tool resolves it to the real entity id. A canonical id ("switch.impresora_3d") is also accepted and is passed straight through. NEVER invent an entity id: guessing an English-looking id for a device named in Spanish is the known failure mode. If the name is not recognised you get code "unknown_entity" plus a "candidates" list of every device that does exist — answer from that list rather than guessing again. 3-128 characters.
+        :return: JSON string with keys entity_id, state, friendly_name, last_changed, last_updated, attributes (safe subset only), result_code. On a resolver miss: {"code": "unknown_entity", "candidates": [...]} and no HA call is made. On error or missing entity: {"error": "...", "code": "..."} or {"entity_id": "...", "code": "not_found"}.
         """
         t0 = time.monotonic()
         args_snap = {"entity_id": entity_id}
 
-        # Input validation. The Literal annotation in ha_call_service
-        # (Phase C C-2) protects the domain enum at spec-build time;
-        # ha_get_state has no enum-like input, so the regex + length
-        # bound is the only schema we enforce here. Bearer never
-        # touches args.
+        # Step 3 — bounded/type check. UNCHANGED from v0.1.0 (spec §4):
+        # it precedes resolution, so it still fires first and still
+        # answers `bad_entity_id`. The Literal annotation in
+        # ha_call_service (Phase C C-2) protects the domain enum at
+        # spec-build time; ha_get_state has no enum-like input, so this
+        # bound is the only schema we enforce here. It also keeps a
+        # misbehaving caller from sending a 10 MB string at the
+        # normalizer. Bearer never touches args.
         if not isinstance(entity_id, str) or len(entity_id) < _ENTITY_ID_MIN_LEN or len(entity_id) > _ENTITY_ID_MAX_LEN:
             _audit("ha_get_state", args_snap, allowed=False, result_code="bad_entity_id")
             return json.dumps({
                 "error": f"entity_id must be {_ENTITY_ID_MIN_LEN}-{_ENTITY_ID_MAX_LEN} characters",
                 "code": "bad_entity_id",
             })
-        if not _ENTITY_ID_RE.match(entity_id):
-            _audit("ha_get_state", args_snap, allowed=False, result_code="bad_entity_id")
-            return json.dumps({
-                "error": "entity_id must match <domain>.<object_id> lowercase grammar",
-                "code": "bad_entity_id",
-            })
+
+        # Steps 4-6 — resolution (ER-1.4a). Slotted exactly where the
+        # old id-shape rejection sat, so every preceding check is
+        # untouched and the rate limiter still sees precisely the
+        # inputs it saw before: one that never reaches HA never reached
+        # the limiter at v0.1.0 either.
+        #
+        # `ha_get_state` runs the identical ladder to `ha_call_service`
+        # minus ER-1-C1 (spec §4): reads need no write verification
+        # because HA already answers 404 -> `not_found` honestly.
+        audit_extra = {}
+        if _ENTITY_ID_RE.match(entity_id):
+            # Step 4 — id-shaped: continue to Home Assistant EXACTLY as
+            # today, whether or not the registry knows it (D-ER-9). The
+            # registry is consulted for OBSERVABILITY ONLY and never to
+            # gate: `modelled` goes to the audit line and changes
+            # nothing about the request. `is_target` answers None when
+            # the resolver is unavailable, and the key is then omitted
+            # rather than recorded as false — claiming "not modelled"
+            # when the registry could not be read would be exactly the
+            # unverified claim ER-1 exists to remove.
+            resolved_id = entity_id
+            modelled = _EntityResolver.is_target(entity_id)
+            if modelled is not None:
+                audit_extra["modelled"] = modelled
+        else:
+            # Step 5 — not id-shaped: a natural name. Normalize (D-ER-8)
+            # + closed lookup. No fuzzy matching, no scoring, no LLM.
+            if not _EntityResolver.available():
+                _audit("ha_get_state", args_snap, allowed=False,
+                       result_code="resolver_unavailable",
+                       duration_ms=int((time.monotonic() - t0) * 1000))
+                return json.dumps({
+                    "error": "entity name resolution is unavailable; pass a canonical entity id",
+                    "code": "resolver_unavailable",
+                    "detail": _EntityResolver.reason(),
+                })
+            resolved_id = _EntityResolver.lookup(entity_id)
+            if resolved_id is None:
+                # Step 6 — miss: fail closed with ZERO HTTP calls. There
+                # is no valid id to send, so nothing *can* pass through.
+                # The candidate list is the corrective feedback that
+                # replaces guessing (root cause #3).
+                _audit("ha_get_state", args_snap, allowed=False,
+                       result_code="unknown_entity",
+                       duration_ms=int((time.monotonic() - t0) * 1000))
+                return json.dumps({
+                    "entity_id": entity_id,
+                    "error": f"'{entity_id}' is not an entity I model",
+                    "code": "unknown_entity",
+                    "candidates": _EntityResolver.candidates(),
+                }, ensure_ascii=False)
+            # An alias hit is a target by construction. `resolved_to`
+            # keeps the audit line honest: without it `args.entity_id`
+            # says "toldo" and no reader could tell what was actually
+            # read (the §1.2 indistinguishability defect).
+            audit_extra["modelled"] = True
+            audit_extra["resolved_to"] = resolved_id
 
         if not _RateLimiter.check("ha_get_state", self.valves.max_per_minute):
-            _audit("ha_get_state", args_snap, allowed=False, result_code="rate_limited")
+            _audit("ha_get_state", args_snap, allowed=False, result_code="rate_limited",
+                   extra=audit_extra or None)
             return json.dumps({
                 "error": "rate limit exceeded",
                 "code": "rate_limited",
@@ -235,7 +299,8 @@ class Tools:
             self._init()
         except Exception as e:
             _audit("ha_get_state", args_snap, allowed=False, result_code="init_error",
-                   duration_ms=int((time.monotonic() - t0) * 1000))
+                   duration_ms=int((time.monotonic() - t0) * 1000),
+                   extra=audit_extra or None)
             return json.dumps({
                 "error": "runtime initialisation failed",
                 "code": "init_error",
@@ -243,7 +308,7 @@ class Tools:
             })
 
         try:
-            url = f"{Tools._base_url}/api/states/{entity_id}"
+            url = f"{Tools._base_url}/api/states/{resolved_id}"
             res = Tools._httpx_client.get(
                 url,
                 headers={
@@ -257,7 +322,8 @@ class Tools:
             # the audit log; the bearer is NOT in args, so it is not
             # logged here either.
             _audit("ha_get_state", args_snap, allowed=False, result_code="ha_unreachable",
-                   duration_ms=int((time.monotonic() - t0) * 1000))
+                   duration_ms=int((time.monotonic() - t0) * 1000),
+                   extra=audit_extra or None)
             return json.dumps({
                 "error": "could not reach home assistant",
                 "code": "ha_unreachable",
@@ -270,21 +336,24 @@ class Tools:
             # made it; the auth answer was at the HA side. If this
             # ever fires, rotate HA_LLAT per the security checklist.
             _audit("ha_get_state", args_snap, allowed=True, result_code="unauthorized",
-                   duration_ms=int((time.monotonic() - t0) * 1000))
+                   duration_ms=int((time.monotonic() - t0) * 1000),
+                   extra=audit_extra or None)
             return json.dumps({
                 "error": "home assistant rejected the credentials",
                 "code": "unauthorized",
             })
         if res.status_code == 404:
             _audit("ha_get_state", args_snap, allowed=True, result_code="not_found",
-                   duration_ms=int((time.monotonic() - t0) * 1000))
+                   duration_ms=int((time.monotonic() - t0) * 1000),
+                   extra=audit_extra or None)
             return json.dumps({
-                "entity_id": entity_id,
+                "entity_id": resolved_id,
                 "code": "not_found",
             })
         if res.status_code >= 300:
             _audit("ha_get_state", args_snap, allowed=True, result_code="ha_error",
-                   duration_ms=int((time.monotonic() - t0) * 1000))
+                   duration_ms=int((time.monotonic() - t0) * 1000),
+                   extra=audit_extra or None)
             return json.dumps({
                 "error": f"home assistant returned {res.status_code}",
                 "code": "ha_error",
@@ -295,7 +364,8 @@ class Tools:
             body = res.json()
         except Exception as e:
             _audit("ha_get_state", args_snap, allowed=True, result_code="ha_error",
-                   duration_ms=int((time.monotonic() - t0) * 1000))
+                   duration_ms=int((time.monotonic() - t0) * 1000),
+                   extra=audit_extra or None)
             return json.dumps({
                 "error": "home assistant returned malformed JSON",
                 "code": "ha_error",
@@ -328,7 +398,7 @@ class Tools:
             safe_attrs[k] = v
 
         result = {
-            "entity_id": body.get("entity_id", entity_id),
+            "entity_id": body.get("entity_id", resolved_id),
             "state": body.get("state"),
             "friendly_name": friendly_name,
             "last_changed": body.get("last_changed"),
@@ -337,5 +407,6 @@ class Tools:
             "result_code": "ok",
         }
         _audit("ha_get_state", args_snap, result_code="ok",
-               duration_ms=int((time.monotonic() - t0) * 1000))
+               duration_ms=int((time.monotonic() - t0) * 1000),
+               extra=audit_extra or None)
         return json.dumps(result, ensure_ascii=False)

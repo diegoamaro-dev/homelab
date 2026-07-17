@@ -20,7 +20,7 @@ markers (including this docstring) is dropped.
 Exposed inlined symbols (all underscore-prefixed so they are not
 treated as Tool methods by Open WebUI's `get_functions_from_tool`):
 
-    _audit(tool, args, *, user="diego", allowed=True, result_code="ok", duration_ms=None) -> None
+    _audit(tool, args, *, user="diego", allowed=True, result_code="ok", duration_ms=None, extra=None) -> None
     _RateLimiter.check(tool, max_per_minute) -> bool
     _amarolab_redact(d) -> dict
     _AMAROLAB_AUDIT_LOG: Path
@@ -60,8 +60,22 @@ def _amarolab_redact(d):
     return out
 
 
-def _audit(tool, args, *, user="diego", allowed=True, result_code="ok", duration_ms=None):
-    """Append one JSON line per Tool call. Never raises."""
+def _audit(tool, args, *, user="diego", allowed=True, result_code="ok", duration_ms=None,
+           extra=None):
+    """Append one JSON line per Tool call. Never raises.
+
+    `extra` merges additive top-level fields (ER-1.4 — `modelled`, `resolved_to`).
+    It is applied AFTER the fixed keys and can only ADD: a colliding key is
+    dropped, never allowed to overwrite. So the fixed keys' names, values and
+    serialized order are untouched by construction, and a caller passing no
+    `extra` produces a byte-identical line to before the parameter existed.
+    Additive-only is enforced rather than trusted because this is an evidence
+    record: an `extra` that could silently rewrite `result_code` or `args` would
+    be a way to log a claim that never happened.
+
+    Facts about the call belong here rather than in `args`, which is a snapshot
+    of what the caller actually passed and must stay that.
+    """
     line = {
         "ts": _amarolab_datetime.now(_amarolab_timezone.utc).isoformat(),
         "id": str(_amarolab_uuid.uuid4()),
@@ -72,6 +86,10 @@ def _audit(tool, args, *, user="diego", allowed=True, result_code="ok", duration
         "result_code": result_code,
         "duration_ms": duration_ms,
     }
+    if extra:
+        for _k, _v in _amarolab_redact(extra).items():
+            if _k not in line:
+                line[_k] = _v
     try:
         _AMAROLAB_AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
         with _AMAROLAB_AUDIT_LOG.open("a", encoding="utf-8") as f:

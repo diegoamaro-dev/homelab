@@ -336,7 +336,7 @@ above (D-ER-2 / §3.3): a valid id continues to HA as today; a natural-language 
 | **ER-1.1** | Schema `aliases` + entity aliases (docs only, additive) | G-ER-1 |
 | **ER-1.2** | Loader: normalizer, validation, `resolution` registry, tests | G-ER-1, G-ER-2 (loader half), G-ER-5 |
 | **ER-1.3** | Projection emitter + runtime artifact; **D-ER-13** (check 12a — Rev 3) | G-ER-6 (**producer half**) |
-| **ER-1.4a** | **Capture the v0.1.0 baseline**, then `ha_get_state` v0.2.0 | G-ER-7 (read half) |
+| **ER-1.4a** | **Capture the v0.1.0 baseline**, then `ha_get_state` v0.2.0 | G-ER-7 (read half) — **PASS 2026-07-17**; G-ER-6 consumer half (read side) **PASS** |
 | **ER-1.4b** | `ha_call_service` v0.2.0 (resolution + C1) | G-ER-2/3/4, G-ER-7 (write half) |
 | **ER-1.5** | Reconciliation + closeout | — |
 
@@ -505,9 +505,20 @@ produced it; a version stamp is provenance, never freshness).
 > `model.py` was **added** to the inventory (it carries the `aliases_normalized`
 > field stamped by N9).
 
-**Tools (2 + 1 new + 1 harness)** — `tools/ha_call_service.py` → **v0.2.0**,
-`tools/ha_get_state.py` → **v0.2.0**, `lib/entity_resolver.py` (**new**),
-`bin/install_tool` (generalise the single inline marker).
+**Tools (2 + 1 new + 2 harness)** — `tools/ha_call_service.py` → **v0.2.0** (ER-1.4b),
+`tools/ha_get_state.py` → **v0.2.0** (**done at ER-1.4a**), `lib/entity_resolver.py`
+(**new** — D-ER-8 normalization, closed lookup, bounded candidates; added at ER-1.4a),
+`bin/install_tool` (marker generalised at ER-1.4a: `# @@AMAROLAB_INLINE:<name>@@` →
+`lib/<name>.py`, several per Tool — `ha_get_state` is the first Tool to need two),
+`lib/audit_helper.py` (**added to the inventory at ER-1.4a**: §4 step 4 mandates the audit
+line record `modelled`, and this is the only audit writer. An optional `extra` merges
+additive fields **after** the fixed keys, so a caller passing none produces a byte-identical
+line; `args` stays a snapshot of what the caller passed).
+
+> **Inventory corrected at ER-1.4a against the implementation** — an
+> implementation-inventory correction, **not** an architectural decision (the ER-1.2
+> precedent; the §3 register is unchanged). `lib/audit_helper.py` was not foreseen at the
+> freeze; the `modelled` field §4 already mandated has no other writer.
 
 **Projection (1 new)** — `ai-stack/ingest/bin/emit-entity-projection` (emit + the `--check`
 freshness mechanism of §9); `etc/cron.d/aurora-signals` **not scheduled at ER-1.3** — deferred

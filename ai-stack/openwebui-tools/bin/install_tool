@@ -2,11 +2,18 @@
 """
 install_tool — install / update an Amarolab Open WebUI Tool.
 
-Reads a Tool source file from disk, inlines lib/audit_helper.py into
-it via the `# @@AMAROLAB_INLINE:audit_helper@@` marker, computes the
-Tool id from the basename, authenticates to Open WebUI by minting a
-JWT signed with WEBUI_SECRET_KEY, and POSTs to /api/v1/tools/create
-(or .../id/{id}/update if the id already exists).
+Reads a Tool source file from disk, inlines each `lib/<name>.py` named
+by a `# @@AMAROLAB_INLINE:<name>@@` marker into it, computes the Tool id
+from the basename, authenticates to Open WebUI by minting a JWT signed
+with WEBUI_SECRET_KEY, and POSTs to /api/v1/tools/create (or
+.../id/{id}/update if the id already exists).
+
+Inlining exists because Open WebUI 0.8.10 executes each Tool in its own
+`tool_{id}` module namespace, where cross-module imports do not resolve.
+A marker resolves by name to `lib/<name>.py` and is replaced by that
+file's `# --- INLINE START ---` / `# --- INLINE END ---` block. A Tool
+may carry several markers; each name is inlined once per occurrence, in
+source order.
 
 Usage:
   install_tool <path/to/tool.py>           install or update
@@ -41,7 +48,7 @@ except ImportError as e:
     sys.exit(f"missing dep: {e}. install with: pip install --user PyJWT requests")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent  # ai-stack/openwebui-tools
-LIB_HELPER = REPO_ROOT / "lib" / "audit_helper.py"
+LIB_DIR = REPO_ROOT / "lib"
 ENV_FILE = Path(os.environ.get(
     "AMAROLAB_ENV_FILE",
     "/home/diego/homelab/ai-stack/.env",
@@ -51,7 +58,10 @@ USER_ID = os.environ.get(
     "OPENWEBUI_USER_ID",
     "3a49344e-acf6-41a1-b28d-8cce95c36c2a",  # diego (admin) on this homelab
 )
-INLINE_MARKER = "# @@AMAROLAB_INLINE:audit_helper@@"
+MARKER_RE = re.compile(
+    r"^[ \t]*# @@AMAROLAB_INLINE:([a-z_][a-z0-9_]*)@@[ \t]*$",
+    re.MULTILINE,
+)
 INLINE_RE = re.compile(
     r"# --- INLINE START ---\n(.*?)\n# --- INLINE END ---",
     re.DOTALL,
@@ -75,18 +85,26 @@ def mint_token(secret: str) -> str:
     return jwt.encode(payload, secret, algorithm="HS256")
 
 
-def extract_helper_block(helper_text: str) -> str:
-    m = INLINE_RE.search(helper_text)
+def extract_helper_block(path: Path) -> str:
+    if not path.exists():
+        sys.exit(f"[helper] no such helper: {path}")
+    m = INLINE_RE.search(path.read_text(encoding="utf-8"))
     if not m:
-        sys.exit(f"[helper] {LIB_HELPER} has no INLINE START/END markers")
+        sys.exit(f"[helper] {path} has no INLINE START/END markers")
     return m.group(1)
 
 
 def inline(tool_text: str) -> str:
-    if INLINE_MARKER not in tool_text:
-        sys.exit(f"[source] tool has no {INLINE_MARKER} marker")
-    helper = extract_helper_block(LIB_HELPER.read_text(encoding="utf-8"))
-    return tool_text.replace(INLINE_MARKER, helper)
+    if not MARKER_RE.search(tool_text):
+        sys.exit("[source] tool has no # @@AMAROLAB_INLINE:<name>@@ marker")
+
+    # A replacement FUNCTION, never a replacement string: helper blocks contain
+    # backslashes (regex literals, the D-ER-8 normalization spec), and re.sub
+    # would interpret those as group references in a string replacement.
+    def replace(m: "re.Match[str]") -> str:
+        return extract_helper_block(LIB_DIR / f"{m.group(1)}.py")
+
+    return MARKER_RE.sub(replace, tool_text)
 
 
 def parse_frontmatter(content: str) -> dict:
