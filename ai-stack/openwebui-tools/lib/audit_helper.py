@@ -64,7 +64,7 @@ def _audit(tool, args, *, user="diego", allowed=True, result_code="ok", duration
            extra=None):
     """Append one JSON line per Tool call. Never raises.
 
-    `extra` merges additive top-level fields (ER-1.4 — `modelled`, `resolved_to`).
+    `extra` merges additive top-level fields (ER-1.4 — `registry_target`, `resolved_to`).
     It is applied AFTER the fixed keys and can only ADD: a colliding key is
     dropped, never allowed to overwrite. So the fixed keys' names, values and
     serialized order are untouched by construction, and a caller passing no

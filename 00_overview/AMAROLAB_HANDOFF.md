@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-17 (Phase ER-1 — ER-1.4a: v0.1.0 baseline + `ha_get_state` v0.2.0, the first cutover)
+Last updated: 2026-07-17 (Phase ER-1 — freeze Rev 4: D-ER-14 `registry_target` + the pre-registered ER-1.4b C1 measurement protocol; prior same-day: ER-1.4a, committed `3ad8779f`)
 
 ## Purpose
 
@@ -369,7 +369,7 @@ Closeout document:
 ## Next Immediate Task
 
 **Current: Phase ER-1 — Deterministic Entity Resolution — design FROZEN 2026-07-16
-(operator-ratified), now Revision 3. Published:** defect record `c147e632` → architecture
+(operator-ratified), now Revision 4. Published:** defect record `c147e632` → architecture
 freeze `38eb8262` → **Revision 2 amendment** `3ebf59d1` (D-ER-11 aliases mirror the `binding`
 shape; D-ER-12 an alias may equal its own entity identifier, never another's) → **ER-1.1**
 `f983a04f` (additive `aliases` contract + the six bound entities' alias sets) → **ER-1.2**
@@ -392,8 +392,9 @@ permanent rule: `PROJECT_RULES.md` → **Content Provenance over Repository Chro
 **ER-1.3 committed + pushed (`ed7a149c`).**
 
 **ER-1.4a — the first cutover — implemented + validated 2026-07-17** (log
-`09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md`). **`ha_get_state` is v0.2.0 in
-`webui.db`; the read path now resolves natural language** (`toldo` → `cover.toldo`,
+`09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md`; committed `3ad8779f`). **`ha_get_state`
+is v0.2.1 in `webui.db` (0.2.0 at ER-1.4a; 0.2.1 = the Rev 4 D-ER-14 audit-field rename,
+behaviour unchanged); the read path now resolves natural language** (`toldo` → `cover.toldo`,
 `impresora 3d` → `switch.impresora_3d`, `Conexión a Internet` →
 `binary_sensor.rooter_estado_wan`) via the new inline-only
 `ai-stack/openwebui-tools/lib/entity_resolver.py`. **G-ER-7 read half PASS** (a canonical
@@ -405,21 +406,29 @@ markers; `lib/audit_helper.py` gained an additive `extra` (spec §10 inventory c
 implementation-inventory correction, **not** an architectural decision).
 
 **Next: ER-1.4b** — `ha_call_service` v0.2.0 (resolution + ER-1-C1); G-ER-2/3/4, G-ER-7 write
-half, G-ER-6 consumer half (write side). **This is where ER-1 changes reality.** **Read
-F-ER14-1 first** (`CURRENT_STATE.md` pending item 10): the audit field `modelled` overstates
-what it verifies (`sun.sun` → `modelled: false` though `daylight-time.md` binds it); the name
-is frozen, so it is **recorded, not self-approved**, and an operator decision is wanted before
-ER-1.4b — that is when the field starts describing actuation rather than reads.
+half, G-ER-6 consumer half (write side). **This is where ER-1 changes reality.**
+**F-ER14-1 is resolved — D-ER-14, freeze Revision 4 (ratified + applied 2026-07-17):** the
+audit observability field is **`registry_target`** (`ha_get_state` → v0.2.1; zero real audit
+lines ever carried `modelled`; behaviour proven byte-identical over the 18-case corpus —
+`09_logs/2026-07-17_ER1_freeze_rev4.md`). **The ER-1.4b C1 measurement protocol is
+PRE-REGISTERED** (`09_logs/2026-07-17_ER1_4b_c1_measurement_protocol.md`): 20 samples on
+`switch.impresora_3d`, decision rules A (immediate read: 20/20 first-read hits) / B (bounded
+retry: any miss with max visibility ≤ 2 s; budget formula fixed in advance) / C (escalate:
+> 2 s or non-observation) — the mechanism is chosen by these predefined criteria, never from
+the observed outcome. Execute the protocol as ER-1.4b Step 2, before implementing C1.
 Logs:
 [`../09_logs/2026-07-16_ER1_freeze_rev2.md`](../09_logs/2026-07-16_ER1_freeze_rev2.md) ·
 [`../09_logs/2026-07-16_ER1_1_aliases_applied.md`](../09_logs/2026-07-16_ER1_1_aliases_applied.md) ·
 [`../09_logs/2026-07-16_ER1_2_loader_applied.md`](../09_logs/2026-07-16_ER1_2_loader_applied.md) ·
 [`../09_logs/2026-07-17_ER1_2_G-ER-5_operational_closeout.md`](../09_logs/2026-07-17_ER1_2_G-ER-5_operational_closeout.md) ·
 [`../09_logs/2026-07-17_ER1_3_projection_applied.md`](../09_logs/2026-07-17_ER1_3_projection_applied.md) ·
-[`../09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md`](../09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md).
+[`../09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md`](../09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md) ·
+[`../09_logs/2026-07-17_ER1_freeze_rev4.md`](../09_logs/2026-07-17_ER1_freeze_rev4.md) ·
+[`../09_logs/2026-07-17_ER1_4b_c1_measurement_protocol.md`](../09_logs/2026-07-17_ER1_4b_c1_measurement_protocol.md).
 
-**Aurora's READ path changed at ER-1.4a; the WRITE path has not.** `ha_get_state` is v0.2.0
-and resolves natural language. **`ha_call_service` is still v0.1.0**, so the 13 historical
+**Aurora's READ path changed at ER-1.4a; the WRITE path has not.** `ha_get_state` is v0.2.1
+(read behaviour is ER-1.4a's; 0.2.1 is the Rev 4 audit-field rename) and resolves natural
+language. **`ha_call_service` is still v0.1.0**, so the 13 historical
 unverified writes would still be reported as successful today. ER-1 changes that at
 **ER-1.4b**, when ER-1-C1 lands.
 

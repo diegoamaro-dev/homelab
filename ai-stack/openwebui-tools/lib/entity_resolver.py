@@ -225,13 +225,16 @@ class _EntityResolver:
         different facts, and reporting the second as the first would put a claim
         in the audit log that was never verified.
 
-        Scope, stated precisely because the audit field is named `modelled`: this
-        answers *"is this id a target in the resolution registry?"*, NOT *"does
-        the World Model model this entity?"* The registry holds only the
-        **aliased** signals of bound entities, so an entity the World Model binds
-        but carries no aliases for is a target=False. `sun.sun` is exactly that
-        case — `environment/daylight-time.md` binds it, and it is deliberately
-        unaliased. Recorded as finding F-ER14-1.
+        Scope: this answers *"is this id a target in the resolution registry?"*
+        — the aliased, `ha_entity`-bound signals of modelled entities (D-ER-6) —
+        NOT *"does the World Model model this entity?"* The audit field carrying
+        it is named `registry_target` (D-ER-14, freeze Rev 4) so the name states
+        exactly that. An entity the World Model binds but carries no aliases for
+        is target=False — `sun.sun` is that case (`environment/daylight-time.md`
+        binds it, deliberately unaliased) and the name reports it accurately.
+        (History: the field was `modelled` at ER-1.4a; F-ER14-1 recorded the
+        overstatement and D-ER-14 renamed it before any real audit line carried
+        the old name.)
         """
         p = cls._load()
         if p is None:

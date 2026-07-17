@@ -3,7 +3,7 @@ title: Amarolab ha_get_state
 author: amarolab
 author_url: https://github.com/amaroou
 description: Read one Home Assistant entity's current state and a curated, safe subset of its attributes. Call this when the user asks the on/off state or a current value of a specific home device (e.g., "is the awning open?", "is the printer on?", "is the front door closed?"). One entity per call. Pass the everyday name the user actually said — in Spanish or English ("toldo", "impresora 3d", "puerta principal", "awning") — or a canonical entity id if you genuinely know it. Never invent an entity id: if the name is not recognised the Tool answers unknown_entity and lists what does exist. HA writes are out of scope for this Tool — use ha_call_service for those.
-version: 0.2.0
+version: 0.2.1
 license: MIT
 requirements:
 """
@@ -243,16 +243,16 @@ class Tools:
             # Step 4 — id-shaped: continue to Home Assistant EXACTLY as
             # today, whether or not the registry knows it (D-ER-9). The
             # registry is consulted for OBSERVABILITY ONLY and never to
-            # gate: `modelled` goes to the audit line and changes
-            # nothing about the request. `is_target` answers None when
-            # the resolver is unavailable, and the key is then omitted
-            # rather than recorded as false — claiming "not modelled"
-            # when the registry could not be read would be exactly the
-            # unverified claim ER-1 exists to remove.
+            # gate: `registry_target` (D-ER-14) goes to the audit line
+            # and changes nothing about the request. `is_target` answers
+            # None when the resolver is unavailable, and the key is then
+            # omitted rather than recorded as false — claiming "not a
+            # registry target" when the registry could not be read would
+            # be exactly the unverified claim ER-1 exists to remove.
             resolved_id = entity_id
-            modelled = _EntityResolver.is_target(entity_id)
-            if modelled is not None:
-                audit_extra["modelled"] = modelled
+            registry_target = _EntityResolver.is_target(entity_id)
+            if registry_target is not None:
+                audit_extra["registry_target"] = registry_target
         else:
             # Step 5 — not id-shaped: a natural name. Normalize (D-ER-8)
             # + closed lookup. No fuzzy matching, no scoring, no LLM.
@@ -284,7 +284,7 @@ class Tools:
             # keeps the audit line honest: without it `args.entity_id`
             # says "toldo" and no reader could tell what was actually
             # read (the §1.2 indistinguishability defect).
-            audit_extra["modelled"] = True
+            audit_extra["registry_target"] = True
             audit_extra["resolved_to"] = resolved_id
 
         if not _RateLimiter.check("ha_get_state", self.valves.max_per_minute):

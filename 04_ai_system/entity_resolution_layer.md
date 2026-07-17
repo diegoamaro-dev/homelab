@@ -1,6 +1,6 @@
 # Entity Resolution Layer (ER-1) — ratified design
 
-- **Status:** **FROZEN 2026-07-16** (operator-ratified) — **Revision 3**. Implementation is
+- **Status:** **FROZEN 2026-07-16** (operator-ratified) — **Revision 4**. Implementation is
   Phase **ER-1** (ER-1.0 → ER-1.5); each sub-phase ends at a **STOP** git gate.
 - **Amendments to the freeze** (a frozen design is amended only by a **gated, operator-ratified
   decision** — never by silent drift):
@@ -10,6 +10,7 @@
   | 1 | 2026-07-16 | Initial freeze — D-ER-1…10 + ER-1-C1 | ER-1.0 |
   | **2** | **2026-07-16** | **D-ER-11** (alias shape mirrors `binding`) · **D-ER-12** (alias vs entity-identifier collision — check 12e) | **ER-1.1** |
   | **3** | **2026-07-17** | **D-ER-13** (an aliased signal must bind `ha_entity` — check 12a; ratifies finding F-ER12-1) · projection freshness is **content-derived, never commit-derived**, via a host-side `--check` (§9) · **G-ER-6 split** into a producer half (ER-1.3) and a consumer half (ER-1.4) | **ER-1.3** |
+  | **4** | **2026-07-17** | **D-ER-14** (the step-4 audit observability field is named `registry_target`, never `modelled`; ratifies finding F-ER14-1) | **ER-1.4b Step 0 — before the write cutover** |
 - **Role:** the deterministic bridge between natural language and real Home Assistant
   `entity_id`s, plus mandatory write verification. It is the remedy for the defect recorded in
   [`../09_logs/2026-07-14_ER1_entity_resolution_finding.md`](../09_logs/2026-07-14_ER1_entity_resolution_finding.md).
@@ -116,6 +117,7 @@ D-12 allowlist; the awareness pipeline; Guardian Cloud.
 | **D-ER-11** *(Rev 2 — ratified at ER-1.1)* | **Aliases mirror the `binding` shape.** A **single-signal** entity uses a **flat alias list**; a **multi-signal** entity uses a **per-signal alias map**. **No implicit primary signal is introduced** — see §3.5. |
 | **D-ER-12** *(Rev 2 — ratified at ER-1.1)* | **Alias vs entity identifier (validation check 12e).** An alias **may** equal **its own** entity identifier; it **must never** collide with **another** entity's identifier — see §3.5. |
 | **D-ER-13** *(Rev 3 — ratified at ER-1.3)* | **An aliased signal must bind `ha_entity` (validation check 12a).** A signal bound to any other backend has no Home Assistant id to resolve to, so an alias on it would be **dead** — see §3.6. Ratifies finding **F-ER12-1**. |
+| **D-ER-14** *(Rev 4 — ratified before ER-1.4b)* | **The step-4 audit observability field is named `registry_target`** — it records *"this id is a target in the resolution registry"* (D-ER-6 scope), which is what is actually checked; `modelled` overstated it — see §3.7. Ratifies finding **F-ER14-1**. |
 
 ### 3.1 ER-1-C1 — mandatory write verification
 
@@ -289,6 +291,42 @@ criterion**, never by reopening a gate that passed on real evidence.
 only**. D-12 remains the sole authorization authority (**INV-17**); the resolver is never
 consulted to permit or deny (**D-ER-9**).
 
+### 3.7 D-ER-14 (Revision 4 — ratified 2026-07-17, before ER-1.4b)
+
+#### D-ER-14 — the step-4 audit observability field is named `registry_target`
+
+**The field the §4 ladder records at step 4 answers *"is this id a target in the resolution
+registry?"* — and its name states exactly that.** It was named `modelled` at Revision 1.
+
+**Why it was forced.** ER-1.4a implemented the field faithfully to the freeze, and
+measurement surfaced **F-ER14-1**: the name claims *"the World Model models this entity"*,
+but the registry holds only the **aliased** signals of bound entities (**D-ER-6**), and the
+two diverge provably — `sun.sun` → `modelled: false` while `environment/daylight-time.md`
+binds it (`binding: { ha_entity: sun.sun }`). The World Model models it; it is simply
+unaliased. A future auditor asking *"which calls hit entities we don't model?"* would
+mis-classify every modelled-but-unaliased entity. ER-1 exists partly because *"the audit log
+cannot presently distinguish a real actuation from an unverified write"* (§1.2); a field
+whose name overstates what was checked is that defect in a new place.
+
+**Why rename, not redefine.** Keeping `modelled` with a precise definition here was
+considered and rejected: an evidence record is read wherever the log is read, and a name that
+needs this document to be read safely re-creates the trap at every reading. `resolvable` was
+rejected as off-target — a recorded id is already resolved or passed through; **membership**
+is what is checked.
+
+**Cost — measured, zero.** Ratified before the field ever reached the real audit log
+(`modelled`: **0 occurrences** across `amarolab-audit.log{,.1}`, verified 2026-07-17 — the
+ER-1.4a probes ran against a scratch log) and before ER-1.4b stamps the field on **writes**.
+No historical audit line carries the old name; nothing needs reconciling later. **G-ER-7's
+read half is not reopened**: its closure asserted pre-existing keys byte-identical and the
+new keys purely additive — renaming an additive key touches neither. The rename is validated
+as an ER-1.4b acceptance criterion (the D-ER-13 pattern).
+
+**Authority is untouched.** Naming/observability only: the registry is still consulted at
+step 4 for observability and **never to gate** (D-ER-9); D-12 remains the sole authorization
+authority (**INV-17**). `ha_get_state` moves 0.2.0 → **0.2.1** (patch — the tool's return
+contract never carried the field; only the audit evidence key moves).
+
 ---
 
 ## 4. Resolution order at the tool boundary
@@ -301,7 +339,7 @@ check is untouched and `bad_service` still fires first.
 | 1 | **D-12 domain allowlist** | **first — unchanged** |
 | 2 | Service validation | unchanged (`bad_service`) |
 | 3 | Bounded/type check (3–128) | unchanged (`bad_entity_id`) |
-| 4 | **Id-shaped?** (`^[a-z_]+\.[a-z0-9_]+$`) | **pass through exactly as today.** Registry consulted for **observability only** (audit records `modelled: true\|false`) — never to gate |
+| 4 | **Id-shaped?** (`^[a-z_]+\.[a-z0-9_]+$`) | **pass through exactly as today.** Registry consulted for **observability only** (audit records `registry_target: true\|false` — D-ER-14) — never to gate |
 | 5 | Else → normalize (D-ER-8) → **closed** alias lookup | hit → substitute the resolved id and continue as if the caller had passed it |
 | 6 | Miss | **`unknown_entity`** + bounded candidate list (≤ 8; names + ids; AD-18-safe); **zero HTTP calls** |
 | 7 | POST | unchanged |
@@ -506,19 +544,22 @@ produced it; a version stamp is provenance, never freshness).
 > field stamped by N9).
 
 **Tools (2 + 1 new + 2 harness)** — `tools/ha_call_service.py` → **v0.2.0** (ER-1.4b),
-`tools/ha_get_state.py` → **v0.2.0** (**done at ER-1.4a**), `lib/entity_resolver.py`
+`tools/ha_get_state.py` → **v0.2.0** (**done at ER-1.4a**; → **v0.2.1** at Rev 4 — the
+D-ER-14 audit-field rename, patch), `lib/entity_resolver.py`
 (**new** — D-ER-8 normalization, closed lookup, bounded candidates; added at ER-1.4a),
 `bin/install_tool` (marker generalised at ER-1.4a: `# @@AMAROLAB_INLINE:<name>@@` →
 `lib/<name>.py`, several per Tool — `ha_get_state` is the first Tool to need two),
 `lib/audit_helper.py` (**added to the inventory at ER-1.4a**: §4 step 4 mandates the audit
-line record `modelled`, and this is the only audit writer. An optional `extra` merges
+line record `registry_target` (named `modelled` until Rev 4 — D-ER-14), and this is the only
+audit writer. An optional `extra` merges
 additive fields **after** the fixed keys, so a caller passing none produces a byte-identical
 line; `args` stays a snapshot of what the caller passed).
 
 > **Inventory corrected at ER-1.4a against the implementation** — an
 > implementation-inventory correction, **not** an architectural decision (the ER-1.2
 > precedent; the §3 register is unchanged). `lib/audit_helper.py` was not foreseen at the
-> freeze; the `modelled` field §4 already mandated has no other writer.
+> freeze; the field §4 already mandated (`modelled` then, `registry_target` since Rev 4) has
+> no other writer.
 
 **Projection (1 new)** — `ai-stack/ingest/bin/emit-entity-projection` (emit + the `--check`
 freshness mechanism of §9); `etc/cron.d/aurora-signals` **not scheduled at ER-1.3** — deferred
