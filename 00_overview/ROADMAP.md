@@ -17,8 +17,8 @@ document.
 Last updated: 2026-07-16 (**Phase ER-1 — Deterministic Entity Resolution — design FROZEN
 2026-07-16, now Revision 2**; ER-1.0 committed + pushed (`c147e632` → `38eb8262`); the
 Revision 2 amendment (D-ER-11 + D-ER-12) committed + pushed (`3ebf59d1`); ER-1.1 (aliases
-contract) committed + pushed (`f983a04f`); **ER-1.2 (loader) implemented + validated — at the
-git gate**; spec
+contract) committed + pushed (`f983a04f`); **ER-1.2 (loader) committed + pushed (`b0fded73`) —
+G-ER-5 CLOSED 2026-07-17 on the first unattended 04:15 cycle**; spec
 `04_ai_system/entity_resolution_layer.md`. Phase
 D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
@@ -559,7 +559,7 @@ Each sub-phase: real-data validation, documentation, **STOP at the git gate**.
 | ER-1.0 | Freeze (spec; decision register D-ER-1…10 + C1; ROADMAP slot; triad; freeze log). The 2026-07-14 defect record is committed separately, immediately before — history reads *defect discovered → design frozen* | **frozen 2026-07-16 — committed + pushed**: defect record `c147e632` → architecture freeze `38eb8262` |
 | ER-1 Rev 2 | Freeze amendment — ratify **D-ER-11** (alias shape) + **D-ER-12** (alias vs entity identifier); correct the record on check-12 semantics | **ratified 2026-07-16 — committed + pushed** (`3ebf59d1`; `09_logs/2026-07-16_ER1_freeze_rev2.md`) |
 | ER-1.1 | Schema `aliases` (additive, `schema_version` unchanged) + entity aliases (docs only) | **applied + validated 2026-07-16 — G-ER-1 PASS within ER-1.1 scope** (33 unique normalized aliases → 8 `ha_entity` targets across the 6 bound entities; `schema_version` unchanged; aliases proven **inert** — a fresh compile differs from the on-disk artifact only in `provenance.sha256`); **committed + pushed** (`f983a04f`; `09_logs/2026-07-16_ER1_1_aliases_applied.md`). Fail-loud enforcement lands at ER-1.2 |
-| ER-1.2 | Loader: normalizer, validation, `resolution` registry + tests | **implemented + validated 2026-07-16 — at the git gate** (`09_logs/2026-07-16_ER1_2_loader_applied.md`). **G-ER-1 CLOSED** (check 12 fail-loud in the real loader; every fault class rejected by test) · **G-ER-2 loader half PASS** (D-ER-8 table-driven + byte-stable registry) · **G-ER-5 implementation-validated, NOT closed** — operational non-regression pending the next unattended 04:15 cycle. 42 loader + 36 evaluator tests green; `artifact_version` still 1; `LOADER_VERSION` → 0.2.0 |
+| ER-1.2 | Loader: normalizer, validation, `resolution` registry + tests | **committed + pushed** (`b0fded73`; `09_logs/2026-07-16_ER1_2_loader_applied.md`). **G-ER-1 CLOSED** (check 12 fail-loud in the real loader; every fault class rejected by test) · **G-ER-2 loader half PASS** (D-ER-8 table-driven + byte-stable registry) · **G-ER-5 CLOSED 2026-07-17** — implementation validation **plus** operational non-regression on the first unattended 04:15 cycle after the artifact regeneration: awareness byte-equivalent to baseline, Home State `Degraded` (never `Unavailable`), zero `ArtifactError` (`09_logs/2026-07-17_ER1_2_G-ER-5_operational_closeout.md`). 42 loader + 36 evaluator tests green; `artifact_version` still 1; `LOADER_VERSION` → 0.2.0 |
 | ER-1.3 | Projection emitter + `aurora-entities.json` runtime artifact | G-ER-6 |
 | ER-1.4a | Capture the v0.1.0 baseline, then `ha_get_state` v0.2.0 | G-ER-7 (read half) |
 | ER-1.4b | `ha_call_service` v0.2.0 (resolution + ER-1-C1) | G-ER-2/3/4, G-ER-7 (write half) |
@@ -615,6 +615,25 @@ touching the shared file.
 ## Documentation Hygiene — Follow-up
 
 Not a phase. Future repo-wide maintenance pass.
+
+* **WM-era stale transient status — technical debt, found 2026-07-17.** Discovered by the
+  first sweep under `PROJECT_RULES.md` → *Transient Operational Status*, and **deliberately
+  left unreconciled**: it predates ER-1.2 and is outside that change's approved scope
+  (operator decision — a narrow commit must not quietly widen). The governance rule
+  guarantees a future reconciliation will clear it. Known sites:
+  * [`CURRENT_STATE.md`](CURRENT_STATE.md) §*Current phase* — WM-4 described as
+    **"STOPPED at the git gate (not committed)"**; reality: **committed + pushed
+    `476e0ae8`** (the same paragraph already says so elsewhere — internally contradictory).
+    It also says G-WM4-6 "closes on 2026-07-14 real evidence"; it closed.
+  * [`ROADMAP.md`](ROADMAP.md) → Phase WM narrative — same WM-4 "STOPPED at the git gate".
+  * [`AMAROLAB_HANDOFF.md`](AMAROLAB_HANDOFF.md) — WM-5 described as **"STOPPED at the git
+    gate"**; reality: **committed + pushed `b2b04670`**.
+  * **Do not "fix" these two classes**, which the same sweep surfaces:
+    **(a)** `"Each phase/sub-phase: … STOP at the git gate"` — a *process rule* describing
+    the workflow, correct as written; **(b)** `"not committed in plain text"` in the Secrets
+    section — the *secrets policy*, not a git status.
+  * Historical `09_logs/` entries are **exempt** and must stay so: their transient status is
+    evidence of what was true then, corrected only by later documentation.
 
 * **Review and optionally sanitize private LAN / Tailscale node IPs across AMAROLAB documentation.**
   Private (RFC 1918) and Tailscale (CGNAT) addresses are

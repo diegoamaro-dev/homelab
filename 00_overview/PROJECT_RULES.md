@@ -174,6 +174,59 @@ CURRENT_STATE.md is assumed correct until reconciliation.
 
 ---
 
+# Transient Operational Status
+
+Operational status is **transient metadata, not durable documentation**.
+
+Phrases such as:
+
+- "at the git gate"
+- "not committed" / "not yet pushed"
+- "pending"
+- "implemented, not yet validated"
+- "Next: <sub-phase>"
+
+describe a **moment**, not a fact. They go false the instant the state advances — most
+often the moment the very commit carrying them is published. A statement that was true
+when written and is false now is **drift**, and drift inside a source of truth is a
+defect, not a cosmetic issue.
+
+Rules:
+
+1. **The triad must never knowingly contain false operational status.**
+   `CURRENT_STATE.md`, `ROADMAP.md` and `AMAROLAB_HANDOFF.md` are operational sources of
+   truth. Leaving a known-false status in them is not permitted, however narrow the
+   current change is.
+
+2. **Every reconciliation sweeps for stale transient status.** After a commit is
+   published, the next documentation reconciliation **must** update or remove the
+   transient markers that commit left behind — **including in triad documents the
+   current change would not otherwise touch**. Sweep for the phrases above; do not
+   rely on noticing them.
+
+3. **Prefer durable phrasing.** Record the **fact** — `committed + pushed <hash>`,
+   `PASS <date> on real evidence` — not the **moment** ("at the git gate"). Where a
+   transient marker is genuinely needed, it is a **debt**, cleared at the next
+   reconciliation.
+
+4. **Historical documents are exempt — and must stay exempt.** A dated apply, freeze or
+   closeout log in `09_logs/` records what was true **at that time**. Its transient
+   status is **not** drift — it is evidence. Never rewrite it to match the present (see
+   *Historical Documentation*). Corrections belong in **later** documentation: a new
+   closeout log, plus the triad.
+
+5. **Accuracy outranks commit purity.** If a commit's theme is narrow but the triad
+   would be left knowingly false, reconcile the status **in that same commit**. A tidy
+   commit boundary is never a reason to publish a false operational claim.
+
+**Origin:** Phase ER-1 (2026-07-16/17). "At the git gate" survived publication **three
+times** across all three triad documents — at one point `AMAROLAB_HANDOFF.md` pointed a
+future session at `Next: ER-1.1` when ER-1.1 was already complete and pushed. The pattern
+is structural, not carelessness: a document that asserts its own pending state is false
+the moment it lands.
+
+---
+
 # Historical Documentation
 
 Historical documents are never rewritten.
@@ -185,6 +238,11 @@ They capture:
 - why it happened
 
 Corrections belong in later documentation, not by rewriting history.
+
+Note: this rule and *Transient Operational Status* are complements, not exceptions to
+each other. **Live state documents** (the triad) are reconciled to reality; **historical
+records** (`09_logs/`) are left exactly as written and corrected only by later
+documents.
 
 ---
 
