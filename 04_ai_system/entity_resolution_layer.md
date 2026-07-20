@@ -375,7 +375,7 @@ above (D-ER-2 / §3.3): a valid id continues to HA as today; a natural-language 
 | **ER-1.2** | Loader: normalizer, validation, `resolution` registry, tests | G-ER-1, G-ER-2 (loader half), G-ER-5 |
 | **ER-1.3** | Projection emitter + runtime artifact; **D-ER-13** (check 12a — Rev 3) | G-ER-6 (**producer half**) |
 | **ER-1.4a** | **Capture the v0.1.0 baseline**, then `ha_get_state` v0.2.0 | G-ER-7 (read half) — **PASS 2026-07-17**; G-ER-6 consumer half (read side) **PASS** |
-| **ER-1.4b** | `ha_call_service` v0.2.0 (resolution + C1) | G-ER-2/3/4, G-ER-7 (write half) |
+| **ER-1.4b** | `ha_call_service` v0.2.0 (resolution + C1) | G-ER-2/3a/3b/4, G-ER-7 (write half), G-ER-6 consumer half (write side) — **all PASS 2026-07-20** |
 | **ER-1.5** | Reconciliation + closeout | — |
 
 Reads are cut over before writes deliberately: the resolver proves itself on the path that
@@ -543,7 +543,9 @@ produced it; a version stamp is provenance, never freshness).
 > `model.py` was **added** to the inventory (it carries the `aliases_normalized`
 > field stamped by N9).
 
-**Tools (2 + 1 new + 2 harness)** — `tools/ha_call_service.py` → **v0.2.0** (ER-1.4b),
+**Tools (2 + 1 new + 2 harness)** — `tools/ha_call_service.py` → **v0.2.0**
+(**applied at ER-1.4b**, 2026-07-20 — resolution ladder + ER-1-C1 after-only
+verification, Rule B / 500 ms window; `09_logs/2026-07-20_ER1_4b_ha_call_service_applied.md`),
 `tools/ha_get_state.py` → **v0.2.0** (**done at ER-1.4a**; → **v0.2.1** at Rev 4 — the
 D-ER-14 audit-field rename, patch), `lib/entity_resolver.py`
 (**new** — D-ER-8 normalization, closed lookup, bounded candidates; added at ER-1.4a),

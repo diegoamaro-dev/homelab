@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-17 (Phase ER-1 — freeze Rev 4: D-ER-14 `registry_target` + the pre-registered ER-1.4b C1 measurement protocol; prior same-day: ER-1.4a, committed `3ad8779f`)
+Last updated: 2026-07-20 (Phase ER-1 — ER-1.4b applied: `ha_call_service` v0.2.0, resolution + ER-1-C1 Rule B / 500 ms; the write path now verifies before claiming success — at the git gate; prior: freeze Rev 4 + C1 measurement protocol 2026-07-17)
 
 ## Purpose
 
@@ -405,8 +405,11 @@ docstring examples). `bin/install_tool` now resolves multiple `# @@AMAROLAB_INLI
 markers; `lib/audit_helper.py` gained an additive `extra` (spec §10 inventory corrected — an
 implementation-inventory correction, **not** an architectural decision).
 
-**Next: ER-1.4b** — `ha_call_service` v0.2.0 (resolution + ER-1-C1); G-ER-2/3/4, G-ER-7 write
-half, G-ER-6 consumer half (write side). **This is where ER-1 changes reality.**
+**Next: ER-1.5** — reconciliation + closeout. **ER-1.4b — `ha_call_service` v0.2.0 (resolution
++ ER-1-C1, Rule B / 500 ms) — implemented + validated 2026-07-20, at the git gate**
+(`09_logs/2026-07-20_ER1_4b_ha_call_service_applied.md`): the write path now verifies before it
+claims success. G-ER-2/3a/3b/4 + G-ER-7 write half + G-ER-6 consumer half (write side) all PASS;
+v0.2.0 installed to `webui.db` (attached to `qwen2.5`). **This was where ER-1 changed reality.**
 **F-ER14-1 is resolved — D-ER-14, freeze Revision 4 (ratified + applied 2026-07-17):** the
 audit observability field is **`registry_target`** (`ha_get_state` → v0.2.1; zero real audit
 lines ever carried `modelled`; behaviour proven byte-identical over the 18-case corpus —
@@ -426,11 +429,12 @@ Logs:
 [`../09_logs/2026-07-17_ER1_freeze_rev4.md`](../09_logs/2026-07-17_ER1_freeze_rev4.md) ·
 [`../09_logs/2026-07-17_ER1_4b_c1_measurement_protocol.md`](../09_logs/2026-07-17_ER1_4b_c1_measurement_protocol.md).
 
-**Aurora's READ path changed at ER-1.4a; the WRITE path has not.** `ha_get_state` is v0.2.1
-(read behaviour is ER-1.4a's; 0.2.1 is the Rev 4 audit-field rename) and resolves natural
-language. **`ha_call_service` is still v0.1.0**, so the 13 historical
-unverified writes would still be reported as successful today. ER-1 changes that at
-**ER-1.4b**, when ER-1-C1 lands.
+**Aurora's read path changed at ER-1.4a; the write path changed at ER-1.4b (2026-07-20).**
+`ha_get_state` is v0.2.1 and `ha_call_service` is now **v0.2.0** — both resolve natural
+language, and `ha_call_service` runs ER-1-C1: **a write is claimed successful only when the
+resulting HA state is verified** (Rule B: check immediately, then poll 100 ms within a 500 ms
+budget), else honest `applied_unverified`. The 13 historical unverified writes across 7
+non-existent ids can no longer be reported as successful (proven by G-ER-3b).
 
 ER-1 closes the natural-language → `entity_id` gap **and** makes writes honest. Real audit
 evidence: **13 unverified writes across 7 non-existent entity ids were reported as
