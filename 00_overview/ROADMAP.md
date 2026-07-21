@@ -45,7 +45,7 @@ Filter (G-F3-1…7) + F-3b HA-voice awareness (G-F3-8) both validated. F-4: F4.1
 (substrate) + F4.2 (generator) DONE + committed 2026-06-30; F4.3 implementation +
 reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08
 config-verified (empirical restic pending next backup), G-F4-05/06/07 intentionally
-pending real operational evidence; F-4 not fully closed. F-5 **CLOSED 2026-07-16 (at WM-6)** — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL** → R-F5-A logged; **remedied by the World Model, closed at WM-6 — G-F5-04 PASS on real evidence (chat + voice); R-F5-A closed** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`); F-6 unblocked. **World Model architecture FROZEN 2026-07-01 (AD-21) as the R-F5-A remedy + Aurora's semantic baseline; Phase WM (WM-1→WM-7) implementation underway — WM-1 `_schema/` foundation committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed); WM-4 evaluator cutover implemented + validated 2026-07-13 — `HOME_RULES` retired, AD-20/INV-18 preserved, STOPPED at the git gate (G-WM4-6 closed 2026-07-14); WM-5 done 2026-07-14; **WM-6 done 2026-07-16 — G-F5-04 CLOSED / R-F5-A · F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`).**
+pending real operational evidence; F-4 not fully closed. F-5 **CLOSED 2026-07-16 (at WM-6)** — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL** → R-F5-A logged; **remedied by the World Model, closed at WM-6 — G-F5-04 PASS on real evidence (chat + voice); R-F5-A closed** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`); F-6 unblocked. **World Model architecture FROZEN 2026-07-01 (AD-21) as the R-F5-A remedy + Aurora's semantic baseline; Phase WM (WM-1→WM-7) implementation underway — WM-1 `_schema/` foundation committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed); WM-4 evaluator cutover implemented + validated 2026-07-13 — `HOME_RULES` retired, AD-20/INV-18 preserved, committed + pushed (`476e0ae8`); G-WM4-6 closed 2026-07-14; WM-5 done 2026-07-14 — committed + pushed (`b2b04670`); **WM-6 done 2026-07-16 — G-F5-04 CLOSED / R-F5-A · F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`).**
 
 ---
 
@@ -498,8 +498,8 @@ evaluates — architectural separation), `bin/aurora-context` renders home aware
 (INV-19), **`HOME_RULES` + the WM-3 parity harness retired** (32 snapshots migrated to the
 `_evaluator/tests/` regression suite), `home_model.md` → redirect, `aurora-context.json`
 schema preserved (AD-20/INV-18), `overall_status` platform-only until WM-5 (apply log
-`09_logs/2026-07-13_WM4_evaluator_cutover_applied.md`) — **STOPPED at the git gate**;
-G-WM4-6 (first unattended nightly cycle) closed 2026-07-14; WM-5 (consumer convergence) done 2026-07-14; **WM-6 (close G-F5-04) done 2026-07-16 — G-F5-04 CLOSED / R-F5-A · F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`).
+`09_logs/2026-07-13_WM4_evaluator_cutover_applied.md`) — **committed + pushed (`476e0ae8`)**;
+G-WM4-6 (first unattended nightly cycle) closed 2026-07-14; WM-5 (consumer convergence) done 2026-07-14 — **committed + pushed (`b2b04670`)**; **WM-6 (close G-F5-04) done 2026-07-16 — G-F5-04 CLOSED / R-F5-A · F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`).
 Each phase: real-data validation, documentation, **STOP at the git gate**. Hashes are the
 post-sanitization canonical hashes (history rewritten + republished 2026-07-10; see
 `09_logs/2026-07-10_repo_history_sanitization_reconciliation.md`).
@@ -511,7 +511,7 @@ post-sanitization canonical hashes (history rewritten + republished 2026-07-10; 
 | WM-2 | Migrate `home_model.md` → literate `home/`+`environment/` entities + `collectors.md` (docs only, 1:1) | **semantic equivalence — docs done 2026-07-01 (G-WM2-1…10 pass); committed + pushed (`4c3e2a5d`)** |
 | WM-3 | Loader/compiler (`_loader/`); run parallel to `HOME_RULES` | **real-data parity — PASS 2026-07-02; committed + pushed (`8d653fea`) — git gate closed** |
 | WM-4 | Evaluation engine consumes the model; retire `HOME_RULES` | **committed + pushed (`476e0ae8`); G-WM4-1…6 PASS — G-WM4-6 closed 2026-07-14 (first unattended cycle); WM-4 complete** |
-| WM-5 | Consumer convergence (Filter, home-aware `system_status`, voice line) | **implemented + validated 2026-07-14 — G-WM5-1…5 PASS on real data (§1.5 low-not-escalated proven; `system_status` webui.db install operator-gated); at the git gate** |
+| WM-5 | Consumer convergence (Filter, home-aware `system_status`, voice line) | **committed + pushed (`b2b04670`); implemented + validated 2026-07-14 — G-WM5-1…5 PASS on real data** (§1.5 low-not-escalated proven; `system_status` v0.3.0 installed to `webui.db` + verified on the running assistant 2026-07-14 — G-WM5-3) |
 | WM-6 | **Reopen & close G-F5-04** (real induced anomaly, chat + voice) | **DONE 2026-07-16 — G-F5-04 CLOSED, PASS (chat @ ai.amarolab.es + voice @ ha.amarolab.es/AURORA v1); R-F5-A / F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`) |
 | WM-7+ | Extend regions (infrastructure, self, projects); foundation for proactive intelligence | per-region validation |
 
@@ -655,24 +655,29 @@ touching the shared file.
 
 Not a phase. Future repo-wide maintenance pass.
 
-* **WM-era stale transient status — technical debt, found 2026-07-17.** Discovered by the
-  first sweep under `PROJECT_RULES.md` → *Transient Operational Status*, and **deliberately
-  left unreconciled**: it predates ER-1.2 and is outside that change's approved scope
-  (operator decision — a narrow commit must not quietly widen). The governance rule
-  guarantees a future reconciliation will clear it. Known sites:
-  * [`CURRENT_STATE.md`](CURRENT_STATE.md) §*Current phase* — WM-4 described as
-    **"STOPPED at the git gate (not committed)"**; reality: **committed + pushed
-    `476e0ae8`** (the same paragraph already says so elsewhere — internally contradictory).
-    It also says G-WM4-6 "closes on 2026-07-14 real evidence"; it closed.
-  * [`ROADMAP.md`](ROADMAP.md) → Phase WM narrative — same WM-4 "STOPPED at the git gate".
-  * [`AMAROLAB_HANDOFF.md`](AMAROLAB_HANDOFF.md) — WM-5 described as **"STOPPED at the git
-    gate"**; reality: **committed + pushed `b2b04670`**.
-  * **Do not "fix" these two classes**, which the same sweep surfaces:
+* **WM-era stale transient status — RESOLVED 2026-07-21.** Found 2026-07-17 by the first
+  sweep under `PROJECT_RULES.md` → *Transient Operational Status* and deliberately left
+  unreconciled at the time (it predated ER-1.2 and was outside that change's approved
+  scope — a narrow commit must not quietly widen). Cleared in a dedicated
+  documentation-only reconciliation: the false WM-4 / WM-5 "STOPPED at the git gate"
+  markers in all three triad documents and in
+  [`../04_ai_system/world_model/README.md`](../04_ai_system/world_model/README.md) were
+  replaced with the durable facts (**WM-4 `476e0ae8`**, **WM-5 `b2b04670`**, G-WM4-6
+  closed 2026-07-14, `system_status` v0.3.0 installed + verified 2026-07-14). Closeout:
+  [`../09_logs/2026-07-21_WM_documentation_hygiene_closeout.md`](../09_logs/2026-07-21_WM_documentation_hygiene_closeout.md).
+  * **Still do not "fix" these two classes**, which any such sweep re-surfaces:
     **(a)** `"Each phase/sub-phase: … STOP at the git gate"` — a *process rule* describing
     the workflow, correct as written; **(b)** `"not committed in plain text"` in the Secrets
     section — the *secrets policy*, not a git status.
   * Historical `09_logs/` entries are **exempt** and must stay so: their transient status is
     evidence of what was true then, corrected only by later documentation.
+  * **Known remaining debt (out of this pass's approved scope):**
+    [`../04_ai_system/world_model_architecture.md`](../04_ai_system/world_model_architecture.md)
+    (§Status header + the *Freeze record* table) still says the freeze package is "not
+    committed, not pushed" — false, it is `b43e8aad`; "not tagged" remains **true** (no WM
+    tag exists). The same table also still says Phase WM implementation is "not started" —
+    false through WM-6. Left untouched by operator decision: it is a **frozen architecture
+    document** and WM-0 era, not WM-4/WM-5.
 
 * **Review and optionally sanitize private LAN / Tailscale node IPs across AMAROLAB documentation.**
   Private (RFC 1918) and Tailscale (CGNAT) addresses are

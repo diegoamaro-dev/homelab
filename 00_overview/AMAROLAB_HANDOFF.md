@@ -322,7 +322,7 @@ reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08 config-
 (empirical restic pending next backup), G-F4-05/06/07 intentionally pending real
 operational evidence; F-4 not fully closed. F-5 Home Intelligence **CLOSED 2026-07-16 (at WM-6)** — F5.1/F5.2 done; **F5.3 (2026-07-01) G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A logged; **World Model remedy, closed at WM-6 — G-F5-04 PASS on real evidence (chat + voice); R-F5-A closed** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`)). Phase D-1 (Voice) closed 2026-06-18.**
 
-**World Model architecture FROZEN 2026-07-01 (AD-21, `04_ai_system/world_model_architecture.md`) — Aurora's semantic baseline and the R-F5-A remedy. Implementation = Phase WM (WM-1→WM-7); WM-1 `_schema/` foundation committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed); WM-4 evaluator cutover implemented + validated 2026-07-13 — `_evaluator/` engine live in `bin/aurora-context`, `HOME_RULES` retired, AD-20/INV-18 preserved — STOPPED at the git gate (not committed); G-WM4-6 unattended-cycle gate open (closes 2026-07-14); WM-5 done 2026-07-14; **WM-6 done 2026-07-16 — G-F5-04 CLOSED, R-F5-A / F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`). Hashes are the post-sanitization canonical hashes (history rewritten + republished 2026-07-10; see `09_logs/2026-07-10_repo_history_sanitization_reconciliation.md`).**
+**World Model architecture FROZEN 2026-07-01 (AD-21, `04_ai_system/world_model_architecture.md`) — Aurora's semantic baseline and the R-F5-A remedy. Implementation = Phase WM (WM-1→WM-7); WM-1 `_schema/` foundation committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed); WM-4 evaluator cutover implemented + validated 2026-07-13 — `_evaluator/` engine live in `bin/aurora-context`, `HOME_RULES` retired, AD-20/INV-18 preserved — committed + pushed (`476e0ae8`); **G-WM4-6 CLOSED 2026-07-14** (first unattended cycle); WM-5 done 2026-07-14 — committed + pushed (`b2b04670`); **WM-6 done 2026-07-16 — G-F5-04 CLOSED, R-F5-A / F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`). Hashes are the post-sanitization canonical hashes (history rewritten + republished 2026-07-10; see `09_logs/2026-07-10_repo_history_sanitization_reconciliation.md`).**
 
 Active follow-on: **Phase RTX-1 — Torre GPU node — CLOSED
 2026-06-27. RTX-1.4 (Tailscale-only) + RTX-1.5 (headless
@@ -480,8 +480,9 @@ WM-3 parity harness retired** (32 snapshots → `_evaluator/tests/` regression s
 is **implemented + validated 2026-07-14** — the §1.5 aggregate verdict lives in `_evaluator/`
 (`evaluate_world` / `aggregate_verdict`; AD-WM5-1 unknown precedence); additive
 `world.verdict` / `world.regions` (`home.anomalies` unchanged — AD-20/INV-18); home-aware
-`system_status` v0.3.0 (`webui.db` install operator-gated) + home-aware voice line (W-10 cap);
-G-WM5-1…5 real-data PASS — **STOPPED at the git gate** (apply log
+`system_status` v0.3.0 (**installed to `webui.db` + verified on the running assistant
+2026-07-14** — G-WM5-3) + home-aware voice line (W-10 cap);
+G-WM5-1…5 real-data PASS — **committed + pushed (`b2b04670`)** (apply log
 `09_logs/2026-07-14_WM5_consumer_convergence_applied.md`). **WM-6 (reopen & close G-F5-04) is DONE 2026-07-16 — G-F5-04 CLOSED, PASS on real
 evidence (chat @ ai.amarolab.es + voice @ ha.amarolab.es/AURORA v1); R-F5-A CLOSED; F-5 CLOSED**
 (apply log `09_logs/2026-07-16_WM6_G-F5-04_closeout.md`; Run 1 aborted — wrong endpoint (HA Assist) —
