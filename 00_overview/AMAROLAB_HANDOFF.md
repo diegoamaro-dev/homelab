@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-20 (Phase ER-1 — ER-1.4b applied: `ha_call_service` v0.2.0, resolution + ER-1-C1 Rule B / 500 ms; the write path now verifies before claiming success — at the git gate; prior: freeze Rev 4 + C1 measurement protocol 2026-07-17)
+Last updated: 2026-07-21 (Phase ER-1 — **ER-1.5 reconciliation + closeout: Phase ER-1 COMPLETE**; ER-1.0→ER-1.5 delivered, G-ER-1…7 closed on real evidence; ER-1.4b `ha_call_service` v0.2.0 + ER-1-C1 committed + pushed `5b502c96`; the write path now verifies before claiming success; closeout log `09_logs/2026-07-21_ER1_5_closeout.md`)
 
 ## Purpose
 
@@ -405,11 +405,14 @@ docstring examples). `bin/install_tool` now resolves multiple `# @@AMAROLAB_INLI
 markers; `lib/audit_helper.py` gained an additive `extra` (spec §10 inventory corrected — an
 implementation-inventory correction, **not** an architectural decision).
 
-**Next: ER-1.5** — reconciliation + closeout. **ER-1.4b — `ha_call_service` v0.2.0 (resolution
-+ ER-1-C1, Rule B / 500 ms) — implemented + validated 2026-07-20, at the git gate**
-(`09_logs/2026-07-20_ER1_4b_ha_call_service_applied.md`): the write path now verifies before it
-claims success. G-ER-2/3a/3b/4 + G-ER-7 write half + G-ER-6 consumer half (write side) all PASS;
-v0.2.0 installed to `webui.db` (attached to `qwen2.5`). **This was where ER-1 changed reality.**
+**Phase ER-1 — Deterministic Entity Resolution — COMPLETE at ER-1.5 (2026-07-21;** closeout
+`09_logs/2026-07-21_ER1_5_closeout.md`). ER-1.0→ER-1.5 delivered; G-ER-1…7 closed on real
+evidence; the triad carries no false ER-1 transient status. **ER-1.4b — `ha_call_service`
+v0.2.0 (resolution + ER-1-C1, Rule B / 500 ms) — implemented + validated 2026-07-20, committed +
+pushed `5b502c96`** (`09_logs/2026-07-20_ER1_4b_ha_call_service_applied.md`): the write path now
+verifies before it claims success. G-ER-2/3a/3b/4 + G-ER-7 write half + G-ER-6 consumer half
+(write side) all PASS; v0.2.0 installed to `webui.db` (attached to `qwen2.5`). **This was where
+ER-1 changed reality.**
 **F-ER14-1 is resolved — D-ER-14, freeze Revision 4 (ratified + applied 2026-07-17):** the
 audit observability field is **`registry_target`** (`ha_get_state` → v0.2.1; zero real audit
 lines ever carried `modelled`; behaviour proven byte-identical over the 18-case corpus —
@@ -418,7 +421,7 @@ PRE-REGISTERED** (`09_logs/2026-07-17_ER1_4b_c1_measurement_protocol.md`): 20 sa
 `switch.impresora_3d`, decision rules A (immediate read: 20/20 first-read hits) / B (bounded
 retry: any miss with max visibility ≤ 2 s; budget formula fixed in advance) / C (escalate:
 > 2 s or non-observation) — the mechanism is chosen by these predefined criteria, never from
-the observed outcome. Execute the protocol as ER-1.4b Step 2, before implementing C1.
+the observed outcome. The protocol was executed as ER-1.4b Step 2, before implementing C1 (→ Rule B / 500 ms).
 Logs:
 [`../09_logs/2026-07-16_ER1_freeze_rev2.md`](../09_logs/2026-07-16_ER1_freeze_rev2.md) ·
 [`../09_logs/2026-07-16_ER1_1_aliases_applied.md`](../09_logs/2026-07-16_ER1_1_aliases_applied.md) ·

@@ -14,8 +14,9 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-07-20 (**Phase ER-1 — Deterministic Entity Resolution — design FROZEN
-2026-07-16, now Revision 4**; ER-1.0 committed + pushed (`c147e632` → `38eb8262`); the
+Last updated: 2026-07-21 (**Phase ER-1 — Deterministic Entity Resolution — COMPLETE at ER-1.5
+(closeout 2026-07-21, `09_logs/2026-07-21_ER1_5_closeout.md`); design FROZEN 2026-07-16,
+Revision 4**; ER-1.0 committed + pushed (`c147e632` → `38eb8262`); the
 Revision 2 amendment (D-ER-11 + D-ER-12) committed + pushed (`3ebf59d1`); ER-1.1 (aliases
 contract) committed + pushed (`f983a04f`); **ER-1.2 (loader) committed + pushed (`b0fded73`) —
 G-ER-5 CLOSED 2026-07-17 on the first unattended 04:15 cycle**; **ER-1.3 (projection emitter +
@@ -26,9 +27,10 @@ half PASS on the read side; the read path resolves natural language (`ha_call_se
 then still v0.1.0)**; **Rev 4 (D-ER-14 — audit field `registry_target`; `ha_get_state` →
 v0.2.1) ratified + applied 2026-07-17, with the ER-1.4b C1 measurement protocol
 pre-registered**; **ER-1.4b (`ha_call_service` v0.2.0 — resolution + ER-1-C1, Rule B / 500 ms)
-implemented + validated 2026-07-20 — the write cutover, at the git gate: G-ER-2/3a/3b/4 +
-G-ER-7 write half + G-ER-6 consumer half (write side) all PASS; the write path now verifies
-before it claims success (`09_logs/2026-07-20_ER1_4b_ha_call_service_applied.md`)**; spec
+implemented + validated 2026-07-20 — the write cutover, committed + pushed `5b502c96`:
+G-ER-2/3a/3b/4 + G-ER-7 write half + G-ER-6 consumer half (write side) all PASS; the write path
+now verifies before it claims success (`09_logs/2026-07-20_ER1_4b_ha_call_service_applied.md`)**;
+spec
 `04_ai_system/entity_resolution_layer.md`. Phase
 D-1 closed; **Phase RTX-1
 CLOSED** — RTX-1.4 remote exposure + RTX-1.5 headless NSSM
@@ -594,9 +596,9 @@ Each sub-phase: real-data validation, documentation, **STOP at the git gate**.
 | ER-1.2 | Loader: normalizer, validation, `resolution` registry + tests | **committed + pushed** (`b0fded73`; `09_logs/2026-07-16_ER1_2_loader_applied.md`). **G-ER-1 CLOSED** (check 12 fail-loud in the real loader; every fault class rejected by test) · **G-ER-2 loader half PASS** (D-ER-8 table-driven + byte-stable registry) · **G-ER-5 CLOSED 2026-07-17** — implementation validation **plus** operational non-regression on the first unattended 04:15 cycle after the artifact regeneration: awareness byte-equivalent to baseline, Home State `Degraded` (never `Unavailable`), zero `ArtifactError` (`09_logs/2026-07-17_ER1_2_G-ER-5_operational_closeout.md`). 42 loader + 36 evaluator tests green; `artifact_version` still 1; `LOADER_VERSION` → 0.2.0 |
 | ER-1.3 | Projection emitter + `aurora-entities.json` runtime artifact; **D-ER-13** (check 12a — Rev 3) | **implemented + validated 2026-07-17** (`09_logs/2026-07-17_ER1_3_projection_applied.md`). **G-ER-6 producer half CLOSED** — artifact missing / corrupt / no-`resolution` ⇒ fail loud, nothing written, last-good retained byte-identical; stale / absent ⇒ honest `--check` (rc 3); consumer half open (ER-1.4). **D-ER-13 ratified — no behaviour change** (unreachable on the real tree; `resolution` hash unmoved). **G-ER-1 untouched** — its 2026-07-16 closure stands; gate history is not rewritten. 43 loader + 36 evaluator green; **`LOADER_VERSION` → 0.2.1** (patch — validation contract only; the live artifact keeps `loader_version` 0.2.0, the version that generated it — ER-1.3 does not regenerate); `artifact_version` still 1; artifact **not** touched, awareness unaffected by construction |
 | ER-1.4a | Capture the v0.1.0 baseline, then `ha_get_state` v0.2.0 | **implemented + validated 2026-07-17** (`09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md`). **G-ER-7 read half PASS** — baseline captured from the **installed** v0.1.0 row before the cutover (§6.2.1), and the repo source proven byte-identical to it, so the rollback target is exact. Every difference falls in an enumerated intentional-change class: a canonical `entity_id` is **byte-identical** (established by a paired A/B run with entity volatility controlled, `sun.sun` included); non-id-shaped → `unknown_entity` + ≤8 candidates, **zero HTTP calls**; aliases resolve (`toldo`, `impresora 3d`, `Conexión a Internet`). D-ER-8 normalization **proven byte-identical** to `_loader/resolution.py` over 46 real + adversarial cases; all 33 authored aliases resolve. **G-ER-6 consumer half PASS on the read side** — missing/corrupt/version-mismatch/normalization-mismatch/bad-target ⇒ direct ids work **exactly as today**, alias → honest `resolver_unavailable`; **stale ⇒ used** (a tool cannot compute freshness — §9), degrading alias resolution only. Real audit log and real projection both untouched. **New:** `lib/entity_resolver.py`; `bin/install_tool` multi-marker; `lib/audit_helper.py` additive `extra`. **F-ER14-1 recorded** (audit field `modelled` overstates what it verifies) — **ratified as D-ER-14 at Rev 4, 2026-07-17: renamed `registry_target`**. Committed + pushed (`3ad8779f`) |
-| ER-1 Rev 4 | Freeze amendment — ratify **D-ER-14** (step-4 audit field → `registry_target`; resolves F-ER14-1); `ha_get_state` → **v0.2.1** reinstalled (returns proven byte-identical, 18-case A/B); **pre-register the ER-1.4b C1 measurement protocol** (predefined decision rules — never outcome-driven) | **ratified + applied 2026-07-17** (`09_logs/2026-07-17_ER1_freeze_rev4.md`; protocol `09_logs/2026-07-17_ER1_4b_c1_measurement_protocol.md`; hash stamped at the next reconciliation) |
-| ER-1.4b | `ha_call_service` v0.2.0 (resolution + ER-1-C1); Step 2 executed the pre-registered C1 measurement protocol first (→ **Rule B / 500 ms**) | **applied + validated 2026-07-20 — G-ER-2/3a/3b/4 + G-ER-7 write half + G-ER-6 consumer half (write side) all PASS; the write path now verifies before claiming success** (`09_logs/2026-07-20_ER1_4b_ha_call_service_applied.md`) — at the git gate |
-| ER-1.5 | Reconciliation + closeout | — |
+| ER-1 Rev 4 | Freeze amendment — ratify **D-ER-14** (step-4 audit field → `registry_target`; resolves F-ER14-1); `ha_get_state` → **v0.2.1** reinstalled (returns proven byte-identical, 18-case A/B); **pre-register the ER-1.4b C1 measurement protocol** (predefined decision rules — never outcome-driven) | **ratified + applied 2026-07-17** (`09_logs/2026-07-17_ER1_freeze_rev4.md`; protocol `09_logs/2026-07-17_ER1_4b_c1_measurement_protocol.md`; tool hashes stamped at ER-1.5 closeout — `09_logs/2026-07-21_ER1_5_closeout.md` §3) |
+| ER-1.4b | `ha_call_service` v0.2.0 (resolution + ER-1-C1); Step 2 executed the pre-registered C1 measurement protocol first (→ **Rule B / 500 ms**) | **applied + validated 2026-07-20 — G-ER-2/3a/3b/4 + G-ER-7 write half + G-ER-6 consumer half (write side) all PASS; the write path now verifies before claiming success** (`09_logs/2026-07-20_ER1_4b_ha_call_service_applied.md`) — **committed + pushed `5b502c96`** |
+| ER-1.5 | Reconciliation + closeout | **COMPLETE 2026-07-21 — Phase ER-1 CLOSED** (`09_logs/2026-07-21_ER1_5_closeout.md`): reconciled against the frozen spec (all §10 deliverables byte-clean at HEAD; invariants hold); G-ER-1…7 ledger closed on real evidence; deferred tool hashes stamped; rollback + observability reviewed; triad reconciled (ER-1 transient markers cleared). Documentation-only; no code/tag |
 
 Gates **G-ER-1…7** (spec §6). **G-ER-3b:** *historical unverified writes must never again be
 reported as successful* — every historical case must produce an honest `verified` or
