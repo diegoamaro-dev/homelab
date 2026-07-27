@@ -41,11 +41,11 @@ doors now consume Torre's GPU Ollama via the `ollama-proxy`).
 All steps done: E-0..E-6; 13 findings resolved or accepted.
 **Phase F — Operational Intelligence — IN PROGRESS. F-0, F-1, F-2 and F-3
 (Situational Awareness) COMPLETE — F-3 closed 2026-06-29 (F3.3): F-3a chat
-Filter (G-F3-1…7) + F-3b HA-voice awareness (G-F3-8) both validated. F-4: F4.1
-(substrate) + F4.2 (generator) DONE + committed 2026-06-30; F4.3 implementation +
-reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08
-config-verified (empirical restic pending next backup), G-F4-05/06/07 intentionally
-pending real operational evidence; F-4 not fully closed. F-5 **CLOSED 2026-07-16 (at WM-6)** — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL** → R-F5-A logged; **remedied by the World Model, closed at WM-6 — G-F5-04 PASS on real evidence (chat + voice); R-F5-A closed** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`); F-6 unblocked. **World Model architecture FROZEN 2026-07-01 (AD-21) as the R-F5-A remedy + Aurora's semantic baseline; Phase WM (WM-1→WM-7) implementation underway — WM-1 `_schema/` foundation committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed); WM-4 evaluator cutover implemented + validated 2026-07-13 — `HOME_RULES` retired, AD-20/INV-18 preserved, committed + pushed (`476e0ae8`); G-WM4-6 closed 2026-07-14; WM-5 done 2026-07-14 — committed + pushed (`b2b04670`); **WM-6 done 2026-07-16 — G-F5-04 CLOSED / R-F5-A · F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`).**
+Filter (G-F3-1…7) + F-3b HA-voice awareness (G-F3-8) both validated. F-4 — Operational Digest + Memory Corpus —
+**CLOSED 2026-07-27**: all gates G-F4-01…09 + repro pass on real evidence (G-F4-05
+reranked date-anchored 24/24 indexed; G-F4-06 deterministic same-night disclosure; G-F4-07
+degraded night; G-F4-08 empirical restic restore-drill, snapshot `7715bf6a`, 24 digests;
+closeout `09_logs/2026-07-27_phaseF_F4_closeout.md`). F-5 **CLOSED 2026-07-16 (at WM-6)** — F5.1/F5.2 done; **F5.3 (2026-07-01): G-F5-03 PASS, G-F5-04 FAIL** → R-F5-A logged; **remedied by the World Model, closed at WM-6 — G-F5-04 PASS on real evidence (chat + voice); R-F5-A closed** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`); F-6 unblocked. **World Model architecture FROZEN 2026-07-01 (AD-21) as the R-F5-A remedy + Aurora's semantic baseline; Phase WM (WM-1→WM-7) implementation underway — WM-1 `_schema/` foundation committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed); WM-4 evaluator cutover implemented + validated 2026-07-13 — `HOME_RULES` retired, AD-20/INV-18 preserved, committed + pushed (`476e0ae8`); G-WM4-6 closed 2026-07-14; WM-5 done 2026-07-14 — committed + pushed (`b2b04670`); **WM-6 done 2026-07-16 — G-F5-04 CLOSED / R-F5-A · F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`).**
 
 ---
 
@@ -461,11 +461,12 @@ Sub-phases:
   writes a dated digest to `09_ops/runtime/` at 04:25, indexed into the dedicated
   `ops_digests` collection (384/Cosine — AD-14, **not** `homelab_docs`) on the next
   02:30 sync. Unattended 04:25 run + real retrieval (2026-06-29 digest top-1 0.87)
-  verified; `generated_at` fidelity fix applied (AD-15). G-F4-01/02/03/04/09 PASS; G-F4-08
-  config verified (empirical restic pending next backup); G-F4-05/06/07 **intentionally
-  pending real operational evidence** (no synthetic digests / fabricated degraded nights —
-  operator decision). F-4 not fully closed. Closeout:
-  [`09_logs/2026-06-30_phaseF_F4_3_closeout.md`](../09_logs/2026-06-30_phaseF_F4_3_closeout.md).
+  verified; `generated_at` fidelity fix applied (AD-15). **F-4 CLOSED 2026-07-27** — all
+  gates G-F4-01…09 + repro pass on real evidence: G-F4-05 (reranked date-anchored, 24/24
+  indexed digests top-1), G-F4-06 (deterministic same-night disclosure), G-F4-07 (degraded
+  night), G-F4-08 (empirical restic restore-drill — snapshot `7715bf6a`, 24 digests
+  recovered). Closeout:
+  [`09_logs/2026-07-27_phaseF_F4_closeout.md`](../09_logs/2026-07-27_phaseF_F4_closeout.md).
 * **F-5 — Home Intelligence** — **CLOSED 2026-07-16 (at WM-6; G-F5-04 PASS on real evidence, chat + voice; R-F5-A closed; closeout `09_logs/2026-07-16_WM6_G-F5-04_closeout.md`).** `home_model.md` (F5.1) + G-F5-07
   Layer A + F5.2 Layer B done 2026-06-30. **F5.3 executed 2026-07-01: G-F5-03
   PASS, G-F5-04 FAIL (real validation)** — the F-3a Filter injects the Degraded

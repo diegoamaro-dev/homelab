@@ -204,7 +204,7 @@ Validated capabilities:
 - **operational memory** — nightly `09_ops/runtime/` digests indexed into the
   dedicated `ops_digests` collection (AD-14), retrievable via `rag_search`
   (Phase F-4; F4.1+F4.2 done + committed 2026-06-30; F4.3 implementation + reconciliation
-  complete 2026-06-30 — G-F4-05/06/07 intentionally pending real operational evidence)
+  complete 2026-06-30; F-4 CLOSED 2026-07-27 — all gates pass)
 
 Verified device:
 
@@ -326,10 +326,11 @@ Current phase:
 
 **Phase F — Operational Intelligence — IN PROGRESS (F-0/F-1/F-2/F-3
 complete; F-3 closed 2026-06-29 (F3.3) — F-3a chat Filter + F-3b voice
-awareness; F-4: F4.1+F4.2 done + committed 2026-06-30; F4.3 implementation +
-reconciliation complete 2026-06-30 — G-F4-01/02/03/04/09 PASS, G-F4-08 config-verified
-(empirical restic pending next backup), G-F4-05/06/07 intentionally pending real
-operational evidence; F-4 not fully closed. F-5 Home Intelligence **CLOSED 2026-07-16 (at WM-6)** — F5.1/F5.2 done; **F5.3 (2026-07-01) G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A logged; **World Model remedy, closed at WM-6 — G-F5-04 PASS on real evidence (chat + voice); R-F5-A closed** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`)). Phase D-1 (Voice) closed 2026-06-18.**
+awareness; F-4 — Operational Digest + Memory Corpus —
+**CLOSED 2026-07-27**: all gates G-F4-01…09 + repro pass on real evidence (G-F4-05
+reranked date-anchored 24/24 indexed; G-F4-06 deterministic same-night disclosure; G-F4-07
+degraded night; G-F4-08 empirical restic restore-drill, snapshot `7715bf6a`, 24 digests;
+closeout `09_logs/2026-07-27_phaseF_F4_closeout.md`). F-5 Home Intelligence **CLOSED 2026-07-16 (at WM-6)** — F5.1/F5.2 done; **F5.3 (2026-07-01) G-F5-03 PASS, G-F5-04 FAIL (real validation)** → R-F5-A logged; **World Model remedy, closed at WM-6 — G-F5-04 PASS on real evidence (chat + voice); R-F5-A closed** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`)). Phase D-1 (Voice) closed 2026-06-18.**
 
 **World Model architecture FROZEN 2026-07-01 (AD-21, `04_ai_system/world_model_architecture.md`) — Aurora's semantic baseline and the R-F5-A remedy. Implementation = Phase WM (WM-1→WM-7); WM-1 `_schema/` foundation committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 loader implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed); WM-4 evaluator cutover implemented + validated 2026-07-13 — `_evaluator/` engine live in `bin/aurora-context`, `HOME_RULES` retired, AD-20/INV-18 preserved — committed + pushed (`476e0ae8`); **G-WM4-6 CLOSED 2026-07-14** (first unattended cycle); WM-5 done 2026-07-14 — committed + pushed (`b2b04670`); **WM-6 done 2026-07-16 — G-F5-04 CLOSED, R-F5-A / F-5 CLOSED** (`09_logs/2026-07-16_WM6_G-F5-04_closeout.md`). Hashes are the post-sanitization canonical hashes (history rewritten + republished 2026-07-10; see `09_logs/2026-07-10_repo_history_sanitization_reconciliation.md`).**
 
@@ -519,11 +520,11 @@ injects `aurora-context.md` on message 1 (G-F3-1…7). F-3b: the HA helper
 DONE + committed 2026-06-30; F4.3 implementation + doc reconciliation complete
 2026-06-30** — the unattended 04:25 digest verified, `ops_digests` retrieves the
 real 2026-06-29 digest top-1 (0.87), `generated_at` fidelity fix applied (AD-15).
-G-F4-01/02/03/04/09 PASS; G-F4-08 config verified (empirical restic pending the next
-backup); G-F4-05/06/07 **intentionally pending real operational evidence** (no synthetic
-digests / fabricated degraded nights — operator decision). F-4 is not fully complete or
-fully validated. F-4 closeout:
-`09_logs/2026-06-30_phaseF_F4_3_closeout.md`.
+G-F4-01/02/03/04/09 PASS; **G-F4-08 PASS** (empirical restic restore-drill — snapshot
+`7715bf6a`, 24 digests recovered, GC dry-run 0 deletions); **G-F4-05/06/07 PASS** on real
+evidence (reranked date-anchored 24/24 indexed; deterministic same-night disclosure;
+degraded night). **F-4 CLOSED 2026-07-27.** F-4 closeout:
+`09_logs/2026-07-27_phaseF_F4_closeout.md`.
 F-3 closeout: `09_logs/2026-06-29_phaseF_F3_closeout.md`; F-2 closeout:
 `09_logs/2026-06-29_phaseF_F2_9_closeout.md`. Architecture document:
 [`04_ai_system/phase_f_architecture.md`](../04_ai_system/phase_f_architecture.md).

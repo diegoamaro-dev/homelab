@@ -10,7 +10,9 @@
   G-F4-01/02/03/04/09 PASS, the `generated_at` fidelity fix applied (AD-15), G-F4-08
   config verified (empirical restic pending the next backup), and G-F4-05/06/07 left
   **intentionally pending real operational evidence** (no synthetic fixtures — operator
-  decision 2026-06-30). F-4 is **not fully complete or fully validated**.
+  decision 2026-06-30). **F-4 CLOSED 2026-07-27** — G-F4-05/06/07 and G-F4-08 have since
+  passed on real evidence; all gates G-F4-01…09 + repro pass
+  (`09_logs/2026-07-27_phaseF_F4_closeout.md`).
 - **Phase:** F — Operational Intelligence.
 - **Mission alignment:** [`AURORA_VISION.md`](AURORA_VISION.md) — read first.
 - **Authored:** F-0 pre-work, 2026-06-28.
@@ -1075,7 +1077,9 @@ gate that **real operational data** supports (G-F4-01/02/03/04/09 + repro) and a
 operational evidence** — no synthetic fixtures or fabricated degraded nights (operator
 decision 2026-06-30). G-F4-08 config is verified; its empirical restic check is
 operator-gated (pending the next backup). **F-4 is not fully complete or fully validated**
-until those gates close on real history. Closeout:
+until those gates close on real history. **Update 2026-07-27:** those gates have since closed
+on real evidence (G-F4-05/06/07) plus the empirical G-F4-08 restore-drill — **F-4 is now
+CLOSED** (`../09_logs/2026-07-27_phaseF_F4_closeout.md`). Closeout:
 [`../09_logs/2026-06-30_phaseF_F4_3_closeout.md`](../09_logs/2026-06-30_phaseF_F4_3_closeout.md).
 
 #### Operational-memory architecture (refined)
@@ -1168,7 +1172,11 @@ later enrichment (emit per-corpus counts from `ingest-nightly`), not frozen F-4.
   empty-collection behaviour is clean before the first digest (D-22).
 - **G-F4-05** — *Date-anchored retrieval (key gate).* With **≥7** digests present
   (real or backfilled dated fixtures), "what happened on the night of <date>?" retrieves
-  the **correct** digest top-k. Failure at scale → AD-17 remedy.
+  the **correct** digest top-k. Failure at scale → AD-17 remedy. **PASS 2026-07-27** —
+  production-equivalent reranked retrieval (dense-30 → `bge-reranker-v2-m3`) returns the
+  correct digest top-1 for **24/24** indexed digests (`2026-06-29…2026-07-26`); the current
+  night (`2026-07-27`) is un-indexed by AD-04 design. Dense-only `bin/ingest search` is a
+  reranker-absent proxy and must not be used to judge this gate.
 - **G-F4-06** — *Same-night honesty.* "what happened last night?" asked the same morning
   is answered from `system_status`, and Aurora states the digest is not yet
   RAG-retrievable (AD-04). **PASS 2026-07-27** — routing corrected in `params.system`;
@@ -1177,9 +1185,14 @@ later enrichment (emit per-corpus counts from `ingest-nightly`), not frozen F-4.
   revision entry + `09_logs/2026-07-27_phaseF_gf406_deterministic_disclosure.md`.
 - **G-F4-07** — *Degraded night.* A night with a real deviation (e.g. a stopped
   non-critical container or a forced ingest rc≠0) yields a digest whose `notable` line
-  captures it and which is retrievable by that description.
+  captures it and which is retrievable by that description. **PASS 2026-07-27** — real
+  deviations captured in `notable` (e.g. `2026-07-10` "audit stale"; `awning_left_extended`)
+  and retrievable by description (`rag_search(ops_digests)` → a real awning night).
 - **G-F4-08** — *Durability.* `09_ops/runtime/` is in the restic set; a restore-drill
   spot-check confirms a missing-source GC does **not** wipe `ops_digests` (AD-16).
+  **PASS 2026-07-27** — snapshot `7715bf6a`: `restic ls` shows `09_ops/runtime`; a restore
+  to a temp dir recovered **24** digests (`2026-06-29…2026-07-26`); the GC dry-run reports
+  **0 deletions** with sources present. See the 2026-07-27 F-4 closeout.
 - **G-F4-09** — *No secrets.* The generated digest contains no secret values (scan
   against the token/var names in §13); only typed signal fields appear (AD-18).
 - **Repro gate** — `bin/generate-digest` source, the `corpora.yaml` entry, and the
@@ -1192,17 +1205,17 @@ later enrichment (emit per-corpus counts from `ingest-nightly`), not frozen F-4.
 | **F4.0** | Architecture review, refinement & freeze (§4B, AD-14…AD-18) | docs — **DONE (frozen); approved** |
 | **F4.1** | Retrieval substrate: create `ops_digests` (E-6 framework) + `corpora.yaml` entry + extend `rag_search` enum + reinstall + validate empty-collection/enum | build + validate — **DONE 2026-06-30** (committed `9063164a`); G-F4-03 (partial), G-F4-04 |
 | **F4.2** | Generator: `bin/generate-digest` (AD-15/17/18) + 04:25 cron + restic durability (AD-16) + validate one nightly cycle | build + validate — **DONE 2026-06-30** (committed `ac647e24`); G-F4-01, G-F4-02, G-F4-09; G-F4-08 (config; empirical operator-gated) |
-| **F4.3** | Retrieval validation + reconciliation: validate with **real data only** (no synthetic fixtures — operator decision, supersedes the original "backfill ≥7 dated fixtures"); `generated_at` fidelity fix (AD-15); reconcile triad + this doc; closeout log; **STOP at git gate** | build + docs — **impl + reconciliation COMPLETE 2026-06-30**; G-F4-01/02/03/04/09 PASS + repro ✓; G-F4-08 config-verified (empirical pending next backup); **G-F4-05/06/07 intentionally pending real operational evidence** (F-4 not fully closed) |
+| **F4.3** | Retrieval validation + reconciliation: validate with **real data only** (no synthetic fixtures — operator decision, supersedes the original "backfill ≥7 dated fixtures"); `generated_at` fidelity fix (AD-15); reconcile triad + this doc; closeout log; **STOP at git gate** | build + docs — **impl + reconciliation COMPLETE 2026-06-30**; G-F4-01/02/03/04/09 PASS + repro ✓; G-F4-08 config-verified (empirical pending next backup); **G-F4-05/06/07 intentionally pending real operational evidence** (F-4 not fully closed **at F4.3** — subsequently CLOSED 2026-07-27; see the as-built note above) |
 
-> **As-built gate status (updated 2026-07-27).** **G-F4-06 = PASS** on real operational
-> evidence: same-night `¿qué pasó anoche?` → `system_status` with the mandatory AD-04
-> disclosure **present**; historical control `¿qué pasó la noche del 20 de julio?` →
-> `rag_search(ops_digests)`, correct `2026-07-20_ops_digest.md`, disclosure **absent**.
-> The disclosure is produced by a **deterministic F-3a Filter `outlet`** (v0.2.0), not by
-> prompting — two prompt-only reinforcements had failed on the 7B. **G-F4-05** and
-> **G-F4-07** are likewise satisfied on accrued real evidence; **G-F4-08** (empirical
-> restic durability, operator/root) is the **sole remaining gate** and F-4 stays open
-> until it closes. Detail: `09_logs/2026-07-27_phaseF_gf406_deterministic_disclosure.md`.
+> **As-built gate status (F-4 CLOSED 2026-07-27).** All F-4 acceptance gates pass on real
+> evidence — **G-F4-01/02/03/04/09 + repro** (F4.3, 2026-06-30); **G-F4-05** (production-
+> equivalent reranked date-anchored retrieval, 24/24 indexed digests top-1; `2026-07-27`
+> un-indexed by AD-04, consistent with G-F4-06); **G-F4-06** (deterministic same-night
+> disclosure via the F-3a `outlet` v0.2.0); **G-F4-07** (real degraded nights captured in
+> `notable` + retrievable); **G-F4-08** (empirical restic restore-drill — snapshot
+> `7715bf6a`, 24 digests recovered, GC dry-run 0 deletions). **Phase F-4 is CLOSED.**
+> Detail: `09_logs/2026-07-27_phaseF_F4_closeout.md`
+> (G-F4-06: `09_logs/2026-07-27_phaseF_gf406_deterministic_disclosure.md`).
 
 #### Rollback
 
@@ -1589,3 +1602,4 @@ are not accidentally implemented in Phase F.
 | 2026-07-01 | **F5.3 — Home-anomaly validation (real induced anomaly)** | Ran the canonical real validation (`printer_on_overnight`, awning closed, 00:00–06:00 Europe/Madrid, immediate baseline restore; **manual induction** by the operator). **G-F5-03 PASS:** `bin/aurora-context` detected the live anomaly and wrote `home.anomalies=["printer_on_overnight"]` + the `Home State: Degraded` block (single clean token; no F-4 regression). **G-F5-04 FAIL (real validation):** the F-3a Filter injected the correct Degraded context and the model received it (non-destructive OWUI system-message merge), but `params.system` `# Routing` precedence made the model call tools (`system_status`, which is **home-blind**) instead of reading the injected block → the live anomaly was not surfaced. Logged as **R-F5-A (Awareness-consumption gap)** (§9-F-5 note + §11 pointer). **No fix, no redesign, no AD/gate/frozen-design change** — remedy **deferred to a future gated architecture phase** (operator decision). Documentation only. Apply log `09_logs/2026-07-01_phaseF_F5_3_applied.md`. STOP at git gate. |
 | 2026-07-16 | **WM-6 — Reopen & close G-F5-04 (real induced anomaly, chat + voice)** | Canonical `printer_on_overnight` induced anomaly (manual induction/restore via the HA UI; attended `bin/aurora-context` + `push-voice-context` refreshes). Real world at test time: `cover.toldo` genuinely **open** (a real standing `awning_left_extended` anomaly, **not** the intended closed control); `plant_water_warning` a flapping low sensor artifact. Scope (operator): judge on the two stable real medium anomalies (`printer_on_overnight` + `awning_left_extended`). **Run 1 ABORTED — wrong endpoint** (the chat run hit HA Assist @ `ha.amarolab.es`, not the Aurora OWUI pipeline; forensics: OWUI silent, no `aurora_context_filter` inject line, `GetLiveContext` = HA Assist LLM-API tool, 0 entities exposed to Assist). **Corrected rerun: CHAT @ `ai.amarolab.es` PASS** (injection `fallback:false, chars:414`; Aurora surfaced both medium anomalies + the low advisory, cited the injected block) **+ VOICE @ `ha.amarolab.es`/AURORA v1 PASS** (after an attended voice-line refresh). **G-F5-04 CLOSED — PASS on real evidence; R-F5-A CLOSED; F-5 CLOSED.** Baseline restored (printer off; awareness reflects the real residual awning anomaly). Findings F-LOCALE / F-VOICE-CONTRADICT / F-PLANT-FLAP / F-ASSIST-BLIND recorded; ER-1 unrelated/open. No code/prompt/tool/schema/loader/DB/architecture change. Closeout `09_logs/2026-07-16_WM6_G-F5-04_closeout.md`. STOP at git gate. |
 | 2026-07-27 | **G-F4-06 closure — deterministic same-night disclosure (F-3a `outlet`)** | Routing for "¿qué pasó anoche?" was corrected in `params.system` (`webui.db`, runtime — recent-night recap → `system_status`, not `rag_search`). Two prompt-only reinforcement iterations then **failed** to make `qwen2.5:7b-instruct` reliably emit the **mandatory** AD-04 disclosure (the `# Style` "answer-first/concise" directive prunes it), so the guarantee was moved into deterministic orchestration. **F-3a Filter `aurora_context` v0.1.0 → v0.2.0** (`function` table, runtime; repo source synced): added a fail-closed `outlet` that appends the disclosure **only** when the answer's source is `system_status` **and** the question is a recent-night recap **and** it is not already present — historical `rag_search` answers carry `rag_search/rag_search` and are **structurally excluded** (12/12 offline unit tests). Reversible via `Valves.same_night_disclosure=False` or restore; `inlet` unchanged. **G-F4-06 = PASS on real browser evidence 2026-07-27:** same-night → `system_status` + disclosure present; control `la noche del 20 de julio` → `rag_search(ops_digests)`, correct `2026-07-20_ops_digest.md`, disclosure absent (audit line 94). **Lessons learned:** *mandatory operational guarantees must not depend solely on probabilistic LLM prompting; when a requirement must hold every time, it belongs in deterministic orchestration.* **F-4 NOT closed — G-F4-08 (empirical restic durability) is the final blocking gate.** No tool/schema/registration change. Apply log `09_logs/2026-07-27_phaseF_gf406_deterministic_disclosure.md`. STOP at git gate. |
+| 2026-07-27 | **F-4 closeout — Operational Intelligence CLOSED** | All F-4 gates pass on real evidence → **F-4 CLOSED.** **G-F4-08 (durability) PASS** — operator/root restic drill on snapshot `7715bf6a`: `restic ls` shows `09_ops/runtime`; a restore to a temp dir recovered **24** digests (`2026-06-29…2026-07-26`); the non-privileged GC dry-run reports **0 deletions** with sources present (a restore repopulates sources, so the missing-source GC cannot wipe `ops_digests`, AD-16). **Restored 24 not 25** because `2026-07-27_ops_digest.md` post-dates the 01:00 UTC snapshot (generated ~02:15 UTC). A restore-drill **false negative** (`sudo ls DIR/*_ops_digest.md` → "not found" despite a good restore) was root-caused to **unprivileged shell glob expansion over a root-owned tree**; re-running the traversal as root located all 24. **G-F4-05 (key gate) PASS** — validated on the **reranked** production path (`bin/ingest search` is dense-only): dense-30 → `bge-reranker-v2-m3` → top-1 correct for **24/24** indexed digests; the dense-only `2026-07-10→2026-07-20` artifact is corrected by the reranker; no contradiction with the G-F4-06 browser control. **G-F4-07 PASS** (real deviation nights captured + retrievable). Lessons: privileged-restore glob artifact; dense-only CLI ≠ reranked production for retrieval gates. Documentation-only. Closeout `09_logs/2026-07-27_phaseF_F4_closeout.md`. STOP at git gate. |
