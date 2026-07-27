@@ -387,12 +387,25 @@ regression of F-4's accruing evidence), F-5 is bound to:
 and invariants: [`world_model_architecture.md`](world_model_architecture.md) (FROZEN,
 Revision 2). AD-21 is the **remedy architecture for R-F5-A** (§9-F-5 / §11): the single-channel
 awareness gap is closed *structurally* (no consumer builds awareness from raw signals), and the
-F-4/F-3a `aurora-context.json` contract (AD-20) is **preserved**. R-F5-A itself **closes at
-WM-6** (Phase WM implementation — not started). AD-21 supersedes D2 (platform-only
+F-4/F-3a `aurora-context.json` contract (AD-20) is **preserved**. R-F5-A itself **closed at
+WM-6** (2026-07-16; Phase WM implemented through WM-6). AD-21 supersedes D2 (platform-only
 `overall_status`) via the World Model aggregate verdict. **No runtime/code/prompt change:**
 AD-21 is an architecture-baseline decision; implementation is Phase WM
 ([`world_model_architecture.md`](world_model_architecture.md) §9). Freeze log:
 [`../09_logs/2026-07-01_world_model_architecture_freeze.md`](../09_logs/2026-07-01_world_model_architecture_freeze.md).
+
+### AD-22: Voice Lab (TTS voice casting/cloning) is a separate experimental track from Phase F-6.
+
+**Ratified 2026-07-27.** Phase **F-6 owns production voice reliability only** — STT quality
+(Whisper), the R-D-13 shim migration, and end-to-end latency — and closes Phase F on an
+objective reliability bar. **TTS voice quality and Aurora's synthetic voice identity** are
+developed in the **Voice Lab**, a repo-external experimental track (Round 1 native casting done
+2026-07-27; Round 2 voice cloning designed), and **do not gate Phase F**. A Voice Lab candidate
+reaches production only through a **separate, operator-approved TTS-migration gate** (Phase C /
+G-5 discipline) — never inside F-6. **Piper remains the production voice; no migration is
+implied by this decision.** Rationale, the STT/TTS responsibility split, the
+production-vs-experimental boundary, and the promotion criteria are recorded in the ADR
+[`../01_architecture/adr_voice_lab_phase_f6_separation.md`](../01_architecture/adr_voice_lab_phase_f6_separation.md).
 
 ---
 
@@ -1234,7 +1247,7 @@ known and accepted (AD-04). Independent of F-3 / F-5 / F-6.
 
 ---
 
-### F-5 — Home Intelligence (FROZEN at F5.0; F5.1 `home_model.md` + G-F5-07 (Layer A) + F5.2 (Layer B) implemented 2026-06-30 — G-F5-01/02/05/06 ✓; **F5.3 validated 2026-07-01 — G-F5-03 PASS, G-F5-04 FAIL → R-F5-A, deferred to a future gated phase**)
+### F-5 — Home Intelligence (FROZEN at F5.0; F5.1 `home_model.md` + G-F5-07 (Layer A) + F5.2 (Layer B) implemented 2026-06-30 — G-F5-01/02/05/06 ✓; **F5.3 validated 2026-07-01 — G-F5-03 PASS, G-F5-04 FAIL → R-F5-A; remedied by the World Model and CLOSED at WM-6 (2026-07-16) — G-F5-04 CLOSED, R-F5-A CLOSED, F-5 CLOSED**)
 
 **Objective:** Aurora has a defined home model, reasons about expected
 device states, and the Filter surfaces home anomalies automatically.
@@ -1357,7 +1370,7 @@ F-1 (system prompt references the home model).
 | **F5.0** | Architecture review, refinement & freeze (§4C, AD-19/AD-20) | docs — **frozen + published** (`c9acad51`, 2026-06-30) |
 | **F5.1** | `home_model.md` (real inventory + baselines + anomaly rules, operator input) — **published** (`55e0416a`); system-prompt `# Home` frame (Layer A) **installed 2026-06-30** (`09_logs/2026-06-30_phaseF_F5_G-F5-07_applied.md`) | build + validate — **G-F5-01 ✓**; **G-F5-07 Layer A ✓** (2026-06-30; Layer B = F5.2) |
 | **F5.2** | Extend `bin/aurora-context` (home section via HA REST; AD-20 schema-preserving) — **implemented 2026-06-30** (`09_logs/2026-06-30_phaseF_F5_2_applied.md`) | build + validate — **G-F5-02/05/06 ✓ (real data)** |
-| **F5.3** | Anomaly-detection validation (real induced anomaly) + optional `cover` gate + closeout; **STOP at git gate** | build + docs — G-F5-03, G-F5-04, G-F5-08, repro |
+| **F5.3** | Anomaly-detection validation (real induced anomaly) + optional `cover` gate + closeout; **STOP at git gate** | build + docs — **G-F5-03 PASS (2026-07-01); G-F5-04 CLOSED at WM-6 (2026-07-16) → F-5 CLOSED**; G-F5-08 optional (not attempted); repro |
 
 > **F5.2 implementation note — `HOME_RULES` is a transcription (recorded 2026-06-30).**
 > `home_model.md` (the F-5 source of truth) is **prose**, so the F5.2 detector encodes its
@@ -1405,35 +1418,97 @@ F-1 (system prompt references the home model).
 
 ---
 
-### F-6 — Voice Quality
+### F-6 — Voice Quality (production voice reliability; DRAFTED for freeze at F6.0 — shape operator-approved 2026-07-27; F6.1+ NOT STARTED)
 
-**Objective:** Voice interactions are reliable enough in Spanish to become
-a daily habit.
+**Objective:** Voice interaction is reliable enough in Spanish to become a **daily habit** —
+the last open §12 criterion ("Voice is reliable"). F-6 is a **reliability** milestone, not an
+aesthetics milestone: it owns whether Aurora *hears* correctly and *responds* fast enough for
+daily use.
 
-**Scope:**
-- Upgrade `aurora-whisper` (HA voice pipeline) from `base-int8` to `small`
-  or `medium-int8` Whisper model. Re-run G-D1 and G-D4 gate validation
-  (accuracy and latency gates from Phase D).
-- Migrate `aurora-whisper-http` (Open WebUI voice path) from
-  `fedirz/faster-whisper-server` (unmaintained — R-D-13) to a maintained
-  alternative. Re-validate Open WebUI voice transcription path.
-- Establish end-to-end latency baseline: wake word to response audio
-  complete, under Torre-primary and UM790-fallback inference paths.
-  Document the baseline in `09_logs/`.
-- Validate cold-cache prompt evaluation improvement from F-1's token
-  reduction contributes to voice latency.
+**Two axes — F-6 owns exactly one (AD-22).** Voice quality has two orthogonal axes, and they
+must not be conflated:
 
-**Parallelism:** F-6 has no dependency on F-2 through F-5. After F-0
-validates the voice quality gap (AF-voice in the finding register), F-6
-can run concurrently with the awareness and memory build.
+| Axis | Governs | Evidence bar | Owner |
+|---|---|---|---|
+| **STT quality + latency** | Does Aurora *hear* correctly and *respond* fast? | Objective (≥9/10 transcription; measured latency) | **F-6 (production)** |
+| **TTS quality + voice identity** | Does Aurora *sound* right / have a chosen voice? | Subjective (blind casting; identity decision) | **Voice Lab (experimental) — NOT F-6** |
 
-**Success criterion:** Spanish short utterances ("apaga la impresora",
-"cierra el toldo") transcribed correctly ≥9/10 trials without repetition;
-end-to-end latency baseline documented; R-D-13 resolved; no regression in
-English accuracy.
+Per **AD-22** (Voice Lab / F-6 separation; ADR
+[`../01_architecture/adr_voice_lab_phase_f6_separation.md`](../01_architecture/adr_voice_lab_phase_f6_separation.md)),
+the TTS voice-identity/cloning track (Voice Lab) is a repo-external experimental effort that
+**does not gate Phase F**; a candidate reaches production only through a separate,
+operator-approved TTS-migration gate. **Piper remains the production voice; F-6 performs no TTS
+engine swap.**
 
-**Dependencies:** F-0 (voice quality gap confirmed and measured); F-1
-(HA voice system prompt updated — reduces total response latency).
+**Scope (F-6 builds — production, STT + latency):**
+
+- **F-6a — STT model quality.** Upgrade `aurora-whisper` (HA Wyoming path) from `base-int8`
+  to `small` or `medium-int8`; re-run G-D1 (accuracy) and G-D4 (canary latency). No
+  English-accuracy regression.
+- **F-6b — STT shim migration (R-D-13).** Migrate `aurora-whisper-http` (Open WebUI path) off
+  the unmaintained `fedirz/faster-whisper-server` to a maintained alternative; re-validate the
+  Open WebUI voice transcription path against the same Spanish corpus.
+- **F-6c — End-to-end latency baseline.** Measure wake-word → response-audio-complete under
+  **Torre-primary** and **UM790-fallback** inference paths; quantify the F-1 token-reduction
+  contribution to cold-cache prompt eval; document in `09_logs/`.
+- **F-6d — TTS production-voice acceptance (decision gate, not a build).** Explicitly judge the
+  **current production TTS (Piper)** against the daily-use bar and record the outcome — either
+  *accepted as-is* or *a separate TTS-migration gate is scheduled* (never performed inside F-6).
+  This lets Phase F close on reliability without waiting on the Voice Lab's voice-identity R&D
+  (AD-22).
+
+**What F-6 explicitly does not do:** no TTS engine migration; no voice cloning or voice-identity
+work (Voice Lab / a future TTS-migration gate — AD-22); no larger inference model (Phase G,
+§14); no wake-word retraining. Aurora's action surface is unchanged.
+
+**Success criterion:** Spanish short utterances ("apaga la impresora", "cierra el toldo")
+transcribed correctly **≥9/10** trials without repetition; end-to-end latency baseline
+documented for both inference paths; **R-D-13 resolved**; no regression in English accuracy; the
+production TTS is explicitly accepted or a migration is explicitly scheduled (F-6d).
+
+**Parallelism:** F-6 has no dependency on F-2 through F-5 (all closed) or on the Voice Lab. It
+has been unblocked since F-0 measured the voice-quality gap.
+
+**Acceptance gates (proposed — freeze at F6.0):**
+
+- **G-F6-01 — STT model quality (HA Wyoming).** After the Whisper upgrade, Spanish short
+  utterances transcribe ≥9/10 without repetition; G-D1 (accuracy) and G-D4 (canary latency)
+  re-pass; English accuracy does not regress.
+- **G-F6-02 — STT shim migration (R-D-13).** `aurora-whisper-http` runs on a maintained engine;
+  the Open WebUI voice path transcribes the same corpus at parity with the HA path; R-D-13 is
+  resolved.
+- **G-F6-03 — Latency baseline.** Wake-word → response-audio-complete is measured and documented
+  in `09_logs/` for Torre-primary and UM790-fallback; the F-1 cold-cache improvement is
+  quantified.
+- **G-F6-04 — TTS production-voice acceptance (decision gate).** The production TTS is explicitly
+  evaluated against the daily-use bar; the outcome (accept-as-is, or schedule a separate
+  TTS-migration gate) is recorded. **F-6 must not close by silently changing the production
+  voice.**
+- **G-F6-05 — Production integrity / no regression.** Both front doors' voice paths remain
+  operational end-to-end after the changes; the Torre→UM790 voice failover still works; no
+  regression to the G-D5 (real-device voice) or G-D6 (failure-mode) behaviours.
+- **Repro gate.** Container/compose/model changes are committed with install/recovery notes
+  (AD-09 discipline); no secrets enter any committed artifact (§13); each change carries a
+  rollback anchor. STOP at git gate.
+
+**Frozen implementation milestones (proposed):**
+
+| Milestone | Content | Type / gates |
+|---|---|---|
+| **F6.0** | Architecture review, refinement & freeze (this section; AD-22; ADR `adr_voice_lab_phase_f6_separation.md`) | docs — **DRAFTED 2026-07-27; shape operator-approved; formal freeze at the git gate** |
+| **F6.1** | STT model quality — `aurora-whisper` `base-int8` → `small`/`medium-int8`; re-run G-D1/G-D4 | build + validate — G-F6-01 — **NOT STARTED** |
+| **F6.2** | STT shim migration (R-D-13) — `aurora-whisper-http` off `fedirz/faster-whisper-server`; re-validate OWUI voice | build + validate — G-F6-02 — **NOT STARTED** |
+| **F6.3** | End-to-end latency baseline (Torre-primary + UM790-fallback); document in `09_logs/` | measure + docs — G-F6-03 — **NOT STARTED** |
+| **F6.4** | TTS production-voice acceptance decision (F-6d) + Phase F-6 closeout; **STOP at git gate** | docs — G-F6-04, G-F6-05, repro — **NOT STARTED** |
+
+**Rollback:** each STT change is independently reversible — revert the `aurora-whisper`
+image/model tag; revert `aurora-whisper-http` to its pinned prior image and repoint the Open
+WebUI audio config. The production TTS (Piper) is untouched by F-6, so there is nothing to roll
+back on the TTS axis.
+
+**Dependencies:** F-0 (voice-quality gap confirmed and measured — ✓); F-1 (HA voice system
+prompt updated — ✓, reduces total response latency). Independent of F-2…F-5 (all closed) and of
+the Voice Lab (AD-22).
 
 ---
 
@@ -1502,7 +1577,7 @@ is assumed closed until F-0 explicitly closes it.
 > F-3a Filter injects the correct Home State and the model receives it, but `params.system`
 > `# Routing` precedence makes Aurora prefer tool calls over the injected block, and `system_status`
 > is currently home-blind — so a real home anomaly is not surfaced (G-F5-04 FAIL; G-F5-03 PASS).
-> Documentation only; remedy **deferred to a future gated phase**. Full record: §9-F-5 +
+> Documentation only. **Update 2026-07-16 (WM-6): remedied by the World Model (WM-4/WM-5) — G-F5-04 CLOSED, R-F5-A CLOSED, F-5 CLOSED on real evidence (chat + voice); closeout [`../09_logs/2026-07-16_WM6_G-F5-04_closeout.md`](../09_logs/2026-07-16_WM6_G-F5-04_closeout.md).** Full record: §9-F-5 +
 > [`../09_logs/2026-07-01_phaseF_F5_3_applied.md`](../09_logs/2026-07-01_phaseF_F5_3_applied.md).
 > (This register is the pre-F-0 plan; R-F5-A is noted here for discoverability only.)
 
@@ -1603,3 +1678,5 @@ are not accidentally implemented in Phase F.
 | 2026-07-16 | **WM-6 — Reopen & close G-F5-04 (real induced anomaly, chat + voice)** | Canonical `printer_on_overnight` induced anomaly (manual induction/restore via the HA UI; attended `bin/aurora-context` + `push-voice-context` refreshes). Real world at test time: `cover.toldo` genuinely **open** (a real standing `awning_left_extended` anomaly, **not** the intended closed control); `plant_water_warning` a flapping low sensor artifact. Scope (operator): judge on the two stable real medium anomalies (`printer_on_overnight` + `awning_left_extended`). **Run 1 ABORTED — wrong endpoint** (the chat run hit HA Assist @ `ha.amarolab.es`, not the Aurora OWUI pipeline; forensics: OWUI silent, no `aurora_context_filter` inject line, `GetLiveContext` = HA Assist LLM-API tool, 0 entities exposed to Assist). **Corrected rerun: CHAT @ `ai.amarolab.es` PASS** (injection `fallback:false, chars:414`; Aurora surfaced both medium anomalies + the low advisory, cited the injected block) **+ VOICE @ `ha.amarolab.es`/AURORA v1 PASS** (after an attended voice-line refresh). **G-F5-04 CLOSED — PASS on real evidence; R-F5-A CLOSED; F-5 CLOSED.** Baseline restored (printer off; awareness reflects the real residual awning anomaly). Findings F-LOCALE / F-VOICE-CONTRADICT / F-PLANT-FLAP / F-ASSIST-BLIND recorded; ER-1 unrelated/open. No code/prompt/tool/schema/loader/DB/architecture change. Closeout `09_logs/2026-07-16_WM6_G-F5-04_closeout.md`. STOP at git gate. |
 | 2026-07-27 | **G-F4-06 closure — deterministic same-night disclosure (F-3a `outlet`)** | Routing for "¿qué pasó anoche?" was corrected in `params.system` (`webui.db`, runtime — recent-night recap → `system_status`, not `rag_search`). Two prompt-only reinforcement iterations then **failed** to make `qwen2.5:7b-instruct` reliably emit the **mandatory** AD-04 disclosure (the `# Style` "answer-first/concise" directive prunes it), so the guarantee was moved into deterministic orchestration. **F-3a Filter `aurora_context` v0.1.0 → v0.2.0** (`function` table, runtime; repo source synced): added a fail-closed `outlet` that appends the disclosure **only** when the answer's source is `system_status` **and** the question is a recent-night recap **and** it is not already present — historical `rag_search` answers carry `rag_search/rag_search` and are **structurally excluded** (12/12 offline unit tests). Reversible via `Valves.same_night_disclosure=False` or restore; `inlet` unchanged. **G-F4-06 = PASS on real browser evidence 2026-07-27:** same-night → `system_status` + disclosure present; control `la noche del 20 de julio` → `rag_search(ops_digests)`, correct `2026-07-20_ops_digest.md`, disclosure absent (audit line 94). **Lessons learned:** *mandatory operational guarantees must not depend solely on probabilistic LLM prompting; when a requirement must hold every time, it belongs in deterministic orchestration.* **F-4 NOT closed — G-F4-08 (empirical restic durability) is the final blocking gate.** No tool/schema/registration change. Apply log `09_logs/2026-07-27_phaseF_gf406_deterministic_disclosure.md`. STOP at git gate. |
 | 2026-07-27 | **F-4 closeout — Operational Intelligence CLOSED** | All F-4 gates pass on real evidence → **F-4 CLOSED.** **G-F4-08 (durability) PASS** — operator/root restic drill on snapshot `7715bf6a`: `restic ls` shows `09_ops/runtime`; a restore to a temp dir recovered **24** digests (`2026-06-29…2026-07-26`); the non-privileged GC dry-run reports **0 deletions** with sources present (a restore repopulates sources, so the missing-source GC cannot wipe `ops_digests`, AD-16). **Restored 24 not 25** because `2026-07-27_ops_digest.md` post-dates the 01:00 UTC snapshot (generated ~02:15 UTC). A restore-drill **false negative** (`sudo ls DIR/*_ops_digest.md` → "not found" despite a good restore) was root-caused to **unprivileged shell glob expansion over a root-owned tree**; re-running the traversal as root located all 24. **G-F4-05 (key gate) PASS** — validated on the **reranked** production path (`bin/ingest search` is dense-only): dense-30 → `bge-reranker-v2-m3` → top-1 correct for **24/24** indexed digests; the dense-only `2026-07-10→2026-07-20` artifact is corrected by the reranker; no contradiction with the G-F4-06 browser control. **G-F4-07 PASS** (real deviation nights captured + retrievable). Lessons: privileged-restore glob artifact; dense-only CLI ≠ reranked production for retrieval gates. Documentation-only. Closeout `09_logs/2026-07-27_phaseF_F4_closeout.md`. STOP at git gate. |
+| 2026-07-27 | **F-5 stale-reference hygiene (R-F5-A)** | Documentation-only reconciliation **within this file** — no architectural change (no AD, gate, frozen-design, scope, code, prompt, tool, DB, or container change). Four spots still framed R-F5-A as *"deferred to a future gated phase"* — stale since WM-6: the **AD-21** note (§4: "closes at WM-6 … not started"), the **F-5 section header** (§9), the **F5.3 milestone row**, and the **§11 R-F5-A finding note**. All four updated to the durable fact already recorded in this file's F-5 body (WM-6 update, ~§9-F-5) + revision log (WM-6 row) and across the triad: **R-F5-A remedied by the World Model; G-F5-04 CLOSED / R-F5-A CLOSED / F-5 CLOSED at WM-6 (2026-07-16)**. The historical **2026-07-01 F5.3 revision row is left intact** (superseded by the WM-6 row, not rewritten — history is not rewritten). STOP at git gate. |
+| 2026-07-27 | **F6.0 — F-6 Architecture Review & Freeze (drafted) + AD-22 + Voice Lab separation ADR** | Drafted the official F-6 (Voice Quality) architecture from the operator-approved shape: F-6 owns **production voice reliability only** (STT + latency) across sub-milestones **F-6a** STT model quality, **F-6b** STT shim migration (R-D-13), **F-6c** latency baseline, **F-6d** production-TTS acceptance *decision* (no engine swap). Added acceptance gates **G-F6-01…05** + repro and milestones **F6.0→F6.4** (F6.1+ NOT STARTED). Recorded **AD-22** (§4) — the Voice Lab (TTS voice quality / Aurora's voice identity) is a **separate experimental track** that does **not** gate Phase F; a candidate reaches production only via a separate operator-approved TTS-migration gate — and published the standalone ADR [`../01_architecture/adr_voice_lab_phase_f6_separation.md`](../01_architecture/adr_voice_lab_phase_f6_separation.md) (STT/TTS responsibilities, production-vs-experimental boundary, promotion criteria, why F-6 owns reliability only). **Piper remains the production voice; no migration implied.** Documentation only — no code/prompt/tool/container/DB change; no implementation started. STOP at git gate (formal F6.0 freeze on operator approval). |
