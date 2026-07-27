@@ -22,6 +22,7 @@ is never invoked on this path; a missing/broken artifact fail-softs the home
 block to Unavailable while every other section still renders.
 """
 
+import fcntl
 import json
 import os
 import re
@@ -40,6 +41,7 @@ CTX_JSON       = AURORA_DIR / "aurora-context.json"
 CTX_MD         = AURORA_DIR / "aurora-context.md"
 CTX_VOICE      = AURORA_DIR / "aurora-context-voice.txt"
 ENV_FILE       = Path("/home/diego/homelab/ai-stack/.env")
+LOCK_FILE      = LOGS_DIR / "aurora-context.lock"
 
 STALE_HOURS    = 26
 SCHEMA_VERSION = 1
@@ -98,12 +100,19 @@ def ts_display(ts_str: str | None) -> str:
 
 def write_atomic(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(content, encoding="utf-8")
-    with open(tmp, "rb") as f:
-        os.fsync(f.fileno())
-    os.chmod(tmp, 0o644)
-    os.replace(tmp, path)
+    # Temp is unique per target filename AND per process, so concurrent writers
+    # (e.g. a manual run overlapping the 04:15 cron) can never share one temp and
+    # publish one artifact's content under another's name (F-ER13-1). `os.replace`
+    # stays atomic per file. Mirrors bin/emit-entity-projection.
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(content, encoding="utf-8")
+        with open(tmp, "rb") as f:
+            os.fsync(f.fileno())
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 # ── Signal readers ─────────────────────────────────────────────────────────
@@ -232,6 +241,18 @@ def render_voice_home(home_anoms: list, unavailable_reason: str | None, top_n: i
 def main() -> int:
     dry_run = "--dry-run" in sys.argv[1:]
     now = utcnow()
+
+    # Non-blocking run lock (non-dry-run only): a second overlapping invocation
+    # exits cleanly instead of racing the writes (F-ER13-1). --dry-run writes
+    # nothing, so it never contends. Mirrors bin/ingest-nightly's `flock -n`.
+    # The fd is held open for the process lifetime; the lock releases on exit.
+    if not dry_run:
+        _lock_fd = open(LOCK_FILE, "w")
+        try:
+            fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("aurora-context: SKIPPED (lock held)", file=sys.stderr)
+            return 0
 
     signals_missing: list[str] = []
     degrades:        list[str] = []
