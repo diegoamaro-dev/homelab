@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-21 (Phase ER-1 — **ER-1.5 reconciliation + closeout: Phase ER-1 COMPLETE**; ER-1.0→ER-1.5 delivered, G-ER-1…7 closed on real evidence; ER-1.4b `ha_call_service` v0.2.0 + ER-1-C1 committed + pushed `5b502c96`; the write path now verifies before claiming success; closeout log `09_logs/2026-07-21_ER1_5_closeout.md`)
+Last updated: 2026-07-27 (**Voice Lab — Round 1 native TTS casting COMPLETE (repo-external)** — Kokoro `ef_dora` = native TTS reference candidate (~70% blind), Piper still production (no migration), Round 2 designed/not-started, next gate = Aurora voice identity (`09_logs/2026-07-27_voice_lab_round1.md`). Prior — Phase ER-1 — **ER-1.5 reconciliation + closeout: Phase ER-1 COMPLETE**; ER-1.0→ER-1.5 delivered, G-ER-1…7 closed on real evidence; ER-1.4b `ha_call_service` v0.2.0 + ER-1-C1 committed + pushed `5b502c96`; the write path now verifies before claiming success; closeout log `09_logs/2026-07-21_ER1_5_closeout.md`)
 
 ## Purpose
 
@@ -113,6 +113,15 @@ Open WebUI HTTP shims (D-1.7):
 HA Assist pipeline `AURORA v1` is the default /
 preferred pipeline (language `es-ES`); voice surface
 is exposed via `https://ha.amarolab.es`.
+
+### Voice Lab — Round 1 (native TTS casting), COMPLETE 2026-07-27
+
+Repo-external (code/models/images/audio **not** committed — evaluation tooling, not production).
+Blind comparison of candidate native TTS engines on a fixed Spanish corpus → **Kokoro `ef_dora`
+preferred (~70%), ahead of the incumbent Piper**. **Kokoro = native TTS reference candidate;
+Piper stays the production voice (no migration).** Round 2 (voice cloning) designed, not started.
+**Next gate: define Aurora's synthetic voice identity.**
+Record: `09_logs/2026-07-27_voice_lab_round1.md`.
 
 ### Home Automation
 

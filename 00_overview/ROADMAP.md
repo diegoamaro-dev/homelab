@@ -14,7 +14,7 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-07-21 (**Phase ER-1 — Deterministic Entity Resolution — COMPLETE at ER-1.5
+Last updated: 2026-07-27 (**Voice Lab — Round 1 native TTS casting COMPLETE (repo-external)** — Kokoro `ef_dora` = native TTS reference candidate (~70% blind), Piper remains production (no migration), Round 2 designed/not-started, next gate = Aurora voice identity (`09_logs/2026-07-27_voice_lab_round1.md`). Prior: **Phase ER-1 — Deterministic Entity Resolution — COMPLETE at ER-1.5
 (closeout 2026-07-21, `09_logs/2026-07-21_ER1_5_closeout.md`); design FROZEN 2026-07-16,
 Revision 4**; ER-1.0 committed + pushed (`c147e632` → `38eb8262`); the
 Revision 2 amendment (D-ER-11 + D-ER-12) committed + pushed (`3ebf59d1`); ER-1.1 (aliases
@@ -476,6 +476,16 @@ Sub-phases:
   [`09_logs/2026-07-01_phaseF_F5_3_applied.md`](../09_logs/2026-07-01_phaseF_F5_3_applied.md).
 * **F-6 — Voice Quality** — Whisper upgrade; STT shim migration; latency
   baseline. Parallel track; no dependency on F-2..F-5.
+  * **Voice Lab — Round 1 (native TTS casting) COMPLETE 2026-07-27 (repo-external).**
+    An isolated local Voice Lab (code/models/images/audio intentionally **not** committed)
+    blind-compared candidate native TTS engines (Piper incumbent, Kokoro `ef_dora`, XTTS v2,
+    Chatterbox) on a fixed Spanish corpus under identical, loudness-matched conditions
+    (randomized labels, sealed mapping revealed only after scoring; subjective casting primary,
+    engineering metrics tie-breakers). **Result: Kokoro `ef_dora` preferred (~70%), ahead of the
+    incumbent Piper → Kokoro is the native TTS reference candidate; Piper remains the production
+    voice (no migration).** **Round 2 (voice cloning) designed, not started; next gate = define
+    Aurora's synthetic voice identity.** Record:
+    [`09_logs/2026-07-27_voice_lab_round1.md`](../09_logs/2026-07-27_voice_lab_round1.md).
 
 ---
 

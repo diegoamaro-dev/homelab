@@ -29,7 +29,7 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-07-21 (Phase ER-1 — **ER-1.5 reconciliation + closeout: Phase ER-1 COMPLETE**; ER-1.4b `ha_call_service` v0.2.0 + ER-1-C1 committed + pushed `5b502c96`; the write path now verifies before claiming success; closeout log `09_logs/2026-07-21_ER1_5_closeout.md`)
+Last updated: 2026-07-27 (**Voice Lab — Round 1 native TTS casting COMPLETE (repo-external)** — Kokoro `ef_dora` = native TTS reference candidate (~70% blind), Piper remains production (no migration), Round 2 designed/not-started, next gate = Aurora voice identity (`09_logs/2026-07-27_voice_lab_round1.md`). Prior — Phase ER-1 — **ER-1.5 reconciliation + closeout: Phase ER-1 COMPLETE**; ER-1.4b `ha_call_service` v0.2.0 + ER-1-C1 committed + pushed `5b502c96`; the write path now verifies before claiming success; closeout log `09_logs/2026-07-21_ER1_5_closeout.md`)
 
 ---
 
@@ -612,6 +612,33 @@ Whisper deployment plan:
 [`03_services/voice-stack/whisper/faster-whisper-deployment.md`](../03_services/voice-stack/whisper/faster-whisper-deployment.md).
 Pipeline spec:
 [`03_services/voice-stack/ha-assist/pipeline-spec.md`](../03_services/voice-stack/ha-assist/pipeline-spec.md).
+
+---
+
+## Voice Lab — Round 1 (native TTS casting)
+
+Status: **Round 1 COMPLETE 2026-07-27. Repo-external — not committed. No production change.**
+
+An isolated local **Voice Lab** (outside this repository; its code, model weights, container
+images and audio outputs are intentionally **not** committed — evaluation tooling, not
+production infrastructure) was used to cast Aurora's candidate **native** TTS voice. Method: a
+fixed Spanish evaluation corpus synthesized under **identical, loudness-matched conditions** by
+every engine, then a **blind** comparison (engines relabeled Voice A/B/…, order randomized,
+mapping sealed and revealed only after scoring; subjective casting primary, engineering metrics
+tie-breakers only).
+
+- Engines cast (native, female Spanish): **Piper** (incumbent production voice), **Kokoro**
+  (`ef_dora`), **XTTS v2** (Coqui CPML — reference only, non-commercial), **Chatterbox**. A
+  hosted engine was included **reference-only** (imported by hand — no cloud call from AMAROLAB,
+  no credentials stored).
+- **Result: Kokoro `ef_dora` preferred at ~70% confidence, ahead of the incumbent Piper.**
+- **Kokoro is now the native TTS reference candidate. Piper remains the production voice — no
+  production migration occurred** (HA, Open WebUI and the Piper services are unchanged).
+- **Round 2 (voice cloning) is designed, not started.** **Next gate: define Aurora's synthetic
+  voice identity**, then record a legally-permitted Castilian reference and evaluate cloning
+  under the same blind method.
+
+Record: [`09_logs/2026-07-27_voice_lab_round1.md`](../09_logs/2026-07-27_voice_lab_round1.md).
 
 ---
 
