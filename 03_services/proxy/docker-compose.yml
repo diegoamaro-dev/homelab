@@ -1,0 +1,42 @@
+# proxy — RECOVERY ARTIFACT. NOT the deployment source.
+#
+# Status:   Recovery Artifact — PROJECT_RULES.md → Recovery Artifacts
+# Captured: 2026-07-28 (I-3), generated from `docker inspect`
+# Contract: ../CAPTURE_CONTRACT.md
+# Evidence: ../../09_logs/2026-07-28_I3_declarative_substrate_capture.md
+#
+# The live container carries the compose project label `proxy` (config_files
+# /data/compose/4/docker-compose.yml, inside the portainer_data volume). That
+# stored file was NOT read — reality is the only source (../CAPTURE_CONTRACT.md §1).
+#
+#   DO NOT `docker compose up` THIS FILE.
+#   Project name is deliberately `amarolab-proxy` so it cannot match the running
+#   `proxy` project. See ../CAPTURE_CONTRACT.md §4.
+#
+# Service key is `npm` and container_name is `nginx-proxy-manager`: the live
+# container carries com.docker.compose.service=npm while being named
+# nginx-proxy-manager, which is how the network aliases [nginx-proxy-manager, npm]
+# arise. Both are reproduced exactly.
+name: amarolab-proxy
+
+services:
+
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      # HostIp empty = published on ALL interfaces.
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    volumes:
+      - /srv/homelab/data/npm:/data
+      - /srv/homelab/data/npm/letsencrypt:/etc/letsencrypt
+    networks:
+      - proxy_default
+
+networks:
+  proxy_default:
+    external: true
+    name: proxy_default

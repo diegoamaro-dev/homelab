@@ -1,0 +1,32 @@
+# home-assistant — RECOVERY ARTIFACT. NOT the deployment source.
+#
+# Status:   Recovery Artifact — PROJECT_RULES.md → Recovery Artifacts
+# Captured: 2026-07-28 (I-3), generated from `docker inspect`
+# Contract: ../CAPTURE_CONTRACT.md
+# Evidence: ../../09_logs/2026-07-28_I3_declarative_substrate_capture.md
+#
+# The live container carries the compose project label `homeassistant`
+# (config_files /data/compose/1/docker-compose.yml, inside the portainer_data
+# volume). That stored file was NOT read — reality is the only source
+# (../CAPTURE_CONTRACT.md §1).
+#
+#   DO NOT `docker compose up` THIS FILE.
+#   Project name is deliberately `amarolab-home-assistant`. See ../CAPTURE_CONTRACT.md §4.
+#
+# Runs on the HOST network. Consequences that are load-bearing elsewhere:
+#   - reaches the Wyoming voice services on 127.0.0.1:10300 / :10200 / :10400
+#   - reaches ollama-proxy on 127.0.0.1:11435
+#   - its `trusted_proxies` is 172.18.0.0/16 = the ai-local_default subnet,
+#     which is auto-assigned by network creation order (R-I3-1)
+name: amarolab-home-assistant
+
+services:
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /srv/homelab/homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro

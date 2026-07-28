@@ -1,0 +1,49 @@
+# portainer — RECOVERY ARTIFACT. NOT the deployment source.
+#
+# Status:   Recovery Artifact — PROJECT_RULES.md → Recovery Artifacts
+# Captured: 2026-07-28 (I-3), generated from `docker inspect`
+# Contract: ../CAPTURE_CONTRACT.md
+# Evidence: ../../09_logs/2026-07-28_I3_declarative_substrate_capture.md
+#
+# No compose label; created by bare `docker run`.
+#
+#   DO NOT `docker compose up` THIS FILE.
+#   Project name is deliberately `amarolab-portainer`. See ../CAPTURE_CONTRACT.md §4.
+#
+# The `portainer_data` volume holds /data/compose/{1,2,4} — the only copies of
+# the Home Assistant, ai-local and proxy stack definitions. It is NOT in the
+# restic backup path set (audit finding H-2; remediation I-5).
+name: amarolab-portainer
+
+services:
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    # `always`, not `unless-stopped` — captured as found; the rest of the estate
+    # uses `unless-stopped`. Recorded as R-I3-6, not changed here.
+    restart: always
+    ports:
+      # HostIp empty = published on ALL interfaces.
+      - "8000:8000"
+      - "9443:9443"
+    volumes:
+      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - default_bridge
+      - proxy_default
+
+volumes:
+  portainer_data:
+    external: true
+    name: portainer_data
+
+networks:
+  # Docker's built-in default bridge, referenced by its real name.
+  default_bridge:
+    external: true
+    name: bridge
+  proxy_default:
+    external: true
+    name: proxy_default

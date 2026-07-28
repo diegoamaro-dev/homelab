@@ -1,0 +1,86 @@
+# ai-local — RECOVERY ARTIFACT. NOT the deployment source.
+#
+# Status:   Recovery Artifact — PROJECT_RULES.md → Recovery Artifacts
+# Captured: 2026-07-28 (I-3), generated from `docker inspect`
+# Contract: ../CAPTURE_CONTRACT.md
+# Evidence: ../../09_logs/2026-07-28_I3_declarative_substrate_capture.md
+#
+# The Portainer-stored stack 2 definition was NOT read and has no authority here.
+# Hazard — read before touching Portainer:
+#   ../../07_operations/hazards/portainer_ai_local_redeploy.md
+#
+#   DO NOT `docker compose up` THIS FILE.
+#   Secret values are redacted, so it is NOT deployable as written (R-I3-2).
+#   Project name is deliberately `amarolab-ai-local` so this file cannot match or
+#   recreate any running container. See ../CAPTURE_CONTRACT.md §4.
+#
+# Reality note: `ollama` currently carries the compose project label `ai-local`
+# (config_files /data/compose/2/docker-compose.yml). `openwebui` and `qdrant`
+# carry NO compose labels — they left that project when they were recreated by
+# hand during RTX-1.6 / F-2 / F-3a / ER-1. This file captures all three because
+# all three are `ai-local` by intent; it does not assert their current labels.
+name: amarolab-ai-local
+
+services:
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: openwebui
+    restart: unless-stopped
+    ports:
+      # HostIp empty on the live container = published on ALL interfaces.
+      - "3000:8080"
+    environment:
+      # Creation-time values only. Everything else is the image default.
+      AMAROLAB_AUDIT_LOG: /app/backend/data/amarolab-audit.log
+      HA_BASE_URL: http://192.168.178.79:8123
+      HA_LLAT: <REDACTED:sha256:c69e81f595559f42:len=183>
+      OLLAMA_BASE_URL: http://ollama-proxy:11434
+      QDRANT_API_KEY: <REDACTED:sha256:b98b8acf565d36bf:len=64>
+      QDRANT_URI: http://qdrant:6333
+      VECTOR_DB: qdrant
+      WEBUI_API_KEYS_ENABLED: "true"
+      WEBUI_SECRET_KEY: <REDACTED:sha256:f184e55742557372:len=64>
+    volumes:
+      - /srv/homelab/data/openwebui:/app/backend/data
+      - /home/diego/homelab/ai-stack/aurora:/opt/aurora:ro
+      - /home/diego/homelab/ai-stack/ingest:/opt/ingest:ro
+    networks:
+      - ai-local_default
+      - proxy_default
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      # HostIp empty = published on ALL interfaces. Authentication is enforced
+      # (verified 401 from the LAN during the 2026-07-28 audit).
+      - "6333:6333"
+    environment:
+      QDRANT__SERVICE__API_KEY: <REDACTED:sha256:b98b8acf565d36bf:len=64>
+    volumes:
+      - /home/diego/homelab/ai-stack/data/qdrant:/qdrant/storage
+    networks:
+      - ai-local_default
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      # HostIp empty = published on ALL interfaces, UNAUTHENTICATED.
+      # Captured as-is. This is audit finding H-5; remediation is S-2.
+      - "11434:11434"
+    volumes:
+      - /srv/homelab/data/ollama:/root/.ollama
+    networks:
+      - ai-local_default
+
+networks:
+  ai-local_default:
+    external: true
+    name: ai-local_default
+  proxy_default:
+    external: true
+    name: proxy_default

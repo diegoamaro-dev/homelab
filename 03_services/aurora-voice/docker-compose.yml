@@ -1,0 +1,122 @@
+# aurora-voice — RECOVERY ARTIFACT. NOT the deployment source.
+#
+# Status:   Recovery Artifact — PROJECT_RULES.md → Recovery Artifacts
+# Captured: 2026-07-28 (I-3), generated from `docker inspect`
+# Contract: ../CAPTURE_CONTRACT.md
+# Evidence: ../../09_logs/2026-07-28_I3_declarative_substrate_capture.md
+#
+# None of these five containers carries a compose label; all were created by
+# bare `docker run`.
+#
+#   DO NOT `docker compose up` THIS FILE.
+#   Project name is deliberately `amarolab-aurora-voice` so it cannot match or
+#   recreate any running container. See ../CAPTURE_CONTRACT.md §4.
+#
+# *** D-F6-1 — `aurora-whisper` MUST NOT BE RECREATED while F6.1 is open. ***
+#
+#   The frozen F6.1 Step 2 baseline is pinned to the currently-running container:
+#     image   sha256:966e1b0967f398b81fa2273a96b2b940004fa1b77754f9ffda6b5689a58dd158
+#     started 2026-07-25T21:50:55Z
+#     restarts 0
+#   Recreating it voids the baseline and forces a full re-measurement.
+#   Constraint source: 09_logs/2026-07-28_phaseF_F6_1_step2_handoff.md §1.
+name: amarolab-aurora-voice
+
+services:
+
+  # Home Assistant Wyoming path (loopback-published; HA runs on host network).
+  aurora-whisper:
+    image: rhasspy/wyoming-whisper:3.2.0
+    container_name: aurora-whisper
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10300:10300"
+    command:
+      - --model
+      - base-int8
+      - --language
+      - auto
+      - --beam-size
+      - "1"
+      - --compute-type
+      - int8
+    volumes:
+      - /srv/homelab/data/whisper/wyoming:/data
+    cpus: 4.0
+    mem_limit: 4g
+    networks:
+      - ai-local_default
+
+  aurora-piper:
+    image: rhasspy/wyoming-piper:2.2.2
+    container_name: aurora-piper
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10200:10200"
+    command:
+      - --voice
+      - es_ES-sharvard-medium
+      - --speaker
+      - "F"
+      - --length-scale
+      - "1.0"
+    volumes:
+      - /srv/homelab/data/piper:/data
+    cpus: 1.0
+    mem_limit: 1g
+    networks:
+      - ai-local_default
+
+  aurora-wakeword:
+    image: rhasspy/wyoming-openwakeword:2.1.0
+    container_name: aurora-wakeword
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10400:10400"
+    command:
+      - --custom-model-dir
+      - /custom_models
+      - --threshold
+      - "0.5"
+      - --trigger-level
+      - "1"
+    volumes:
+      - /srv/homelab/data/wakeword:/custom_models
+    cpus: 1.0
+    mem_limit: 512m
+    networks:
+      - ai-local_default
+
+  # Open WebUI audio path (OpenAI-API HTTP shims). No published ports —
+  # reached over the docker network only.
+  aurora-whisper-http:
+    image: fedirz/faster-whisper-server:0.6.0-rc.3-cpu
+    container_name: aurora-whisper-http
+    restart: unless-stopped
+    environment:
+      WHISPER__COMPUTE_TYPE: int8
+      WHISPER__MODEL: Systran/faster-whisper-base
+    volumes:
+      - /srv/homelab/data/whisper/http:/home/ubuntu/.cache/huggingface
+    networks:
+      - ai-local_default
+
+  aurora-piper-http:
+    image: ghcr.io/matatonic/openedai-speech:0.18.2
+    container_name: aurora-piper-http
+    restart: unless-stopped
+    entrypoint:
+      - /bin/bash
+    command:
+      - -c
+      - python speech.py --xtts_device none --host 0.0.0.0 --port 8000
+    volumes:
+      - /srv/homelab/data/openedai-speech/voice_to_speaker.yaml:/app/config/voice_to_speaker.yaml:ro
+      - /srv/homelab/data/piper:/app/voices:ro
+    networks:
+      - ai-local_default
+
+networks:
+  ai-local_default:
+    external: true
+    name: ai-local_default

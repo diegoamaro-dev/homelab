@@ -930,3 +930,11 @@ token for the `amarolab` tunnel lives at
     before ER-1.4b — the point at which the field starts describing actuation rather than
     reads. Finding record: `09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md` §4; resolution:
     `09_logs/2026-07-17_ER1_freeze_rev4.md`.
+11. **H-4 — the Portainer `ai-local` stack must not be redeployed.** The stored stack
+    definition and the running containers have diverged; a redeploy would drop the RTX-1.6
+    endpoint, the Qdrant API key, `HA_LLAT`, the audit-log path and the `/opt/aurora` +
+    `/opt/ingest` mounts. **Hazard record — read before touching Portainer:**
+    [`../07_operations/hazards/portainer_ai_local_redeploy.md`](../07_operations/hazards/portainer_ai_local_redeploy.md).
+    Source finding H-4 in `09_logs/2026-07-28_amarolab_technical_audit.md`; removed by M-B
+    (convergence), which depends on I-3 and on F6.1 being closed. *(Pointer only — the full
+    2026-07-28 audit reconciliation is I-7 and has not run.)*

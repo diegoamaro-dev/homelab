@@ -1,5 +1,10 @@
 # ollama-proxy — RTX-1.6 failover front end (Torre primary + UM790 fallback).
 #
+# Status: DEPLOYMENT SOURCE — PROJECT_RULES.md → Recovery Artifacts.
+#   This file was authored first and deployed from; it is authoritative and
+#   deployable. It is the ONLY file in 03_services/ that is. The six captured
+#   projects alongside it are Recovery Artifacts and must not be deployed.
+#
 # Self-contained compose project. Touches no existing service.
 #   - Open WebUI (bridge)      reaches it as  http://ollama-proxy:11434
 #   - Home Assistant (host net) reaches it as http://127.0.0.1:11435

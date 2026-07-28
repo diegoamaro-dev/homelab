@@ -1,0 +1,62 @@
+# zigbee-stack — RECOVERY ARTIFACT. NOT the deployment source.
+#
+# Status:   Recovery Artifact — PROJECT_RULES.md → Recovery Artifacts
+# Captured: 2026-07-28 (I-3), generated from `docker inspect`
+# Contract: ../CAPTURE_CONTRACT.md
+# Evidence: ../../09_logs/2026-07-28_I3_declarative_substrate_capture.md
+#
+# This path is the one the running containers name in their compose labels
+# (com.docker.compose.project.config_files). The file had been missing, and
+# `git log --all` confirms it was NEVER in this repository's history — so it was
+# reconstructed from live state, not restored (R-I3-3).
+#
+#   DO NOT `docker compose up` THIS FILE.
+#   Project name is deliberately `amarolab-zigbee-stack`, NOT `zigbee-stack`, so
+#   this file cannot match, adopt or recreate the running containers. Combined
+#   with the redacted device path below, an `up` here would otherwise recreate
+#   zigbee2mqtt with an invalid coordinator path and repeat the C-1 outage.
+#   See ../CAPTURE_CONTRACT.md §4.
+#
+#   The dongle serial is redacted per repository convention
+#   (../../01_architecture/zigbee_network.md:34). Substitute the real
+#   /dev/serial/by-id/... path before any deployment (R-I3-5).
+name: amarolab-zigbee-stack
+
+services:
+
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt:latest
+    container_name: zigbee2mqtt
+    restart: unless-stopped
+    ports:
+      # HostIp empty = published on ALL interfaces.
+      - "8080:8080"
+    environment:
+      TZ: Europe/Madrid
+    devices:
+      - /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_<DEVICE_ID>-if00-port0:/dev/ttyUSB0
+    volumes:
+      - /home/diego/homelab/03_services/zigbee-stack/zigbee2mqtt/data:/app/data
+      - /run/udev:/run/udev:ro
+    networks:
+      - zigbee-stack_default
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      # HostIp empty = published on ALL interfaces. Authenticated + ACLs
+      # (allow_anonymous false), hardened 2026-06-17.
+      - "1883:1883"
+    volumes:
+      - /home/diego/homelab/03_services/zigbee-stack/mosquitto/config:/mosquitto/config
+      - /home/diego/homelab/03_services/zigbee-stack/mosquitto/data:/mosquitto/data
+      - /home/diego/homelab/03_services/zigbee-stack/mosquitto/log:/mosquitto/log
+    networks:
+      - zigbee-stack_default
+
+networks:
+  zigbee-stack_default:
+    external: true
+    name: zigbee-stack_default

@@ -386,6 +386,74 @@ while being correct throughout. Chronology reported stale; content proved curren
 
 ---
 
+# Recovery Artifacts
+
+**A captured definition describes reality. It does not govern it.**
+
+An infrastructure definition is in exactly one of three states, and it must say which:
+
+```
+Recovery Artifact  →  Validated  →  Deployment Source
+   describes           proven         governs
+```
+
+A **Recovery Artifact** is generated from the running system — `docker inspect`, a live
+export, a derived recipe. It is evidence of what exists, sufficient to rebuild from, and it
+has **no authority to change anything**. It becomes a **Deployment Source** only when a
+separate, gated project proves it equivalent to reality and adopts it deliberately.
+
+Rules:
+
+1. **Capture never converges.** Writing a definition and applying a definition are two
+   different changes with two different risk profiles, and they are never the same commit,
+   the same step, or the same approval. Capture is additive and reversible; convergence
+   recreates running things.
+
+2. **A Recovery Artifact must be inert by construction, not by convention.** A warning
+   comment is not a control. Inertness is a property the artifact is built to have — an
+   identifier that cannot match a running instance, an explicit name that makes an
+   accidental apply collide and abort. Assume the warning will not be read, because
+   eventually it will not be.
+
+3. **The artifact states its own status, in itself.** A reader who opens only that file must
+   learn from that file that it does not deploy. Status recorded only in a README, a log or
+   a triad entry has already failed the reader who arrived by `grep`.
+
+4. **The direction of repair is fixed: reality → file.** When a Recovery Artifact and the
+   running system disagree, the artifact is wrong. Never "fix" reality to match a definition
+   that has never been validated. This is *Reality always wins*, applied at the moment it is
+   most tempting to invert.
+
+5. **Promotion is an event, not a drift.** Git becomes the deployment source of truth for a
+   service on a specific date, by a specific gated change, recorded. A definition must never
+   *become* authoritative because it has been sitting in the repository looking official.
+
+6. **A redaction is a status, not a cosmetic.** An artifact carrying redacted secrets,
+   device paths or hostnames is **not deployable as written**, and says so. The substitution
+   mechanism is a separate decision; leaving it undecided is acceptable, leaving it
+   undocumented is not.
+
+**Why.** The dangerous state is not "no definition" — that failure is loud, and the 2026-07-28
+audit found it as an obvious gap. The dangerous state is a definition that *looks*
+authoritative and has never been proven equivalent, because it invites the one action that
+destroys the running configuration: "there's a compose file, just redeploy it." H-4 is
+exactly that failure, already live in this estate — a stored stack definition, invisible
+inside a Docker volume, that would silently revert eleven gates' worth of validated
+behaviour. A half-trusted definition is more dangerous than none.
+
+**The rule codifies existing practice.** `03_services/ollama-proxy/docker-compose.yml` was
+authored first and deployed from — a Deployment Source from birth, and correct. The F6.1
+baseline capture derived an exact `docker run` equivalent from the live container and used
+it as a **rollback reference that was never executed** — a Recovery Artifact, and also
+correct. The two were already being treated differently; this names the difference so the
+next session does not have to rediscover it.
+
+**Origin:** I-3, 2026-07-28, capturing eight unmanaged containers after audit findings H-3
+and H-4. Contract and inventory: [`../03_services/CAPTURE_CONTRACT.md`](../03_services/CAPTURE_CONTRACT.md),
+[`../03_services/README.md`](../03_services/README.md).
+
+---
+
 # Guardian Cloud
 
 Guardian Cloud is production.
