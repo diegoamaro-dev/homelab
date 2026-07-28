@@ -14,7 +14,17 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-07-28 (**I-7 — triad reconciliation after the 2026-07-28 infrastructure
+Last updated: 2026-07-28 (**S-1 — LAN trust posture DECIDED.** *The LAN is a trusted
+transport; it is never a substitute for service authentication; every LAN-reachable service
+must authenticate, be explicitly justified, or remain closed.* Recorded in
+`06_security/security_posture.md`; decision record
+`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`. **S-2/S-3/S-4/S-5 unblocked** — each
+is now a conformance action against a written bar. Four listeners fail the bar: H-5, H-6,
+M-9, plus two new findings **F-S1-1** (`rpcbind` with no NFS behind it) and **F-S1-2** (an
+unattributed LAN-reachable listener), both recorded and deliberately unimplemented, **no
+remediation identifier assigned**. Segmentation is now a decided non-goal at current scale.
+New tracking item **I-9** (architecture-document drift). No production change. Prior:
+**I-7 — triad reconciliation after the 2026-07-28 infrastructure
 audit.** New section *Infrastructure Remediation — 2026-07-28 audit*: five programs, full
 item ledger, standing constraints. **Program A capture COMPLETE at I-3** (`319b2c58`);
 P0 + I-1 + I-2 + I-7 also done; **I-4 is next**. Low-severity audit documentation items
@@ -652,7 +662,7 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 |---|---|---|---|
 | **A** | Declarative substrate | 8 of 17 containers existed only as running processes | **Capture COMPLETE (I-3).** M-B, M-C open |
 | **B** | Observability & alerting | Nothing observes anything in real time | Open |
-| **C** | Security posture | The LAN is the boundary by default, not by decision | Open |
+| **C** | Security posture | The LAN is the boundary by default, not by decision | **S-1 DECIDED 2026-07-28** — the boundary is now a decision with a minimum bar. S-2…S-5 unblocked; four listeners non-conforming |
 | **D** | Documentation truth | Operational drift in the declared source of truth | **I-7 COMPLETE.** Low items below |
 | **E** | Backup lifecycle | Retention inert; coverage incomplete; no anchor protection | Open |
 
@@ -668,8 +678,9 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **I-4** | Fix the restic grouping defect | **NEXT.** Prerequisite for all of Program E |
 | **I-5** | Extend backup coverage (H-2) | Open — after I-4 |
 | **I-6** | Give anchor `63c072f4` real protection | Open — after I-4, before S-10 |
-| **I-8** | Track `/usr/local/bin/homelab-backup.sh` in the repo | Open |
-| **S-1** | Decide + document the LAN trust posture | Open — **gates S-2/S-3/S-4/S-5** |
+| **I-8** | Track `/usr/local/bin/homelab-backup.sh` in the repo | Open — **after I-4 closes** (tracking it now would commit a pre-Gate-8 script the rollback could invalidate) |
+| **I-9** | Reconcile `01_architecture/amarolab_architecture.md` | Open — **tracking only**, see below |
+| **S-1** | Decide + document the LAN trust posture | **DONE 2026-07-28** — *the LAN is a trusted transport, never a substitute for service authentication*; **S-2/S-3/S-4/S-5 unblocked** (`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`) |
 | **S-7** | Health Aggregator now, or accept a third writer | Open — gates the monitoring build |
 | **S-8** | Close the backup monitoring blind spot | Open — after I-4, S-7 |
 | **S-9** | Zigbee coordinator USB hardening (C-1 structural) | Open |
@@ -682,6 +693,31 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **R-I3-1…7** | Items discovered during the I-3 capture | Recorded, deliberately unimplemented |
 | **L-A** | STT shim migration (R-D-13) | Open — **post-F6.1 only** (D-F6-3) |
 | **L-E** | Full disaster-recovery rehearsal | Open — the real acceptance test for Programs A + E |
+
+### I-9 — `amarolab_architecture.md` drift (tracking only, raised 2026-07-28)
+
+**Problem.** [`../01_architecture/amarolab_architecture.md`](../01_architecture/amarolab_architecture.md)
+states *"Phase E — In progress (E-1 in progress)"* and *"Current objective: Knowledge
+Platform Foundation (Phase E)"*. Its RAG collection list omits `knowledge_history` and
+`ops_digests`; it carries no World Model, no `system_status`, no voice stack, and no
+pointer to *Hardware-Agnostic Platform*.
+
+**Reason.** Last updated 2026-06-27. Phase E closed 2026-06-28, and F-4, F-5, WM-1…WM-6 and
+ER-1 have all closed since. **I-7 deliberately scoped itself to the triad**, so this
+document was never swept — the drift is unregistered rather than deferred.
+
+**Affected document.** `01_architecture/amarolab_architecture.md` — the file
+`START_HERE.md` names as the architecture reference, which is why stale phase status there
+misleads onboarding and future audits.
+
+**Priority.** Low. No operational claim depends on it; the triad remains the source of
+truth and is current.
+
+**Dependencies.** None. To be executed as a dedicated documentation task **after** the
+current remediation work completes.
+
+**Status.** Recorded 2026-07-28 at S-1. **No implementation.** This entry is the tracking
+action; the reconciliation itself is not authorized by it.
 
 ### Standing constraints
 

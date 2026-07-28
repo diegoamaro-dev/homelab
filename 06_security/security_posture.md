@@ -1,6 +1,9 @@
 # Security Posture
 
-Last updated: 2026-06-27
+Last updated: 2026-07-28 (**S-1 — LAN trust posture decided.** *Network Security →
+Internal Network* previously recorded `Trusted LAN` as an inherited assumption; it is now
+a dated operator decision with an explicit minimum bar. The threat model and the pending
+list are reconciled to that decision. No other section was reconciled in this change.)
 
 ---
 
@@ -54,6 +57,10 @@ Not currently considered:
 * Nation-state actors
 * Advanced persistent threats
 * Physical datacenter attacks
+* **A hostile device already present on the LAN** — excluded by the **S-1** decision below
+  (*Network Security → Internal Network*), deliberately and not by oversight. The LAN is
+  trusted as a *transport*; the minimum bar exists precisely so that this exclusion can
+  never become the justification for an unauthenticated service.
 
 ---
 
@@ -126,22 +133,103 @@ Responsibilities:
 
 ## Internal Network
 
-Current posture:
+### Decision — S-1, ratified 2026-07-28
 
 ```text
-Trusted LAN
+The LAN is a trusted transport.
+It is never a substitute for service authentication.
+Every LAN-reachable service must either:
+- authenticate,
+- be explicitly justified,
+- or remain closed.
 ```
 
-Future posture:
+This supersedes the previous entry, which recorded `Trusted LAN` as an inherited posture —
+a *trust statement* that had never been taken as a *decision*. Origin: finding **H-8** of
+the 2026-07-28 infrastructure audit. Decision record:
+[`../09_logs/2026-07-28_S1_lan_trust_posture_decision.md`](../09_logs/2026-07-28_S1_lan_trust_posture_decision.md).
 
-```text
-User devices
-IoT devices
-Servers
-Guest network
-```
+**What it means.** AMAROLAB is a single-user, single-host platform on a home LAN behind a
+FRITZ!Box, with no public administrative path. Treating that LAN as a trusted transport is
+proportionate to the threat model above. The decision makes the posture explicit so that it
+is a **choice**, reviewable and dated, rather than a default nobody took.
 
-Segmentation will be increased over time.
+**What it does not mean.** It grants no service the right to be unauthenticated. The
+minimum bar is the operative half of the decision: **trust in the transport never
+substitutes for authentication at the service.** A LAN-reachable listener that neither
+authenticates nor carries a written justification is a defect, and is closed.
+
+**This is not segmentation.** VLAN separation of user / IoT / server / guest devices is a
+**decided non-goal at the current scale** — not a pending task, and it is no longer listed
+as one. It returns as an open question only if the LAN stops being effectively
+single-user: guest access, or untrusted IoT that cannot sit behind the existing Zigbee
+boundary.
+
+### Enforcement state
+
+No host firewall is enforcing. `/etc/ufw/ufw.conf` carries `ENABLED=no`; the `ufw` unit is
+`active` and `enabled` but installs no rules. **This is consistent with the decision** —
+under S-1 the LAN is trusted, so the control that matters is authentication at each
+service, not packet filtering at the host.
+
+**Verification limit, stated in place.** `iptables -S` and `nft list ruleset` both return
+*permission denied* without passwordless sudo, so the *effective* filter state has never
+been read directly — by this document or by the 2026-07-28 audit. Enforcement claims here
+are derived from `ufw.conf` plus observed reachability, and any future change to filtering
+must be verified by the operator with root.
+
+**A closure caveat that matters.** Eight LAN-exposed ports are **Docker-published**
+(`0.0.0.0:…->…`): 3000, 6333, 8085, 1883, 80/81/443, 11434, 8000/9443. Docker installs its
+own `nat`/`DOCKER` rules, so **enabling UFW would not close them**. Closing a Docker-published
+port means changing its publish binding (e.g. `127.0.0.1:11434`) or adding a `DOCKER-USER`
+rule — never `ufw enable` alone. Recorded as a known Docker property; not verified against
+this host's ruleset, for the reason above.
+
+### Conformance against the bar — measured 2026-07-28
+
+| Port | Service | Bar met by | Status |
+|---|---|---|---|
+| 22 | SSH | authenticates | **conditional** — `PasswordAuthentication` is unset in `sshd_config` / `sshd_config.d/`, so the OpenSSH default `yes` applies (**M-9 → S-5**) |
+| 80 / 81 / 443 | Nginx Proxy Manager | admin account | conforms |
+| 139 / 445 | Samba `[projects]` | `valid users = smbuser` | conforms |
+| 1883 | Mosquitto | authentication + per-user ACLs (hardened 2026-06-17) | conforms |
+| 3000 | Open WebUI | app login | conforms |
+| 6333 | Qdrant | API key — verified `HTTP 401` | conforms |
+| 8000 / 9443 | Portainer | app login | conforms |
+| 8085 / 3001 | Guardian Cloud web / backend | production project, hosted; out of AMAROLAB scope | justified |
+| 8088 | Apache WebDAV | Basic auth — verified `HTTP 401` | conforms |
+| 8123 | Home Assistant | app login | conforms |
+| **11434** | **Ollama** | — | **FAILS** — unauthenticated; `HTTP 200` on `/api/tags` from the LAN address (**H-5 → S-2**) |
+| **5050** | **homelab-tools** | — | **FAILS** — unauthenticated Flask dev server serving Docker logs; contradicts D-18 (**H-6 → S-3**) |
+| **111** | **rpcbind** (tcp+udp, IPv4+IPv6) | — | **FAILS** — no `/etc/exports`, `nfs-server` inactive: a portmapper with no NFS behind it (**F-S1-1**) |
+| **18555** | **unattributed** | — | **FAILS** — LAN-reachable; the process cannot be attributed without root (**F-S1-2**) |
+
+Loopback-bound services (`10200`, `10300`, `10400` Wyoming voice chain; `11435`
+`ollama-proxy`; `631` CUPS) are outside the bar by construction — they are not
+LAN-reachable.
+
+**Four listeners fail the bar as of 2026-07-28.** Two were already tracked (H-5 → S-2,
+H-6 → S-3). Two are new, found by this decision's own audit, and are recorded as findings
+**F-S1-1** and **F-S1-2** in the decision record — **deliberately unimplemented here**, on
+the R-I3-1…7 precedent. S-1 decides the posture; it changes no running service.
+
+### Backup adjacency — recorded at S-1
+
+The restic repository directory `/mnt/storage/backups/restic` is `root`-owned, mode `0700`
+— its contents are not readable or writable by `smbuser` or the `shared` group. Its
+**parent** `/mnt/storage/backups` is `smbuser`-owned, group-writable, and carries **no
+sticky bit**, so the `restic` directory entry itself can be renamed or unlinked by
+`smbuser` or any member of `shared`. That parent is on the same filesystem (`/dev/sda1`) as
+the LAN-writable Samba share `[projects]`.
+
+**Not demonstrated:** that the `[projects]` share reaches outside `/mnt/storage/projects`.
+As configured it does not — the share path is scoped and `wide links` is not set. The
+exposure is therefore **conditional**, requiring a second share, a configuration change, or
+a compromised `smbuser` process.
+
+It is recorded because it sets the stakes of trusting the LAN: the platform's **sole**
+backup repository — single copy, and per I-4 never pruned — sits one directory-entry
+permission away from a LAN-facing file service. Remediation is not assigned here.
 
 ---
 
@@ -509,6 +597,7 @@ Git hygiene
 RTX node Tailscale-only exposure (host-scoped /32)
 RTX node headless service + ACL hardening
 ollama-proxy failover (Torre primary + UM790 fallback)
+LAN trust posture decided + documented (S-1, 2026-07-28)
 ```
 
 Pending:
@@ -517,9 +606,21 @@ Pending:
 Cloudflare Tunnel token rotation
 Dedicated NAS deployment
 Secondary backup location
-Additional network segmentation
 Hardware-backed authentication
 ```
+
+Pending against the S-1 minimum bar (four non-conforming listeners):
+
+```text
+Ollama unauthenticated on the LAN            (H-5 -> S-2)
+homelab-tools unauthenticated on the LAN     (H-6 -> S-3)
+SSH password authentication enabled          (M-9 -> S-5)
+rpcbind + one unattributed listener          (F-S1-1, F-S1-2 — no item assigned)
+```
+
+`Additional network segmentation` was removed from this list at S-1: it is now a **decided
+non-goal at the current scale**, not pending work. See *Network Security → Internal
+Network*.
 
 ---
 

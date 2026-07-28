@@ -5,7 +5,13 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-28 (**I-7 — triad reconciliation after the 2026-07-28 infrastructure
+Last updated: 2026-07-28 (**S-1 — LAN trust posture DECIDED.** The LAN is a **trusted
+transport**, never a substitute for service authentication; every LAN-reachable service must
+authenticate, be explicitly justified, or remain closed. S-2/S-3/S-4/S-5 unblocked; four
+listeners non-conforming (H-5, H-6, M-9, F-S1-1, F-S1-2); segmentation is a decided non-goal
+at current scale; new tracking item **I-9** (architecture-document drift). No production
+change. Record `09_logs/2026-07-28_S1_lan_trust_posture_decision.md`. Prior — **I-7 —
+triad reconciliation after the 2026-07-28 infrastructure
 audit.** *Next Immediate Task* rewritten — it still opened with Phase ER-1, closed since
 2026-07-21. Two live workstreams now stated up front: **F-6/F6.1** (in progress, stopped
 after Step 2a) and **infrastructure remediation** (P0 + I-1 + I-2 + I-3 + I-7 done, **I-4
@@ -415,8 +421,13 @@ ledger and `CURRENT_STATE.md` → *Infrastructure audit — 2026-07-28* for live
 capture — 14 services at 103/103 parity, `319b2c58`)**, I-7 (this reconciliation).
 **Next: I-4** — fix the restic grouping defect, the prerequisite for all of Program E.
 Then one nightly cycle, I-5, I-6, S-8, and only then S-10, which is the **only irreversible
-item in the roadmap**. **S-1** (LAN trust posture) and **S-7** (Health Aggregator) are
-zero-cost decisions that gate seven downstream items and can be taken at any time.
+item in the roadmap**. **S-1 (LAN trust posture) was DECIDED 2026-07-28** — *the LAN is a
+trusted transport; it is never a substitute for service authentication; every LAN-reachable
+service must authenticate, be explicitly justified, or remain closed*
+(`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`). **S-2/S-3/S-4/S-5 are unblocked**
+and are now conformance actions against that bar; four listeners currently fail it (H-5,
+H-6, M-9, plus new findings F-S1-1 / F-S1-2, no identifier assigned). **S-7** (Health
+Aggregator) remains an open zero-cost decision and can be taken at any time.
 
 **Three standing constraints that outlive this session:**
 
