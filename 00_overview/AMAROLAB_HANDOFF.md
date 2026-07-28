@@ -5,7 +5,13 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-27 (**Voice Lab — Round 1 native TTS casting COMPLETE (repo-external)** — Kokoro `ef_dora` = native TTS reference candidate (~70% blind), Piper still production (no migration), Round 2 designed/not-started, next gate = Aurora voice identity (`09_logs/2026-07-27_voice_lab_round1.md`). Prior — Phase ER-1 — **ER-1.5 reconciliation + closeout: Phase ER-1 COMPLETE**; ER-1.0→ER-1.5 delivered, G-ER-1…7 closed on real evidence; ER-1.4b `ha_call_service` v0.2.0 + ER-1-C1 committed + pushed `5b502c96`; the write path now verifies before claiming success; closeout log `09_logs/2026-07-21_ER1_5_closeout.md`)
+Last updated: 2026-07-28 (**I-7 — triad reconciliation after the 2026-07-28 infrastructure
+audit.** *Next Immediate Task* rewritten — it still opened with Phase ER-1, closed since
+2026-07-21. Two live workstreams now stated up front: **F-6/F6.1** (in progress, stopped
+after Step 2a) and **infrastructure remediation** (P0 + I-1 + I-2 + I-3 + I-7 done, **I-4
+next**). Three standing constraints recorded: no `aurora-whisper` recreation, no Portainer
+`ai-local` redeploy, `03_services/` files are Recovery Artifacts. Prior — **Voice Lab —
+Round 1 native TTS casting COMPLETE (repo-external)** — Kokoro `ef_dora` = native TTS reference candidate (~70% blind), Piper still production (no migration), Round 2 designed/not-started, next gate = Aurora voice identity (`09_logs/2026-07-27_voice_lab_round1.md`). Prior — Phase ER-1 — **ER-1.5 reconciliation + closeout: Phase ER-1 COMPLETE**; ER-1.0→ER-1.5 delivered, G-ER-1…7 closed on real evidence; ER-1.4b `ha_call_service` v0.2.0 + ER-1-C1 committed + pushed `5b502c96`; the write path now verifies before claiming success; closeout log `09_logs/2026-07-21_ER1_5_closeout.md`)
 
 ## Purpose
 
@@ -99,7 +105,9 @@ infrastructure.
 Wyoming chain (HA Assist):
 
 * `aurora-whisper` (STT, `base-int8`, D-1.2)
-* `aurora-piper` (TTS, `es_ES-davefx-medium`, D-1.3)
+* `aurora-piper` (TTS, **`es_ES-sharvard-medium` speaker F**, D-1.3 — verified live
+  2026-07-28; this line previously said `es_ES-davefx-medium`, which contradicted the
+  shim entry below and the running container — L-2)
 * `aurora-wakeword` (`okay_nabu`, D-1.4)
 
 Open WebUI HTTP shims (D-1.7):
@@ -314,6 +322,13 @@ Pending:
   requested immediately before each command. Approval never
   carries over between commands or sessions. See
   `PROJECT_RULES.md` → "Operator Git Approval".
+* **Recovery Artifacts** — a captured definition describes reality, it does not
+  govern it. `Recovery Artifact` (describes) → `Validated` (proven) →
+  `Deployment Source` (governs), and promotion is a dated gated event, never drift.
+  Every compose file in `03_services/` is a Recovery Artifact **except**
+  `ollama-proxy/docker-compose.yml`. See `PROJECT_RULES.md` → "Recovery Artifacts".
+* **Reality always wins** — when a captured definition and the running system
+  disagree, the definition is corrected. Never the reverse.
 
 ---
 
@@ -378,7 +393,51 @@ Closeout document:
 
 ## Next Immediate Task
 
-**Current: Phase ER-1 — Deterministic Entity Resolution — design FROZEN 2026-07-16
+> **Read this block first. Everything below it is historical context, kept for provenance.**
+
+**Two workstreams are live and independent.**
+
+**1 — AURORA engineering: Phase F / F-6 (Voice Quality). F6.1 is IN PROGRESS, stopped after
+Step 2a.** Rule N did **not** fire (B/N = 14/30 = 0.467), so the defect reproduces on a fair
+corpus and the phase continues. Steps 3–8 not started. Status lives in
+`09_logs/2026-07-28_phaseF_F6_1_step2_handoff.md`, **not** in the triad; the corpus and
+tooling are repo-external under `/home/diego/f6_1_corpus/`. Binding: **D-F6-1** (`--model`
+is the only variable — `aurora-whisper` must not be recreated), **D-F6-2** (the laboratory
+on port 10399 is the mandatory promotion gate), **D-F6-3** (`small-int8` only; no
+escalation). **Blocker to know before Step 7: there is currently no live voice acceptance
+path** — the voice-exposure ACL exposes zero entities and the G-D4 canary is not in it
+(**S-11**).
+
+**2 — Infrastructure remediation from the 2026-07-28 audit.** 38 findings in five
+programs; see `ROADMAP.md` → *Infrastructure Remediation — 2026-07-28 audit* for the full
+ledger and `CURRENT_STATE.md` → *Infrastructure audit — 2026-07-28* for live status.
+**Done:** P0 (C-1 restore + stale restic lock cleared), I-1, I-2, **I-3 (Program A
+capture — 14 services at 103/103 parity, `319b2c58`)**, I-7 (this reconciliation).
+**Next: I-4** — fix the restic grouping defect, the prerequisite for all of Program E.
+Then one nightly cycle, I-5, I-6, S-8, and only then S-10, which is the **only irreversible
+item in the roadmap**. **S-1** (LAN trust posture) and **S-7** (Health Aggregator) are
+zero-cost decisions that gate seven downstream items and can be taken at any time.
+
+**Three standing constraints that outlive this session:**
+
+1. **Do not recreate `aurora-whisper`** while F6.1 is open (D-F6-1).
+2. **Do not redeploy the Portainer `ai-local` stack** —
+   `07_operations/hazards/portainer_ai_local_redeploy.md`. If a redeploy is already running
+   and a name conflict appears, **stop and do not remove the conflicting container**.
+3. **`03_services/` compose files are Recovery Artifacts, not deployment sources** —
+   `PROJECT_RULES.md` → *Recovery Artifacts*. Only `ollama-proxy/docker-compose.yml`
+   deploys. The captured files carry redacted secrets and device paths and are not
+   deployable as written.
+
+**Backups: the backup step passes and recovery is proven; retention has never worked.**
+Do not assume old snapshots are pruned — the policy is structurally inert and always has
+been (`09_logs/2026-07-28_backup_retention_incident.md`).
+
+---
+
+### Historical — prior "next task" entries
+
+**Phase ER-1 — Deterministic Entity Resolution — design FROZEN 2026-07-16
 (operator-ratified), now Revision 4. Published:** defect record `c147e632` → architecture
 freeze `38eb8262` → **Revision 2 amendment** `3ebf59d1` (D-ER-11 aliases mirror the `binding`
 shape; D-ER-12 an alias may equal its own entity identifier, never another's) → **ER-1.1**

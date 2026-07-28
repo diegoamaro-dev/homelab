@@ -14,7 +14,12 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-07-27 (**Voice Lab — Round 1 native TTS casting COMPLETE (repo-external)** — Kokoro `ef_dora` = native TTS reference candidate (~70% blind), Piper remains production (no migration), Round 2 designed/not-started, next gate = Aurora voice identity (`09_logs/2026-07-27_voice_lab_round1.md`). Prior: **Phase ER-1 — Deterministic Entity Resolution — COMPLETE at ER-1.5
+Last updated: 2026-07-28 (**I-7 — triad reconciliation after the 2026-07-28 infrastructure
+audit.** New section *Infrastructure Remediation — 2026-07-28 audit*: five programs, full
+item ledger, standing constraints. **Program A capture COMPLETE at I-3** (`319b2c58`);
+P0 + I-1 + I-2 + I-7 also done; **I-4 is next**. Low-severity audit documentation items
+(L-6/L-7/L-8/L-11/M-4) added to *Documentation Hygiene*. Prior: **Voice Lab — Round 1 native
+TTS casting COMPLETE (repo-external)** — Kokoro `ef_dora` = native TTS reference candidate (~70% blind), Piper remains production (no migration), Round 2 designed/not-started, next gate = Aurora voice identity (`09_logs/2026-07-27_voice_lab_round1.md`). Prior: **Phase ER-1 — Deterministic Entity Resolution — COMPLETE at ER-1.5
 (closeout 2026-07-21, `09_logs/2026-07-21_ER1_5_closeout.md`); design FROZEN 2026-07-16,
 Revision 4**; ER-1.0 committed + pushed (`c147e632` → `38eb8262`); the
 Revision 2 amendment (D-ER-11 + D-ER-12) committed + pushed (`3ebf59d1`); ER-1.1 (aliases
@@ -627,6 +632,67 @@ the awareness pipeline (INV-18 / AD-20 / INV-19 all hold).
 
 ---
 
+## Infrastructure Remediation — 2026-07-28 audit
+
+**Not an AURORA phase.** Operational remediation of the platform AURORA runs on, driven by
+the read-only technical audit of 2026-07-28 (38 findings). It runs in parallel with, and
+does not block, F-6.
+
+Authoritative registers (dated records — their internal status columns are frozen
+as-of-2026-07-28 and do **not** track execution; live status is here and in
+`CURRENT_STATE.md`):
+
+* Audit — [`../09_logs/2026-07-28_amarolab_technical_audit.md`](../09_logs/2026-07-28_amarolab_technical_audit.md)
+* Roadmap — [`../09_logs/2026-07-28_amarolab_remediation_roadmap.md`](../09_logs/2026-07-28_amarolab_remediation_roadmap.md)
+* Backup incident — [`../09_logs/2026-07-28_backup_retention_incident.md`](../09_logs/2026-07-28_backup_retention_incident.md)
+
+### Programs
+
+| | Program | Core problem | Status |
+|---|---|---|---|
+| **A** | Declarative substrate | 8 of 17 containers existed only as running processes | **Capture COMPLETE (I-3).** M-B, M-C open |
+| **B** | Observability & alerting | Nothing observes anything in real time | Open |
+| **C** | Security posture | The LAN is the boundary by default, not by decision | Open |
+| **D** | Documentation truth | Operational drift in the declared source of truth | **I-7 COMPLETE.** Low items below |
+| **E** | Backup lifecycle | Retention inert; coverage incomplete; no anchor protection | Open |
+
+### Ledger
+
+| Item | Content | Status |
+|---|---|---|
+| **P0** | C-1 service restore + stale restic lock cleared | **DONE 2026-07-28.** No snapshot deleted; Stage C never approved |
+| **I-1** | Publish audit + roadmap + incident record | **DONE** — `319b2c58` |
+| **I-2** | Record the H-4 redeploy hazard | **DONE** — `07_operations/hazards/portainer_ai_local_redeploy.md` |
+| **I-3** | Capture live container configs (Program A) | **DONE** — 14 services, 6 projects, parity 103/103, no production change (`09_logs/2026-07-28_I3_declarative_substrate_capture.md`) |
+| **I-7** | Triad reconciliation | **DONE 2026-07-28** — this update |
+| **I-4** | Fix the restic grouping defect | **NEXT.** Prerequisite for all of Program E |
+| **I-5** | Extend backup coverage (H-2) | Open — after I-4 |
+| **I-6** | Give anchor `63c072f4` real protection | Open — after I-4, before S-10 |
+| **I-8** | Track `/usr/local/bin/homelab-backup.sh` in the repo | Open |
+| **S-1** | Decide + document the LAN trust posture | Open — **gates S-2/S-3/S-4/S-5** |
+| **S-7** | Health Aggregator now, or accept a third writer | Open — gates the monitoring build |
+| **S-8** | Close the backup monitoring blind spot | Open — after I-4, S-7 |
+| **S-9** | Zigbee coordinator USB hardening (C-1 structural) | Open |
+| **S-10** | Retention decision + attended prune | Open — **the only irreversible item in the roadmap** |
+| **S-11** | Decide whether to re-expose the voice canary | Open — **needed before F6.1 Step 7** |
+| **M-A** | Design and build real alerting | Open — largest single item |
+| **M-B** | Converge the `ai-local` definition with reality | Open — **needs I-3 (done) + F6.1 CLOSED** |
+| **M-C** | Pin production images to digests | Open — after I-3 |
+| **M-D** | Secrets-backup strategy | Open |
+| **R-I3-1…7** | Items discovered during the I-3 capture | Recorded, deliberately unimplemented |
+| **L-A** | STT shim migration (R-D-13) | Open — **post-F6.1 only** (D-F6-3) |
+| **L-E** | Full disaster-recovery rehearsal | Open — the real acceptance test for Programs A + E |
+
+### Standing constraints
+
+1. **Do not recreate `aurora-whisper`** until F6.1 closes — **D-F6-1**. Constrains M-B.
+2. **Do not redeploy the Portainer `ai-local` stack** — see the H-4 hazard record.
+3. **`03_services/` compose files are Recovery Artifacts, not deployment sources** —
+   `PROJECT_RULES.md` → *Recovery Artifacts*. Only `ollama-proxy` deploys.
+4. **S-10 destroys data** and stays operator-approved per execution.
+
+---
+
 ## Future projects (post-Foundation)
 
 These consume the knowledge platform once the Phase E
@@ -741,6 +807,24 @@ Not a phase. Future repo-wide maintenance pass.
     tag exists). The same table also still says Phase WM implementation is "not started" —
     false through WM-6. Left untouched by operator decision: it is a **frozen architecture
     document** and WM-0 era, not WM-4/WM-5.
+
+* **Low-severity documentation items from the 2026-07-28 audit — open.** Carried here
+  rather than into the triad, because none affects operational correctness:
+  * **L-6** — ~2.5 GB of pre-sanitization repository copies retained outside the repo
+    (`homelab_backup_before_rewrite` 1.9 G, `homelab-sanitize-backup-2026-07-10` 587 M,
+    `homelab-sanitize-work` 25 M, `homelab-rewrite.git` 13 M). Decide retention.
+  * **L-7** — Nginx Proxy Manager carries stale hosts (`homeassistant.local`,
+    `jarvis.local`, `ai.homelab`, `portainer.homelab`), all `ssl_forced=0`.
+  * **L-8** — Home Assistant log noise from undocumented Cast/DLNA integrations: either
+    document them as in-scope or remove them; noise hides real errors.
+  * **L-11** — the two known WM / phase-F doc-debt items, unchanged and still deferred by
+    operator decision (see the bullet above and `phase_f_architecture.md:1042`, where F3.3
+    is still described as "current").
+  * **M-4** — `ai-tools/venv/` (1333 files) and `ai-stack/openwebui-tools/tmp/` are tracked
+    in git; `.gitignore` excludes `ai-stack/ingest/venv/` but not these. Tracked as **M-E**
+    in the remediation ledger.
+  * **L-10 needs no action** — the voice-context container count self-corrects at the next
+    04:15 cycle; it was a symptom of M-1, not a defect of its own.
 
 * **Review and optionally sanitize private LAN / Tailscale node IPs across AMAROLAB documentation.**
   Private (RFC 1918) and Tailscale (CGNAT) addresses are
