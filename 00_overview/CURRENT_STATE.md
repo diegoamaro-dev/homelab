@@ -6,20 +6,33 @@ Phase F — Operational Intelligence — **IN PROGRESS.** F-0, F-1, F-2 and **F-
 **Phase ER-1 — Deterministic Entity Resolution — design FROZEN 2026-07-16 (operator-ratified), now Revision 4. ER-1.0, the Revision 2 amendment, ER-1.1, ER-1.2 and ER-1.3 are all committed + pushed** (defect record `c147e632` → architecture freeze `38eb8262` → Rev 2 amendment `3ebf59d1` → ER-1.1 aliases contract `f983a04f` → ER-1.2 loader `b0fded73` → ER-1.3 projection emitter `ed7a149c`); **G-ER-5 CLOSED 2026-07-17** on the first unattended 04:15 cycle after the artifact regeneration (`09_logs/2026-07-17_ER1_2_G-ER-5_operational_closeout.md`); **G-ER-6 producer half CLOSED** at ER-1.3 (`09_logs/2026-07-17_ER1_3_projection_applied.md`). **ER-1.4a (v0.1.0 baseline + `ha_get_state` v0.2.0 — the first cutover) implemented + validated 2026-07-17 — G-ER-7 read half PASS; G-ER-6 consumer half PASS on the read side (write side open at ER-1.4b)** (`09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md`). **The read path resolves natural language as of ER-1.4a; the write path does not change until ER-1.4b.** Spec: `04_ai_system/entity_resolution_layer.md`; freeze log `09_logs/2026-07-16_ER1_freeze.md`; **Rev 2 amendment log `09_logs/2026-07-16_ER1_freeze_rev2.md`**; defect record `09_logs/2026-07-14_ER1_entity_resolution_finding.md`. ER-1 closes the natural-language → `entity_id` gap **and** makes writes honest: real audit evidence shows **13 unverified writes across 7 non-existent entity ids reported as successful** (`result_code:"ok"`; all 7 re-probed 2026-07-16 → HTTP 404). The read path is **not** defective. ER-1 **amends no frozen decision** (AD-21 §7 anticipates the entity registry; ER-1 implements it) and is **independent of Phase WM** — **not WM-5.5**. Key decisions: **D-ER-9** (no write-surface restriction — a valid `entity_id` follows the current path exactly as today; **D-12 remains the sole authorization authority**; any stronger restriction is a future architectural decision), **ER-1-C1** (mandatory after-only write verification — never claim success unless the resulting HA state was verified; *when* a POST is issued does not change), **D-ER-10** (closed expected-state map; all other services → `applied_unverified`), **D-ER-7** (`ARTIFACT_VERSION` stays 1 — a bump would silently degrade home awareness instead of failing loud). **Revision 2 (ratified 2026-07-16, committed + pushed `3ebf59d1`): D-ER-11** (aliases mirror the `binding` shape — single-signal → flat list, multi-signal → per-signal map, **no implicit primary signal**) and **D-ER-12** (an alias **may** equal **its own** entity identifier, **never** another's — validation check 12e); both surfaced while authoring the ER-1.1 alias sets, and both are naming/validation only — **D-12 remains the sole authorization authority (INV-17)**. **Revision 3 (ratified 2026-07-17 at ER-1.3): D-ER-13** — an aliased signal must bind `ha_entity` (check 12a; ratifies finding F-ER12-1 from ER-1.2), because a signal bound to `container`/`corpus`/`probe`/`signal` has no HA id to resolve to and its alias would be **dead**. Unreachable on the real tree (every bound signal binds `ha_entity`) — ratified so the rule states the constraint the registry **depends on**, not the one that happens to hold; naming/validation only (INV-17 untouched). Rev 3 also records the **G-ER-6 split** (producer half ER-1.3 / consumer half ER-1.4) and rewrites spec §9: projection freshness is **content-derived** via the host-side `emit-entity-projection --check`, never commit-derived (`PROJECT_RULES.md` → *Content Provenance over Repository Chronology*). **Revision 4 (ratified + applied 2026-07-17, before ER-1.4b): D-ER-14** — the step-4 audit observability field is **`registry_target`**, never `modelled` (ratifies F-ER14-1: the old name overstated what is checked — `sun.sun` is modelled yet unaliased, so not a registry target); applied while the field had **zero** occurrences in the real audit log, so no historical line carries the old name; `ha_get_state` → **v0.2.1** (patch) reinstalled, returns proven byte-identical over the 18-case corpus; naming/observability only — INV-17 / D-ER-9 untouched (`09_logs/2026-07-17_ER1_freeze_rev4.md`). **ER-1.4b (`ha_call_service` v0.2.0 — resolution + ER-1-C1) implemented + validated 2026-07-20 — the write cutover, committed + pushed `5b502c96`: Rule B (500 ms window) ratified from the pre-registered N=20 measurement; G-ER-2/3a/3b/4 + G-ER-7 write half + G-ER-6 consumer half (write side) all PASS; the 13 historical unverified writes can no longer be reported as successful (`09_logs/2026-07-20_ER1_4b_ha_call_service_applied.md`).** Gates G-ER-1…7; each sub-phase STOPs at the git gate.
 
 Overall health:
-Stable — **with 34 open audit findings.** All 17 containers run and every architectural
-decision that could be checked held, but backup **retention is structurally inert**, there is
-**no real-time monitoring or alerting of any kind**. **The LAN is now the security boundary
+Degraded — **with 34 open audit findings, one of which is currently live.** Backup
+**retention grouping is fixed** (I-4, 2026-07-31; retention deliberately held at
+`--dry-run`), but **16/17 containers are running**: `zigbee2mqtt` has been down since
+2026-07-28 15:52 after a shared-hub USB reset plus a Docker/udev restart race, and there is
+still **no real-time monitoring or alerting of any kind** — the signal layer recorded the
+outage every night and nothing notified a human (**M-1** / **M-A**; evidence in `ROADMAP.md`
+→ *C-1 recurrence 2026-07-28 15:52*). **The LAN is now the security boundary
 by decision** — S-1, ratified 2026-07-28: *a trusted transport, never a substitute for
 service authentication* — but **four LAN-reachable listeners do not yet meet that bar**
 (H-5, H-6, M-9, plus F-S1-1 / F-S1-2). See *Infrastructure audit — 2026-07-28* below.
 
 Production:
-Operational — 17/17 containers running (verified 2026-07-28)
+Degraded — **16/17 containers running (verified 2026-07-31)**. `zigbee2mqtt` is `exited (2)`
+since 2026-07-28 15:52; both Zigbee entities are unavailable. Cause established
+2026-07-31 (read-only investigation): a shared external USB hub reset dropped the
+coordinator, and Docker's single `unless-stopped` restart attempt lost a ~100 ms race
+against udev recreating the `by-id` symlink. **The adapter is present and free**; the
+container has deliberately not been restarted. Evidence: `ROADMAP.md` → *C-1 recurrence
+2026-07-28 15:52* (**M-1** / **M-A** and **S-9**).
 
 Next milestone:
-**Remediation Program E — backup lifecycle: I-4** (fix the restic grouping defect), then one
-nightly cycle, then I-5 / I-6 / S-8, and only then S-10 — the single irreversible step in the
-whole roadmap. **S-1 (LAN trust posture) is DECIDED 2026-07-28** — S-2/S-3/S-4/S-5 are
+**Remediation Program E — backup lifecycle: I-5** (extend backup coverage, H-2). **I-4 is
+COMPLETE 2026-07-31** — the restic grouping defect is fixed and Gate 8 closed on real
+evidence (45 snapshots / **42 groups**, byte-identical path sets, parent detection restored,
+zero removals, no locks). Retention stays `--dry-run`. Then I-6 / I-8 / S-8, and only then
+S-10 — the single irreversible step in the whole roadmap. **S-1 (LAN trust posture) is
+DECIDED 2026-07-28** — S-2/S-3/S-4/S-5 are
 unblocked and are now conformance actions against a written bar rather than open questions.
 **S-7** (Health Aggregator) remains an open zero-cost decision and gates the monitoring
 build. **F-6 / F6.1 continues independently**
@@ -28,7 +41,16 @@ and is not blocked by any of this, but F6.1 Step 7 currently has no live voice a
 **Phase ER-1 is CLOSED — no ER-1 engineering remains** (ER-1.5 reconciliation + closeout COMPLETE 2026-07-21, `09_logs/2026-07-21_ER1_5_closeout.md`). The **WM-era documentation-hygiene pass is COMPLETE 2026-07-21** — the deferred WM-4/WM-5 transient-status drift is cleared across the triad and `04_ai_system/world_model/README.md` (`09_logs/2026-07-21_WM_documentation_hygiene_closeout.md`). Standing: F-4 CLOSED 2026-07-27 (all gates pass; closeout `09_logs/2026-07-27_phaseF_F4_closeout.md`). No new engineering phase selected. ER-1.5 was the final ER-1 sub-phase. **ER-1.4b — `ha_call_service` v0.2.0 (resolution + ER-1-C1) — implemented + validated 2026-07-20, committed + pushed `5b502c96`** (`09_logs/2026-07-20_ER1_4b_ha_call_service_applied.md`): **the write path now verifies before it claims success.** Rule B (check immediately, then poll 100 ms within a 500 ms budget; else `applied_unverified`) was ratified from the pre-registered N=20 measurement on `switch.impresora_3d` (immediate read stale 20/20; state visible 52–159 ms; POST returns in ~1.6 ms). Gates all PASS — **G-ER-3b** (the 13 historical unverified writes across 7 non-existent ids now return `applied_unverified`, not a false `ok`), **G-ER-4** (real actuation of `switch.impresora_3d` via exact id **and** alias `impresora 3d` → `ok`+`verified` via the live read-back; baseline `off` restored), **G-ER-7 write half** (refusal/validation/`entity_not_found` + the HA-facing POST byte-identical to v0.1.0; success adds only `verified`/`state_after`), **G-ER-6 consumer half write side** (missing/corrupt projection ⇒ direct ids work as today, alias ⇒ `resolver_unavailable`, zero HA calls), **G-ER-2** determinism, **G-ER-5** unaffected (loader 43 + evaluator 36 green). Installed to `webui.db` (attached to `qwen2.5`); stored row confirmed via Open WebUI's own loader. Finding recorded: the installed v0.1.0 row was a pre-2026-07-10 snapshot (old audit_helper + `future Claude` comment) — method body byte-identical, so equivalence asserted on behaviour. **F-ER14-1 RESOLVED — D-ER-14 ratified + applied (freeze Rev 4, 2026-07-17)**: the audit field is **`registry_target`**; the rename landed at `ha_get_state` v0.2.1 before any real audit line carried the old name (pending item 10 closed; `09_logs/2026-07-17_ER1_freeze_rev4.md`). **The C1 read-back measurement protocol is PRE-REGISTERED** (`09_logs/2026-07-17_ER1_4b_c1_measurement_protocol.md`): N=20 samples on `switch.impresora_3d`, and the immediate-read vs bounded-retry choice is decided by predefined rules (A/B/C), never from the observed outcome — the protocol commits before the measurement runs. **ER-1.4a (v0.1.0 baseline + `ha_get_state` v0.2.0) implemented + validated 2026-07-17 — G-ER-7 read half PASS, G-ER-6 consumer half (read side) PASS** (log `09_logs/2026-07-17_ER1_4a_ha_get_state_applied.md`): the read path now resolves natural language — `toldo` → `cover.toldo`, `impresora 3d` → `switch.impresora_3d`, `Conexión a Internet` → `binary_sensor.rooter_estado_wan` — via the new inline-only `ai-stack/openwebui-tools/lib/entity_resolver.py` (D-ER-8 normalization **proven byte-identical** to `_loader/resolution.py` across 46 real + adversarial cases; all 33 authored aliases resolve). A canonical `entity_id` is **byte-identical to v0.1.0**, proven by a paired A/B run with entity volatility controlled; a non-id-shaped miss returns `unknown_entity` + ≤8 candidates with **zero HTTP calls**; a missing/corrupt projection leaves direct ids working **exactly as today** and answers `resolver_unavailable` on the alias path only (D-ER-9). Root cause #2 fixed (the `light.kitchen` docstring examples that taught English-style guesses at a device named `impresora_3d`). `bin/install_tool` generalised to multiple inline markers; `lib/audit_helper.py` gains an additive `extra` (spec §10 inventory corrected — implementation-inventory correction, **not** an architectural decision). **`ha_call_service` is now v0.2.0 (ER-1.4b, applied 2026-07-20).** Prior: **ER-1.3 (projection emitter) committed + pushed (`ed7a149c`)** (log `09_logs/2026-07-17_ER1_3_projection_applied.md`): the consumer-side `ai-stack/ingest/bin/emit-entity-projection` (emit + the canonical `--check` freshness mechanism; D-ER-5) derives the gitignored runtime projection `ai-stack/aurora/aurora-entities.json` — the artifact's `resolution` block **verbatim** + provenance, 33 aliases → 8 targets, **no authorization-adjacent field** (D-ER-9/INV-17), reaching the ER-1.4 resolver through the read-only `/opt/aurora` mount. **D-ER-13 ratified — freeze Revision 3** (an aliased signal must bind `ha_entity`, check 12a; ratifies F-ER12-1): unreachable on the real tree, `resolution` hash unmoved — **no behaviour change**. **G-ER-6 producer half CLOSED** (artifact missing/corrupt/no-`resolution` ⇒ fail loud, nothing written, last-good retained byte-identical; stale/absent ⇒ honest `--check`); **consumer half open (ER-1.4)**. **G-ER-1 untouched** — it closed 2026-07-16 on its Rev 2 condition and that closure stands; gate history is not rewritten. 43 loader + 36 evaluator green; **`LOADER_VERSION` → 0.2.1** (patch — validation contract only, no output change; **the live artifact keeps `loader_version` 0.2.0 because 0.2.0 is what generated it**, and ER-1.3 deliberately does not regenerate — a version stamp is provenance, never freshness); `ARTIFACT_VERSION` still 1; the artifact is **not** touched and the awareness path is unaffected **by construction** — ER-1.3 adds no new input to the nightly 04:15 cycle and creates no new operational gate. New permanent rule: `PROJECT_RULES.md` → **Content Provenance over Repository Chronology** (canonical content hashes are the freshness authority; commit hashes are traceability only, never freshness). Prior: **ER-1.2 (loader) committed + pushed (`b0fded73`)** (log `09_logs/2026-07-16_ER1_2_loader_applied.md`): D-ER-8 normalization + fail-loud check 12 (12a–12f) in the real loader + the additive `resolution` registry (33 aliases → 8 targets; **no authorization-adjacent field** — D-ER-9/INV-17); `LOADER_VERSION` → 0.2.0, **`ARTIFACT_VERSION` still 1** (D-ER-7); 42 loader + 36 evaluator tests green (the evaluator suite runs against the **regenerated real artifact**); artifact diff = additive `resolution` + provenance only. **G-ER-1 CLOSED · G-ER-2 loader half PASS · G-ER-5 CLOSED 2026-07-17** — the first unattended 04:15 cycle after the artifact regeneration consumed the 0.2.0 artifact and produced awareness **byte-equivalent to baseline** (`degraded` / `medium` / `{home: medium, infrastructure: ok}` / `[awning_left_extended, plant_water_warning]`); Home State `Degraded`, never `Unavailable`; zero `ArtifactError` (`09_logs/2026-07-17_ER1_2_G-ER-5_operational_closeout.md`). Prior: ER-1.1 aliases contract committed + pushed (`f983a04f`; `09_logs/2026-07-16_ER1_1_aliases_applied.md`). Then ER-1.4a/b (tools v0.2.0 + ER-1-C1) → ER-1.5 (closeout). See `00_overview/ROADMAP.md` → Phase ER-1. F-4 closeout DONE 2026-07-27 — all gates (G-F4-05 date-anchored, G-F4-06 same-night honesty, G-F4-07 degraded night, G-F4-08 empirical restic durability) PASS; F-4 CLOSED (`09_logs/2026-07-27_phaseF_F4_closeout.md`). Operational memory is the dedicated `ops_digests` collection (AD-14 — **not** `homelab_docs`). See `04_ai_system/phase_f_architecture.md` §9 → F-4. (F-5 Home Intelligence **CLOSED 2026-07-16 at WM-6** — G-F5-07 Layer A + F5.2 Layer B done 2026-06-30; **F5.3 executed 2026-07-01 — G-F5-03 PASS, G-F5-04 FAIL (real validation)** → **R-F5-A** (awareness-consumption gap) remedied by the World Model and closed at WM-6; F-6 Voice Quality is unblocked.) **World Model architecture FROZEN 2026-07-01 (AD-21); WM-1 (`_schema/` foundation) committed 2026-07-01 (`6e97c3fb`); WM-2 committed 2026-07-01 (`4c3e2a5d`, pushed); WM-3 (loader/parity) implemented 2026-07-02 — real-data parity PASS, committed + pushed (`8d653fea`, git gate closed; apply log `09_logs/2026-07-02_WM3_loader_applied.md`); WM-4 (evaluator cutover) implemented + validated 2026-07-13 — awareness renders from the compiled World Model via `world_model/_evaluator/` (INV-19), `HOME_RULES` retired, `home_model.md` → redirect, AD-20/INV-18 preserved (apply log `09_logs/2026-07-13_WM4_evaluator_cutover_applied.md`) — committed + pushed (`476e0ae8`); G-WM4-6 closed 2026-07-14 (first unattended cycle) — WM-4 complete. WM-5 (consumer convergence) implemented + validated 2026-07-14 (G-WM5-1…5 real-data PASS; §1.5 low-not-escalated proven; `system_status` v0.3.0 **installed to `webui.db` + verified on the running assistant 2026-07-14** — G-WM5-3), **committed + pushed (`b2b04670`)**; **WM-6 (reopen & close G-F5-04) COMPLETE 2026-07-16 — G-F5-04 CLOSED, PASS on real evidence (chat @ ai.amarolab.es + voice @ ha.amarolab.es via AURORA v1); R-F5-A CLOSED; F-5 CLOSED** (apply log `09_logs/2026-07-16_WM6_G-F5-04_closeout.md`; Run 1 aborted — wrong endpoint (HA Assist) — then corrected; findings F-LOCALE/F-VOICE-CONTRADICT/F-PLANT-FLAP/F-ASSIST-BLIND recorded). R-F5-A's remedy is the World Model. Freeze doc: `04_ai_system/world_model_architecture.md`; freeze log: `09_logs/2026-07-01_world_model_architecture_freeze.md`; roadmap: ROADMAP.md → Phase WM.**
 
 Last completed:
-**I-7 — triad reconciliation after the 2026-07-28 infrastructure audit — this document.**
+**I-4 — restic backup grouping defect — COMPLETE 2026-07-31.** `SNAP_DIR` de-dated and
+retention held at `--dry-run`; **G-I4-5 / G-I4-6 / G-I4-8 / G-I4-9 / G-I4-12 all closed on
+real operational evidence at Gate 8** across two unattended nightly cycles (2026-07-29 and
+2026-07-30) plus a root-verified repository read on 2026-07-31: 45 snapshots in **42 groups**
+(the decisive number — unchanged from Gate 7), the three post-fix snapshots sharing a
+byte-identical `paths[]`, `no parent snapshot found` gone, zero `remove` blocks, and **no
+repository locks**. Prerequisite for all of Program E; **I-5 is next**. Closeout:
+`09_logs/2026-07-31_I4_gate8_closeout.md` (predictions and Gate 7:
+`09_logs/2026-07-28_issue-i4_backup-grouping_handoff.md` §8/§11). Prior:
+**I-7 — triad reconciliation after the 2026-07-28 infrastructure audit.**
 Prior: **I-1 / I-2 / I-3 — audit publication, H-4 hazard record, and Program A declarative
 capture — COMPLETE 2026-07-28, committed + pushed `319b2c58`** (apply log
 `09_logs/2026-07-28_I3_declarative_substrate_capture.md`): 14 services captured into
@@ -48,7 +70,16 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-07-28 (**S-1 — LAN trust posture DECIDED.** The LAN is a **trusted
+Last updated: 2026-07-31 (**I-4 — restic backup grouping defect — COMPLETE.** Gate 8 closed on
+real evidence: **G-I4-5 / G-I4-6 / G-I4-8 / G-I4-9 / G-I4-12 all PASS** across two unattended
+nightly cycles plus a root-verified repository read — 45 snapshots in **42 groups**,
+byte-identical `paths[]` across the three post-fix snapshots, parent detection restored, zero
+`remove` blocks, no repository locks. **Retention stays `--dry-run`; no snapshot can be
+deleted.** Program E advances to **I-5**. Also reconciled: production is **degraded at
+16/17** — `zigbee2mqtt` down since 2026-07-28 15:52 (shared-hub USB reset + Docker/udev
+restart race), recorded as evidence for **M-1 / M-A** and **S-9** in `ROADMAP.md`; **not
+restarted**. New open observation: `63c072f4` names a parent that no longer exists in the
+repository. Prior — **S-1 — LAN trust posture DECIDED.** The LAN is a **trusted
 transport**, never a substitute for service authentication; every LAN-reachable service must
 authenticate, be explicitly justified, or remain closed. Recorded in
 `06_security/security_posture.md`; decision record
@@ -577,7 +608,7 @@ Apply log:
 
 ## Zigbee2MQTT
 
-Status: Operational — **recovered from an unnoticed 2 h 39 m outage on 2026-07-28**
+Status: **DOWN since 2026-07-28 15:52** — `exited (2)`, second C-1 recurrence that day
 
 - Adapter: Sonoff Zigbee Dongle Plus
 - Frontend: **enabled**
@@ -587,10 +618,17 @@ Status: Operational — **recovered from an unnoticed 2 h 39 m outage on 2026-07
 - **C-1 (2026-07-28): the container exited `code=2` at 00:10 CEST** when a USB
   re-enumeration removed the CP210x bridge; `zigbee2mqtt` treats adapter loss as fatal.
   Both Zigbee entities went `unavailable` and **nothing alerted** — the outage was found
-  by an audit 2 h 39 m later, not by monitoring. Service restored 02:49 (`docker start`);
-  running since with 0 restarts. **The structural half is open as S-9** (dedicated USB
-  port off the hot-plug hub + a device-loss recovery path). The detection gap is **M-1**
-  — see *Infrastructure audit* below.
+  by an audit 2 h 39 m later, not by monitoring. Service restored 02:49 (`docker start`).
+- **It exited again the same day at 15:52 and is still down** (verified 2026-07-31,
+  `RestartCount 1`). Same mechanism, independent trigger: hot-plugging a Bluetooth adapter
+  into the **same external hub** as the coordinator reset that hub; Docker's single
+  `unless-stopped` restart attempt then failed with `error gathering device information …
+  no such file or directory` **80 ms before** udev recreated the node, and the restart
+  manager gave up permanently. The 13:28:48 power loss did **not** cause it — the container
+  ran healthily for 2 h 22 m after the reboot. **The adapter is present and free**; not
+  restarted pending an operator decision. Full timeline: `ROADMAP.md` → *C-1 recurrence
+  2026-07-28 15:52*. **Structural half: S-9. Notification gap: M-1 / M-A** (the signal layer
+  detected and recorded it every night; nothing reached a human).
 
 ---
 
@@ -751,21 +789,42 @@ Planned:
 
 ## Backups
 
-Status: **Backup PASS — retention DEFECTIVE.** The nightly `restic backup` step has
+Status: **Backup PASS — grouping defect FIXED at I-4 (2026-07-31); retention live but
+`--dry-run`, so no snapshot can be deleted.** The nightly `restic backup` step has
 succeeded every night and recoverability is proven (restore drill PASS E5-b 2026-06-27;
-empirical restic restore-drill G-F4-08 2026-07-27 on snapshot `7715bf6a`). **The
-retention half does not work and never has.**
+empirical restic restore-drill G-F4-08 2026-07-27 on snapshot `7715bf6a`).
 
-- **Retention is structurally inert (H-1a / L-9, open).** `homelab-backup.sh` embeds
-  `$(date +%F)` in the restic path set, and restic groups by `host,paths` by default, so
-  **every nightly snapshot lands in its own group of one**. `--keep-daily 7 --keep-weekly 4
-  --keep-monthly 6` applied to singleton groups keeps everything. **No snapshot has ever
-  been removed since repository creation on 2026-06-13.** A stale lock (2026-06-27 →
-  2026-07-28) masked this for ~30 days but did not cause it; the lock was cleared
-  2026-07-28 and the inert policy remained. Remediation is **I-4**, then **S-10**.
-- **The same defect blinds change detection.** Every run reports `no parent snapshot
-  found, will read all files` — ~4.1 GiB re-scanned nightly, every file reported `new`.
-  Deduplication still works (~20 MiB stored/night), so this is not a capacity problem.
+- **The grouping defect is FIXED (H-1a / L-9 — CLOSED at I-4).** `homelab-backup.sh` used
+  to embed `$(date +%F)` in the restic path set, and restic groups by `host,paths` by
+  default, so every nightly snapshot landed in its own group of one and the policy could
+  delete nothing. `SNAP_DIR` is now the undated `/tmp/homelab-backup-snapshots`
+  (script sha256 `90e8eb91…a907a45f`). **Verified on real evidence at Gate 8, 2026-07-31:**
+  45 snapshots in **42 groups**, the three post-fix snapshots
+  (`6323b009` → `89966886` → `d03f0e19`) sharing a **byte-identical 13-element `paths[]`**
+  and forming one group. `--group-by` was deliberately **not** changed; restic's default
+  `host,paths` grouping is retained as a safety property.
+- **Change detection is restored (L-9 — CLOSED).** `no parent snapshot found` is gone;
+  each run now names its parent and reports real deltas — `0 new, 267 changed, 2473
+  unmodified` (2026-07-29) and `1 new, 165 changed, 2575 unmodified` (2026-07-30),
+  against ~2740 files. The nightly full ~4.1 GiB re-scan is over.
+- **Retention runs as `--dry-run`. No snapshot can be deleted by the nightly job.** This is
+  deliberate, not a leftover: with grouping fixed the policy is live again and would begin
+  deleting once the post-fix group spans more than 7 days — before the policy has been
+  decided (**S-10**) and before the anchor has protection (**I-6**). Re-enabling deletion is
+  **S-10**, attended and operator-approved per execution.
+- **The 42 legacy snapshots are permanently unreachable by the nightly policy.** They sit in
+  41 dated groups no future snapshot can join. Removing them needs an explicit mechanism —
+  selection by ID, or a deliberate one-off grouping override — executed attended at
+  **S-10**. This is a handover, not a defect.
+- **First would-remove report expected on or shortly after 2026-08-04**, when the post-fix
+  group spans eight days and `6323b009` falls outside `--keep-daily 7`. With `--dry-run` it
+  will be **reported, never removed** — and that report is the input S-10 requires.
+- **The nightly retention policy has never removed a snapshot** since repository creation on
+  2026-06-13 (14 `forget` executions, zero `remove` blocks). **Open observation, raised
+  2026-07-31:** snapshot `63c072f4` records `parent: 4f4177e8…`, and no snapshot with that
+  id exists in the repository — so *something* removed a snapshot on or before 2026-06-17.
+  Not the nightly policy, which was structurally inert throughout. Unexplained; no I-4 gate
+  depends on it.
 - **No tag-based protection exists for any snapshot** (§5 of the incident record).
 - **The backup probe cannot see any of this (H-1c, open).** `bin/backup-probe` evaluates
   only newest-snapshot age against a 4 h window, so `backup_status.json` reported `ok`
@@ -776,6 +835,8 @@ retention half does not work and never has.**
   recoverable to a running state from restic alone. Remediation is **I-5** / **M-D**.
 - Incident record (dated, authoritative for the diagnosis):
   [`../09_logs/2026-07-28_backup_retention_incident.md`](../09_logs/2026-07-28_backup_retention_incident.md).
+- **I-4 Gate 8 closeout (dated, authoritative for the fix and its gates):**
+  [`../09_logs/2026-07-31_I4_gate8_closeout.md`](../09_logs/2026-07-31_I4_gate8_closeout.md).
 
 - Restic installed
 - Repository initialised on the 2 TB USB disk
@@ -969,7 +1030,7 @@ authoritative finding register:
 | **B** | Observability & alerting | **Open** — nothing observes anything in real time. M-1 is the largest item in the roadmap |
 | **C** | Security posture | **S-1 DECIDED 2026-07-28** — the LAN is a trusted transport, never a substitute for service authentication. S-2/S-3/S-4/S-5 unblocked; four listeners non-conforming |
 | **D** | Documentation truth | **This reconciliation (I-7)**. Drift items closed below |
-| **E** | Backup lifecycle | **Open** — see *Backups*. I-4 → I-5 → I-6 → S-8 → S-10 |
+| **E** | Backup lifecycle | **I-4 COMPLETE 2026-07-31** (grouping fixed, Gate 8 closed on real evidence; retention held at `--dry-run`). Remaining: I-5 → I-6 → I-8 → S-8 → S-10 |
 
 ### Completed
 

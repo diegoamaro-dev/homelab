@@ -5,7 +5,14 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-28 (**S-1 — LAN trust posture DECIDED.** The LAN is a **trusted
+Last updated: 2026-07-31 (**I-4 — restic backup grouping defect — COMPLETE.** Gate 8 closed on
+real evidence: 45 snapshots in **42 groups**, byte-identical `paths[]` across the three
+post-fix snapshots, parent detection restored, zero `remove` blocks, no repository locks;
+G-I4-5 / G-I4-6 / G-I4-8 / G-I4-9 / G-I4-12 all PASS. **Retention stays `--dry-run`.**
+Program E advances to **I-5**. Also reconciled: **`zigbee2mqtt` is down** since 2026-07-28
+15:52 (16/17 containers) — shared-hub USB reset + Docker/udev restart race, recorded as
+evidence for **M-1 / M-A** and **S-9**; **not restarted**. Prior — **S-1 — LAN trust posture
+DECIDED.** The LAN is a **trusted
 transport**, never a substitute for service authentication; every LAN-reachable service must
 authenticate, be explicitly justified, or remain closed. S-2/S-3/S-4/S-5 unblocked; four
 listeners non-conforming (H-5, H-6, M-9, F-S1-1, F-S1-2); segmentation is a decided non-goal
@@ -418,10 +425,14 @@ path** — the voice-exposure ACL exposes zero entities and the G-D4 canary is n
 programs; see `ROADMAP.md` → *Infrastructure Remediation — 2026-07-28 audit* for the full
 ledger and `CURRENT_STATE.md` → *Infrastructure audit — 2026-07-28* for live status.
 **Done:** P0 (C-1 restore + stale restic lock cleared), I-1, I-2, **I-3 (Program A
-capture — 14 services at 103/103 parity, `319b2c58`)**, I-7 (this reconciliation).
-**Next: I-4** — fix the restic grouping defect, the prerequisite for all of Program E.
-Then one nightly cycle, I-5, I-6, S-8, and only then S-10, which is the **only irreversible
-item in the roadmap**. **S-1 (LAN trust posture) was DECIDED 2026-07-28** — *the LAN is a
+capture — 14 services at 103/103 parity, `319b2c58`)**, I-7, **I-4 (2026-07-31 — restic
+grouping defect fixed; Gate 8 closed on real evidence, G-I4-1…12 all PASS; retention held
+at `--dry-run`)**. **Next: I-5** — extend backup coverage (H-2). I-5 edits the script's
+`PATHS` array, which changes the recorded path set and therefore starts a new group:
+expected and harmless, but **it must not reintroduce a variable path component**. Then
+I-6, I-8 (now unblocked), S-8, and only then S-10, which is the **only irreversible item in
+the roadmap** — and is now genuinely live, with the first would-remove report expected on
+or shortly after 2026-08-04. **S-1 (LAN trust posture) was DECIDED 2026-07-28** — *the LAN is a
 trusted transport; it is never a substitute for service authentication; every LAN-reachable
 service must authenticate, be explicitly justified, or remain closed*
 (`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`). **S-2/S-3/S-4/S-5 are unblocked**
@@ -440,9 +451,22 @@ Aggregator) remains an open zero-cost decision and can be taken at any time.
    deploys. The captured files carry redacted secrets and device paths and are not
    deployable as written.
 
-**Backups: the backup step passes and recovery is proven; retention has never worked.**
-Do not assume old snapshots are pruned — the policy is structurally inert and always has
-been (`09_logs/2026-07-28_backup_retention_incident.md`).
+**Backups: the backup step passes, recovery is proven, and the retention grouping defect is
+FIXED (I-4, 2026-07-31).** Do not assume old snapshots are pruned — **nothing is deleted
+today**, because retention deliberately runs as `--dry-run`. The policy is no longer
+structurally inert; it is intentionally held. Re-enabling deletion is **S-10**, attended and
+operator-approved per execution. The 42 legacy snapshots sit in 41 dated groups that no future
+snapshot can join, so S-10 needs an explicit mechanism for them
+(`09_logs/2026-07-28_backup_retention_incident.md` for the diagnosis;
+**`09_logs/2026-07-31_I4_gate8_closeout.md` for the fix, its twelve gates and the residual
+risks**).
+
+**`zigbee2mqtt` is DOWN** since 2026-07-28 15:52 (`exited (2)`, 16/17 containers). A shared
+external USB hub reset dropped the coordinator and Docker's single restart attempt lost a
+~100 ms race against udev. **The adapter is present and free; the container has deliberately
+not been restarted.** Nothing alerted for ~2 days — the signal layer recorded it faithfully
+every night. Evidence: `ROADMAP.md` → *C-1 recurrence 2026-07-28 15:52* (**M-1** / **M-A**,
+**S-9**).
 
 ---
 

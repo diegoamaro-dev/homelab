@@ -14,7 +14,21 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-07-28 (**S-1 — LAN trust posture DECIDED.** *The LAN is a trusted
+Last updated: 2026-07-31 (**I-4 — restic backup grouping defect — DONE.** Gate 8 closed on real
+evidence across two unattended nightly cycles plus a root-verified repository read: 45 snapshots
+in **42 groups**, byte-identical `paths[]` across the three post-fix snapshots, parent detection
+restored, zero `remove` blocks, **no repository locks**. G-I4-5 / G-I4-6 / G-I4-8 / G-I4-9 /
+G-I4-12 all PASS. **Retention stays `--dry-run`.** Program E advances to **I-5**; **I-8 is
+unblocked**; **S-10** is now genuinely live, with the first would-remove report expected on or
+shortly after 2026-08-04. Prior: **C-1 recurrence recorded as supporting evidence for M-1 / M-A
+and S-9.** The 2026-07-28 15:52 `zigbee2mqtt` exit is documented under *Infrastructure Remediation* —
+a shared-hub USB reset followed by a Docker/udev startup race left the container down ~2 days
+while the awareness pipeline reported it correctly every night and nothing notified a human.
+Confirms the restart hypothesis the audit recorded as unverified under C-1. The
+human-notification half is the **general** operator-notification gap (**M-1** / **M-A**), **not**
+S-8 — S-8 stays scoped to the *backup* monitoring blind spot (H-1c / N-3) and is unchanged.
+**Evidence only — neither remediation is designed; M-1 / M-A and S-9 stay Open.** No production
+change; the container was deliberately left `exited`. Prior: **S-1 — LAN trust posture DECIDED.** *The LAN is a trusted
 transport; it is never a substitute for service authentication; every LAN-reachable service
 must authenticate, be explicitly justified, or remain closed.* Recorded in
 `06_security/security_posture.md`; decision record
@@ -27,7 +41,8 @@ New tracking item **I-9** (architecture-document drift). No production change. P
 **I-7 — triad reconciliation after the 2026-07-28 infrastructure
 audit.** New section *Infrastructure Remediation — 2026-07-28 audit*: five programs, full
 item ledger, standing constraints. **Program A capture COMPLETE at I-3** (`319b2c58`);
-P0 + I-1 + I-2 + I-7 also done; **I-4 is next**. Low-severity audit documentation items
+P0 + I-1 + I-2 + I-7 also done; I-4 was next at that point (**DONE 2026-07-31**, see the
+current entry above). Low-severity audit documentation items
 (L-6/L-7/L-8/L-11/M-4) added to *Documentation Hygiene*. Prior: **Voice Lab — Round 1 native
 TTS casting COMPLETE (repo-external)** — Kokoro `ef_dora` = native TTS reference candidate (~70% blind), Piper remains production (no migration), Round 2 designed/not-started, next gate = Aurora voice identity (`09_logs/2026-07-27_voice_lab_round1.md`). Prior: **Phase ER-1 — Deterministic Entity Resolution — COMPLETE at ER-1.5
 (closeout 2026-07-21, `09_logs/2026-07-21_ER1_5_closeout.md`); design FROZEN 2026-07-16,
@@ -664,7 +679,7 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **B** | Observability & alerting | Nothing observes anything in real time | Open |
 | **C** | Security posture | The LAN is the boundary by default, not by decision | **S-1 DECIDED 2026-07-28** — the boundary is now a decision with a minimum bar. S-2…S-5 unblocked; four listeners non-conforming |
 | **D** | Documentation truth | Operational drift in the declared source of truth | **I-7 COMPLETE.** Low items below |
-| **E** | Backup lifecycle | Retention inert; coverage incomplete; no anchor protection | Open |
+| **E** | Backup lifecycle | Retention inert; coverage incomplete; no anchor protection | **I-4 DONE 2026-07-31** — grouping fixed, retention no longer inert but held at `--dry-run`. I-5 next |
 
 ### Ledger
 
@@ -675,18 +690,18 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **I-2** | Record the H-4 redeploy hazard | **DONE** — `07_operations/hazards/portainer_ai_local_redeploy.md` |
 | **I-3** | Capture live container configs (Program A) | **DONE** — 14 services, 6 projects, parity 103/103, no production change (`09_logs/2026-07-28_I3_declarative_substrate_capture.md`) |
 | **I-7** | Triad reconciliation | **DONE 2026-07-28** — this update |
-| **I-4** | Fix the restic grouping defect | **NEXT.** Prerequisite for all of Program E |
-| **I-5** | Extend backup coverage (H-2) | Open — after I-4 |
-| **I-6** | Give anchor `63c072f4` real protection | Open — after I-4, before S-10 |
-| **I-8** | Track `/usr/local/bin/homelab-backup.sh` in the repo | Open — **after I-4 closes** (tracking it now would commit a pre-Gate-8 script the rollback could invalidate) |
+| **I-4** | Fix the restic grouping defect | **DONE 2026-07-31** — Gate 8 closed on real evidence; G-I4-1…12 all PASS; retention held at `--dry-run` (closeout `09_logs/2026-07-31_I4_gate8_closeout.md`) |
+| **I-5** | Extend backup coverage (H-2) | **NEXT** — I-4 is closed. Must not reintroduce a variable path component |
+| **I-6** | Give anchor `63c072f4` real protection | Open — before S-10 |
+| **I-8** | Track `/usr/local/bin/homelab-backup.sh` in the repo | Open — **unblocked 2026-07-31** (I-4 closed; the installed script is the Gate-8-validated version, sha256 `90e8eb91…a907a45f`) |
 | **I-9** | Reconcile `01_architecture/amarolab_architecture.md` | Open — **tracking only**, see below |
 | **S-1** | Decide + document the LAN trust posture | **DONE 2026-07-28** — *the LAN is a trusted transport, never a substitute for service authentication*; **S-2/S-3/S-4/S-5 unblocked** (`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`) |
 | **S-7** | Health Aggregator now, or accept a third writer | Open — gates the monitoring build |
 | **S-8** | Close the backup monitoring blind spot | Open — after I-4, S-7 |
-| **S-9** | Zigbee coordinator USB hardening (C-1 structural) | Open |
-| **S-10** | Retention decision + attended prune | Open — **the only irreversible item in the roadmap** |
+| **S-9** | Zigbee coordinator USB hardening (C-1 structural) | Open — **supporting evidence added 2026-07-31**, see below |
+| **S-10** | Retention decision + attended prune | Open — **the only irreversible item in the roadmap.** Now genuinely live: I-4 restored the policy, so the first would-remove report is expected on or shortly after **2026-08-04**. Needs an explicit mechanism for the 42 legacy snapshots, which no future snapshot can join |
 | **S-11** | Decide whether to re-expose the voice canary | Open — **needed before F6.1 Step 7** |
-| **M-A** | Design and build real alerting | Open — largest single item |
+| **M-A** | Design and build real alerting | Open — largest single item. **Supporting evidence for M-1 added 2026-07-31**, see below |
 | **M-B** | Converge the `ai-local` definition with reality | Open — **needs I-3 (done) + F6.1 CLOSED** |
 | **M-C** | Pin production images to digests | Open — after I-3 |
 | **M-D** | Secrets-backup strategy | Open |
@@ -718,6 +733,85 @@ current remediation work completes.
 
 **Status.** Recorded 2026-07-28 at S-1. **No implementation.** This entry is the tracking
 action; the reconciliation itself is not authorized by it.
+
+### C-1 recurrence 2026-07-28 15:52 — supporting evidence for M-1 / M-A and S-9
+
+**Recorded 2026-07-31 from a read-only investigation. Evidence only.** Neither remediation is
+designed, scoped or authorized by this entry; **M-1 / M-A and S-9 remain Open.** No production
+change was made — the container was deliberately left `exited`.
+
+**Scope note.** This incident is **not** evidence for **S-8**. S-8 is specifically the *backup*
+monitoring blind spot (H-1c / N-3 — `bin/backup-probe` cannot see retention outcomes, script exit
+status, snapshot count, lock state or missed nights) and its scope is unchanged by this entry.
+What this incident demonstrates is the **general operator-notification gap**, tracked as finding
+**M-1** under Program B and remediated by **M-A**.
+
+`zigbee2mqtt` exited `code=2` at **2026-07-28 15:52:01 CEST** and was still down at
+2026-07-31. This is the **second** occurrence of the C-1 mechanism in one day; the first, at
+00:10, is the audit's C-1 finding. The two are independent events sharing one mechanism.
+
+**The 13:28:48 power loss did not cause it.** The container started 13:30:15 CEST — 44 s after
+the reboot — and ran healthily for 2 h 22 m. Its own log shows normal device traffic until
+15:51:55 and a bridge-health report at 15:50:21 (`uptime_sec` 8406, 8 devices, MQTT connected).
+The exit was a separate, later, physical event.
+
+#### Observed sequence
+
+USB hot-plug activity between 15:51:37 and 15:52:02 moved a Realtek Bluetooth Controller from
+port `1-1.2` to `1-2.2.4` — a port on the **same downstream hub** (`1-2.2`, a 4-port external
+hub) that carries the Sonoff coordinator at `1-2.2.2`. That insertion reset the shared hub.
+
+| Timestamp (CEST) | Source | Event |
+|---|---|---|
+| 15:52:00.965 | kernel | `cp210x ttyUSB0: usb_serial_generic_read_bulk_callback - urb stopped: -32` |
+| 15:52:01.158745 | kernel | `usb 1-2.2.2: USB disconnect, device number 7` — coordinator leaves the bus |
+| 15:52:01.160439 | zigbee2mqtt | `Adapter disconnected, stopping` → `Stopping Zigbee2MQTT (restart=false, code=2)` |
+| 15:52:01.186040 | docker | container exits, `ExitCode 2` |
+| 15:52:01.341185 | dockerd | `restarting container … restartCount=1 restartPolicy="{unless-stopped 0}"` |
+| 15:52:01.362861 | dockerd | `restartmanger wait error: error gathering device information while adding custom device "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_<DEVICE_ID>-if00-port0": no such file or directory` |
+| 15:52:01.443047 | kernel | `cp210x converter now attached to ttyUSB0` — device node back, **80 ms after the restart had already failed** |
+
+**Exactly one restart attempt exists in the Docker journal**, then and since. The failure was a
+*start* error rather than a container exit, so the restart manager terminated instead of backing
+off; `RestartCount` froze at 1 and nothing retried.
+
+This **confirms the hypothesis the 2026-07-28 audit recorded as unverified** under C-1, with one
+correction: Docker did not exhaust a backoff budget — it made a single attempt and stopped. The
+audit is a dated record and is not rewritten; this entry is the correction (`PROJECT_RULES.md` →
+*Historical Documentation*).
+
+**State at time of recording:** the adapter is present and free. `/dev/ttyUSB0` and the identical
+`by-id` symlink were recreated at 15:52, the CP210x bridge is bound to `cp210x`, no process or
+container holds it, and there has been no further re-enumeration since 15:52:02. The configured
+device path is correct and was never the problem.
+
+#### M-1 / M-A — supporting evidence
+
+**Problem demonstrated.** The signal layer detected the outage and Aurora and the operational
+digests recorded it, but **no human notification was generated.**
+
+**Evidence.** `zigbee2mqtt` remained down for approximately two days while the awareness pipeline
+continued to report it. Every nightly cycle recorded the failure faithfully —
+`container_status.json` `degraded: [zigbee2mqtt]`, `aurora-context.json` `world.verdict: critical`
+with `home.anomalies: [zigbee_bridge_down]`, and both the 2026-07-29 and 2026-07-30 operational
+digests (`16/17 running — stopped: zigbee2mqtt`). The signal layer worked; nothing carried its
+output to a person.
+
+**Acceptance criterion.** A critical service failure must notify the operator within a defined
+time budget.
+
+#### S-9 — supporting evidence
+
+**Problem demonstrated.** A temporary USB disconnect caused the coordinator to disappear.
+
+**Root cause.** A shared external USB hub reset, followed by a Docker/udev startup race. The
+coordinator sits three hubs deep on an external hub shared with hot-plugged peripherals. Docker
+resolves `--device` once, at container start, so the mapping dies with the disconnect; its single
+`unless-stopped` restart attempt then lost a ~100 ms race against udev recreating the `by-id`
+symlink, and the restart manager gave up permanently.
+
+**Acceptance criterion.** Zigbee2MQTT must recover automatically from a temporary coordinator
+disconnect without manual intervention, provided the adapter returns.
 
 ### Standing constraints
 
@@ -861,6 +955,26 @@ Not a phase. Future repo-wide maintenance pass.
     in the remediation ledger.
   * **L-10 needs no action** — the voice-context container count self-corrects at the next
     04:15 cycle; it was a symptom of M-1, not a defect of its own.
+
+* **Post-I-4 backup wording — align every document on the evidence-backed claim. Open, raised
+  2026-07-31.** I-4 changed what is true about retention, and two wordings elsewhere in the repo
+  still carry the pre-I-4 framing. Neither affects an operational decision today; both are
+  **deliberately left untouched at the I-4 gate** by operator decision, so a narrow change does
+  not quietly widen.
+  * [`../06_security/security_posture.md`](../06_security/security_posture.md) (LAN-trust
+    section) describes the backup repository as *"single copy, and per I-4 never pruned"*. The
+    **fact** is still true — retention runs as `--dry-run`, so nothing is pruned — but the
+    **attribution is now wrong**: I-4 *restored* the policy, and what keeps the repository
+    un-pruned is the deliberate `--dry-run` hold, which **ends at S-10**. The security argument
+    it supports therefore has an expiry date that the sentence does not state.
+  * The evidence-backed wording to converge on is the narrow one, established at the Gate 8
+    closeout: ***the nightly retention policy has never removed a snapshot.*** The broader claim
+    *"no snapshot has ever been removed from this repository"* is **not** supported — see the
+    orphan-parent observation for `63c072f4` in
+    [`../09_logs/2026-07-31_I4_gate8_closeout.md`](../09_logs/2026-07-31_I4_gate8_closeout.md)
+    §10, which records the discrepancy **without attributing a cause**.
+  * **Best executed together with S-10**, which is the moment the `--dry-run` hold is lifted and
+    every one of these sentences has to change anyway.
 
 * **Review and optionally sanitize private LAN / Tailscale node IPs across AMAROLAB documentation.**
   Private (RFC 1918) and Tailscale (CGNAT) addresses are
