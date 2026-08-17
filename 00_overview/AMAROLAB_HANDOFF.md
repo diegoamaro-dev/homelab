@@ -10,7 +10,11 @@ documentation only, no production change, nothing fixed, nothing authorized. **T
 recurrence:** `zigbee2mqtt` restarted automatically at the **2026-08-12 reboot**, ran five days,
 and **exited again 2026-08-17 13:12:24 CEST** — this time with **no trigger at all**, which
 widens the S-9 failure mode beyond hot-plug; the outage went seven hours unnoticed (**M-1 /
-M-A**). Container deliberately left `exited`; **recovery is a separate approved intervention**.
+M-A**). **RECOVERED 2026-08-17 21:15:13 CEST** as a separate approved intervention — single
+`docker start`, container **not** recreated, six validation checks PASS, 10 devices rejoined,
+`switch.impresora_3d` back at its `off` baseline with **no actuation**
+(`09_logs/2026-08-17_zigbee2mqtt_recovery.md`). **Recovery is not repair — S-9 stays Open, no
+stability claim from a ten-minute window, fourth recurrence expected.**
 **The S-10 input now exists** — first would-remove report **2026-08-05** as I-4 predicted,
 **10 snapshots** by 2026-08-17, **13 reports, zero deletions**, anchor `63c072f4` in none of them
 (**I-6** still required). **I-4 holds** across eighteen further nights; **G-I4-1…12 not
@@ -487,17 +491,22 @@ shape alone**, so **I-6 must still land before S-10**. Night-by-night table:
 which starts a new group and restarts this report from zero** — which is why the trail was
 recorded before I-5 runs.
 
-**`zigbee2mqtt` is DOWN since 2026-08-17 13:12:24 CEST** (`exited (2)`, 16/17 containers) —
-the **third** C-1 recurrence, and **a new outage, not the July one**. It restarted
+**`zigbee2mqtt` is RUNNING again — recovered 2026-08-17 21:15:13 CEST** (17/17 containers)
+after the **third** C-1 recurrence, which was **a new outage, not the July one**. It restarted
 automatically at the 2026-08-12 reboot, ran healthily for five days, then exited again by the
 same mechanism: coordinator USB disconnect, Docker's single restart attempt losing a **101 ms**
 race against udev. **What is new: there was no trigger** — zero USB enumerations preceded it,
 so the failure mode is **not confined to hot-plug** and any S-9 design must handle spontaneous
 disconnects. Nothing alerted; the outage was found by inspection seven hours later, and the
-nightly signal layer (04:00–04:25) had not yet run. **The adapter is present and free; the
-container has deliberately not been restarted** — recovery is a separate operator-approved
-intervention. Evidence: `ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12* and
-`09_logs/2026-08-17_operational_reconciliation.md` §3 (**M-1** / **M-A**, **S-9**).
+nightly signal layer (04:00–04:25) had not yet run. **Recovery** was then executed as a separate
+operator-approved intervention — a single `docker start zigbee2mqtt`, container **not**
+recreated, six validation checks PASS (10 devices rejoined; `switch.impresora_3d` back at its
+`off` baseline with **no actuation**). **Recovery is not repair: S-9 remains Open, the mechanism
+is untouched, and a ten-minute observation window supports no stability claim — on three
+occurrences in three weeks a fourth is expected. If it recurs, capture the kernel and `dockerd`
+evidence before restarting.** Evidence: `ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12*,
+`09_logs/2026-08-17_operational_reconciliation.md` §3, and
+`09_logs/2026-08-17_zigbee2mqtt_recovery.md` (**M-1** / **M-A**, **S-9**).
 
 ---
 

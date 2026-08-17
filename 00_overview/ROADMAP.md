@@ -21,8 +21,10 @@ ran five days, and **exited again 2026-08-17 13:12:24 CEST**, this time with **n
 all** (zero USB enumerations preceded the disconnect; margin 101 ms). The failure mode is
 therefore **not confined to hot-plug** — recorded as further evidence for **S-9** and, because
 the outage went seven hours unnoticed while the nightly signal layer had not yet run, for
-**M-1 / M-A**. Container deliberately left `exited`; recovery is a separate approved
-intervention. **The S-10 input now exists:** the first would-remove report landed **2026-08-05**
+**M-1 / M-A**. **Service then RECOVERED 2026-08-17 21:15:13 CEST** as a separate approved
+intervention — single `docker start`, container **not** recreated, six checks PASS, 10 devices
+rejoined, no actuation (`09_logs/2026-08-17_zigbee2mqtt_recovery.md`); **recovery is not repair —
+S-9 stays Open and a fourth recurrence is expected.** **The S-10 input now exists:** the first would-remove report landed **2026-08-05**
 exactly as I-4 predicted and reached **10 snapshots** by 2026-08-17 — **13 reports, zero
 deletions**, and the anchor `63c072f4` in none of them (**I-6** still required). **I-4 holds**
 across eighteen further unattended nights; **G-I4-1…12 not reopened**. Also recorded: the
@@ -833,7 +835,9 @@ disconnect without manual intervention, provided the adapter returns.
 
 **Recorded 2026-08-17 from a read-only investigation. Evidence only.** Neither remediation is
 designed, scoped or authorized by this entry; **M-1 / M-A and S-9 remain Open.** No production
-change was made — the container was deliberately left `exited`. Full record:
+change was made **by this investigation** — the container was left `exited` while the outage was
+documented, and was recovered afterwards by a separate approved intervention (*Recovery outcome*
+below). Full record:
 [`../09_logs/2026-08-17_operational_reconciliation.md`](../09_logs/2026-08-17_operational_reconciliation.md) §3.
 
 **First, a correction to the previous entry's forward-looking claim.** The 2026-07-31 record
@@ -883,6 +887,22 @@ unchanged: a critical service failure must notify the operator within a defined 
 **State at recording:** adapter present and free; `/dev/ttyUSB0` and the `by-id` symlink recreated
 at 13:12:25 and both resolve; nothing holds the device; no further re-enumeration. Recovery is a
 separate operator-approved intervention.
+
+#### Recovery outcome — 2026-08-17 21:15:13 CEST
+
+Service was **recovered** by a single operator-approved `docker start zigbee2mqtt` (container
+started, **not** recreated; compose, restart policy, USB topology and Home Assistant untouched)
+after **8 h 02 m 49 s** down. Six validation checks PASS — running · clean 2.9.1 startup ·
+coordinator connected with **10 devices joined** · MQTT connected + bridge `online` · both HA
+entities back from `unavailable` (`switch.impresora_3d` → **`off`**, its baseline, **no
+actuation**) · no repeat failure in a 614 s window. Record:
+[`../09_logs/2026-08-17_zigbee2mqtt_recovery.md`](../09_logs/2026-08-17_zigbee2mqtt_recovery.md).
+
+**This changes nothing structural. S-9 remains Open**, the mechanism is untouched, and the
+ten-minute window supports no stability claim — the container ran five days before this failure.
+**On three occurrences in three weeks, a fourth is expected.** If it recurs, capture the kernel
+and `dockerd` evidence **before** restarting, so the occurrence strengthens the S-9 case instead
+of being erased by a reflex restart.
 
 ### Retention dry-run evidence 2026-08-05 → 2026-08-17 — the S-10 input
 

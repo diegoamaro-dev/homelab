@@ -8,11 +8,14 @@ Phase F — Operational Intelligence — **IN PROGRESS.** F-0, F-1, F-2 and **F-
 Overall health:
 Degraded — **with 34 open audit findings, one of which is currently live.** Backup
 **retention grouping is fixed** (I-4, 2026-07-31; retention deliberately held at
-`--dry-run`) and **holding across eighteen further unattended nights**, but **16/17
-containers are running**: `zigbee2mqtt` exited again on **2026-08-17 at 13:12:24 CEST**
-— the **third** C-1 recurrence — and there is still **no real-time monitoring or alerting
-of any kind**; the outage was found by inspection seven hours later, not by monitoring
-(**M-1** / **M-A**; evidence in `ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12*).
+`--dry-run`) and **holding across eighteen further unattended nights**, and **17/17
+containers are running again**: `zigbee2mqtt` exited on **2026-08-17 at 13:12:24 CEST**
+— the **third** C-1 recurrence — and was **recovered 21:15:13 CEST** after 8 h 02 m 49 s
+down, all six validation checks PASS (`09_logs/2026-08-17_zigbee2mqtt_recovery.md`).
+**The recovery is not a fix: S-9 remains Open**, and there is still **no real-time
+monitoring or alerting of any kind** — the outage was found by inspection eight hours
+later, not by monitoring (**M-1** / **M-A**; evidence in `ROADMAP.md` → *C-1 recurrence
+2026-08-17 13:12*).
 Independently, the platform has reported `degraded` since **2026-08-01** for a *second*
 reason — an empty, freshly-rotated audit log (see *Ingest service* below). **The LAN is now
 the security boundary by decision** — S-1, ratified 2026-07-28: *a trusted transport, never
@@ -21,16 +24,21 @@ meet that bar** (H-5, H-6, M-9, plus F-S1-1 / F-S1-2). See *Infrastructure audit
 2026-07-28* below.
 
 Production:
-Degraded — **16/17 containers running (verified 2026-08-17)**. `zigbee2mqtt` is `exited (2)`
-since **2026-08-17 13:12:24 CEST**; both Zigbee entities are unavailable. **This is a new
-outage, not the July one:** the container restarted automatically at the 2026-08-12 reboot,
-ran healthily for five days, and then exited again today by the same C-1 mechanism —
-coordinator USB disconnect, followed by Docker's single `unless-stopped` restart attempt
-losing a **101 ms** race against udev recreating the `by-id` symlink. **Unlike 2026-07-28
-there was no trigger** — zero USB enumerations preceded the disconnect. **The adapter is
-present and free**; the container has deliberately not been restarted, pending a separate
-operator-approved recovery. Evidence: `ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12* and
-`09_logs/2026-08-17_operational_reconciliation.md` (**M-1** / **M-A** and **S-9**).
+**17/17 containers running (verified 2026-08-17 21:25)** — `zigbee2mqtt` recovered.
+It had been `exited (2)` since **2026-08-17 13:12:24 CEST** and was restarted at
+**21:15:13 CEST** by a single operator-approved `docker start zigbee2mqtt`; the Zigbee
+network re-formed with all **10 devices joined**, and both Zigbee entities recovered from
+`unavailable` — `switch.impresora_3d` to its **`off`** baseline (no actuation) and
+`cover.toldo` to `closed`. **That outage was a new one, not the July one:** the container
+restarted automatically at the 2026-08-12 reboot, ran healthily for five days, then exited
+by the same C-1 mechanism — coordinator USB disconnect, followed by Docker's single
+`unless-stopped` restart attempt losing a **101 ms** race against udev recreating the
+`by-id` symlink. **Unlike 2026-07-28 there was no trigger** — zero USB enumerations
+preceded the disconnect. **Recovery is not a fix — S-9 remains Open**, and a fourth
+recurrence is expected on the evidence of three in three weeks. Records:
+`09_logs/2026-08-17_zigbee2mqtt_recovery.md` (recovery, six checks) and
+`09_logs/2026-08-17_operational_reconciliation.md` §3 (the outage and its mechanism);
+`ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12* (**M-1** / **M-A** and **S-9**).
 
 Next milestone:
 **Remediation Program E — backup lifecycle: I-5** (extend backup coverage, H-2). **I-4 is
@@ -97,8 +105,15 @@ still required**); **(5)** the platform has read `degraded` since **2026-08-01**
 unrelated reason — `amarolab-audit.log` rotated empty on 2026-08-01 and no tool call has written
 to it since, so `check-audit-liveness` reports `missing`. Also confirmed: the F6.1 baseline
 survived the reboot **without container recreation** (D-F6-1 holds; only `StartedAt` moved).
-**Nothing was fixed** — S-9, M-1/M-A, S-10, I-6 all remain Open; **I-5 remains the next
-milestone**. Record: `09_logs/2026-08-17_operational_reconciliation.md`. Prior —
+**Nothing was fixed by that record** — S-9, M-1/M-A, S-10, I-6 all remain Open; **I-5 remains
+the next milestone**. Record: `09_logs/2026-08-17_operational_reconciliation.md`.
+**Then, as a separate operator-approved intervention: `zigbee2mqtt` RECOVERED 2026-08-17
+21:15:13 CEST** by a single `docker start` (container started, **not** recreated) after
+8 h 02 m 49 s down — **17/17 containers**, all **10 Zigbee devices rejoined**, both entities
+back from `unavailable` (`switch.impresora_3d` → **`off`**, no actuation), six validation
+checks PASS, no repeat failure in a 614 s window. **This is recovery, not repair — S-9 stays
+Open and no stability claim is made from a ten-minute window; a fourth recurrence is
+expected.** Record: `09_logs/2026-08-17_zigbee2mqtt_recovery.md`. Prior —
 **2026-07-31: I-4 — restic backup grouping defect — COMPLETE.** Gate 8 closed on
 real evidence: **G-I4-5 / G-I4-6 / G-I4-8 / G-I4-9 / G-I4-12 all PASS** across two unattended
 nightly cycles plus a root-verified repository read — 45 snapshots in **42 groups**,
@@ -637,7 +652,8 @@ Apply log:
 
 ## Zigbee2MQTT
 
-Status: **DOWN since 2026-08-17 13:12:24 CEST** — `exited (2)`, **third** C-1 recurrence
+Status: **Operational — recovered 2026-08-17 21:15:13 CEST** after the third C-1 recurrence
+(down 8 h 02 m 49 s). All 10 devices rejoined; both entities recovered. **S-9 unfixed.**
 
 - Adapter: Sonoff Zigbee Dongle Plus
 - Frontend: **enabled**
@@ -664,11 +680,18 @@ Status: **DOWN since 2026-08-17 13:12:24 CEST** — `exited (2)`, **third** C-1 
   enumerations occurred between 00:00 and the disconnect, and the Bluetooth adapter has been
   resident on the shared hub since the 2026-08-12 boot. The coordinator dropped off the bus
   with **no observable external cause**, which widens the failure mode beyond hot-plug and
-  must be reflected in any future S-9 design. **The adapter is present and free** — the node
-  and `by-id` symlink were recreated at 13:12:25 and both resolve, nothing holds the device.
-  **Not restarted**; recovery is a separate operator-approved intervention. Full timeline:
-  `ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12* and
-  `09_logs/2026-08-17_operational_reconciliation.md` §3.
+  must be reflected in any future S-9 design. Full timeline: `ROADMAP.md` → *C-1 recurrence
+  2026-08-17 13:12* and `09_logs/2026-08-17_operational_reconciliation.md` §3.
+- **Recovered 2026-08-17 21:15:13 CEST** by a single operator-approved
+  `docker start zigbee2mqtt` — the container was started, **not recreated**; compose, restart
+  policy, USB topology and Home Assistant were all untouched. Six validation checks PASS:
+  running · clean 2.9.1 startup · coordinator connected (ZStack3x0, **10 devices joined**) ·
+  `Connected to MQTT server` + bridge `online` · both HA entities recovered from `unavailable`
+  (`switch.impresora_3d` → **`off`**, its documented baseline — **no actuation**;
+  `cover.toldo` → `closed`) · no repeat failure in a 614 s window (zero post-restart failure
+  markers, zero kernel USB events). Record:
+  `09_logs/2026-08-17_zigbee2mqtt_recovery.md`. **`RestartCount` reset to 0 by the manual
+  start** — the pre-recovery value of 1 is preserved in the records.
 - **Structural half: S-9. Notification gap: M-1 / M-A** — both **Open**. The nightly signal
   layer runs 04:00–04:25, so a 13:12 failure is not visible until the next cycle; the outage
   was found by inspection seven hours later, not by monitoring.
