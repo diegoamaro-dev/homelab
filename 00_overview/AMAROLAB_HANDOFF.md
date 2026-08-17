@@ -5,7 +5,20 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-07-31 (**I-4 — restic backup grouping defect — COMPLETE.** Gate 8 closed on
+Last updated: 2026-08-17 (**Operational reconciliation after seventeen unattended days** —
+documentation only, no production change, nothing fixed, nothing authorized. **Third C-1
+recurrence:** `zigbee2mqtt` restarted automatically at the **2026-08-12 reboot**, ran five days,
+and **exited again 2026-08-17 13:12:24 CEST** — this time with **no trigger at all**, which
+widens the S-9 failure mode beyond hot-plug; the outage went seven hours unnoticed (**M-1 /
+M-A**). Container deliberately left `exited`; **recovery is a separate approved intervention**.
+**The S-10 input now exists** — first would-remove report **2026-08-05** as I-4 predicted,
+**10 snapshots** by 2026-08-17, **13 reports, zero deletions**, anchor `63c072f4` in none of them
+(**I-6** still required). **I-4 holds** across eighteen further nights; **G-I4-1…12 not
+reopened**. Platform has read `degraded` since **2026-08-01** for a second, unrelated reason —
+an empty, freshly-rotated audit log. **F6.1 baseline survived the reboot without container
+recreation** (D-F6-1 holds). **I-5 remains next.** Record
+`09_logs/2026-08-17_operational_reconciliation.md`. Prior — **2026-07-31: I-4 — restic backup
+grouping defect — COMPLETE.** Gate 8 closed on
 real evidence: 45 snapshots in **42 groups**, byte-identical `paths[]` across the three
 post-fix snapshots, parent detection restored, zero `remove` blocks, no repository locks;
 G-I4-5 / G-I4-6 / G-I4-8 / G-I4-9 / G-I4-12 all PASS. **Retention stays `--dry-run`.**
@@ -417,7 +430,10 @@ corpus and the phase continues. Steps 3–8 not started. Status lives in
 tooling are repo-external under `/home/diego/f6_1_corpus/`. Binding: **D-F6-1** (`--model`
 is the only variable — `aurora-whisper` must not be recreated), **D-F6-2** (the laboratory
 on port 10399 is the mandatory promotion gate), **D-F6-3** (`small-int8` only; no
-escalation). **Blocker to know before Step 7: there is currently no live voice acceptance
+escalation). **The baseline survived the 2026-08-12 reboot intact** (verified 2026-08-17):
+`aurora-whisper` was restarted, **not recreated** — same container, image id
+`sha256:966e1b09…a58dd158`, same command, `RestartCount` 0; only `StartedAt` moved, so do not
+read that moved timestamp as evidence of recreation. **Blocker to know before Step 7: there is currently no live voice acceptance
 path** — the voice-exposure ACL exposes zero entities and the G-D4 canary is not in it
 (**S-11**).
 
@@ -452,7 +468,9 @@ Aggregator) remains an open zero-cost decision and can be taken at any time.
    deployable as written.
 
 **Backups: the backup step passes, recovery is proven, and the retention grouping defect is
-FIXED (I-4, 2026-07-31).** Do not assume old snapshots are pruned — **nothing is deleted
+FIXED (I-4, 2026-07-31) — verified still holding on 2026-08-17** across eighteen further
+unattended nights (unbroken snapshots, parent detection working, script sha256 unchanged;
+**G-I4-1…12 are not reopened**). Do not assume old snapshots are pruned — **nothing is deleted
 today**, because retention deliberately runs as `--dry-run`. The policy is no longer
 structurally inert; it is intentionally held. Re-enabling deletion is **S-10**, attended and
 operator-approved per execution. The 42 legacy snapshots sit in 41 dated groups that no future
@@ -461,12 +479,25 @@ snapshot can join, so S-10 needs an explicit mechanism for them
 **`09_logs/2026-07-31_I4_gate8_closeout.md` for the fix, its twelve gates and the residual
 risks**).
 
-**`zigbee2mqtt` is DOWN** since 2026-07-28 15:52 (`exited (2)`, 16/17 containers). A shared
-external USB hub reset dropped the coordinator and Docker's single restart attempt lost a
-~100 ms race against udev. **The adapter is present and free; the container has deliberately
-not been restarted.** Nothing alerted for ~2 days — the signal layer recorded it faithfully
-every night. Evidence: `ROADMAP.md` → *C-1 recurrence 2026-07-28 15:52* (**M-1** / **M-A**,
-**S-9**).
+**The S-10 input now exists.** The first would-remove report landed **2026-08-05** — exactly as
+I-4 predicted — and has grown to **10 snapshots** by 2026-08-17. **13 reports across 13 nights,
+zero deletions**; the D-1.5 anchor `63c072f4` appears in **none** of them, protected by **group
+shape alone**, so **I-6 must still land before S-10**. Night-by-night table:
+`09_logs/2026-08-17_operational_reconciliation.md` §5. **Sequencing note: I-5 edits `PATHS`,
+which starts a new group and restarts this report from zero** — which is why the trail was
+recorded before I-5 runs.
+
+**`zigbee2mqtt` is DOWN since 2026-08-17 13:12:24 CEST** (`exited (2)`, 16/17 containers) —
+the **third** C-1 recurrence, and **a new outage, not the July one**. It restarted
+automatically at the 2026-08-12 reboot, ran healthily for five days, then exited again by the
+same mechanism: coordinator USB disconnect, Docker's single restart attempt losing a **101 ms**
+race against udev. **What is new: there was no trigger** — zero USB enumerations preceded it,
+so the failure mode is **not confined to hot-plug** and any S-9 design must handle spontaneous
+disconnects. Nothing alerted; the outage was found by inspection seven hours later, and the
+nightly signal layer (04:00–04:25) had not yet run. **The adapter is present and free; the
+container has deliberately not been restarted** — recovery is a separate operator-approved
+intervention. Evidence: `ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12* and
+`09_logs/2026-08-17_operational_reconciliation.md` §3 (**M-1** / **M-A**, **S-9**).
 
 ---
 

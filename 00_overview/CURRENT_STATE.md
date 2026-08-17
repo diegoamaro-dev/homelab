@@ -8,30 +8,41 @@ Phase F — Operational Intelligence — **IN PROGRESS.** F-0, F-1, F-2 and **F-
 Overall health:
 Degraded — **with 34 open audit findings, one of which is currently live.** Backup
 **retention grouping is fixed** (I-4, 2026-07-31; retention deliberately held at
-`--dry-run`), but **16/17 containers are running**: `zigbee2mqtt` has been down since
-2026-07-28 15:52 after a shared-hub USB reset plus a Docker/udev restart race, and there is
-still **no real-time monitoring or alerting of any kind** — the signal layer recorded the
-outage every night and nothing notified a human (**M-1** / **M-A**; evidence in `ROADMAP.md`
-→ *C-1 recurrence 2026-07-28 15:52*). **The LAN is now the security boundary
-by decision** — S-1, ratified 2026-07-28: *a trusted transport, never a substitute for
-service authentication* — but **four LAN-reachable listeners do not yet meet that bar**
-(H-5, H-6, M-9, plus F-S1-1 / F-S1-2). See *Infrastructure audit — 2026-07-28* below.
+`--dry-run`) and **holding across eighteen further unattended nights**, but **16/17
+containers are running**: `zigbee2mqtt` exited again on **2026-08-17 at 13:12:24 CEST**
+— the **third** C-1 recurrence — and there is still **no real-time monitoring or alerting
+of any kind**; the outage was found by inspection seven hours later, not by monitoring
+(**M-1** / **M-A**; evidence in `ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12*).
+Independently, the platform has reported `degraded` since **2026-08-01** for a *second*
+reason — an empty, freshly-rotated audit log (see *Ingest service* below). **The LAN is now
+the security boundary by decision** — S-1, ratified 2026-07-28: *a trusted transport, never
+a substitute for service authentication* — but **four LAN-reachable listeners do not yet
+meet that bar** (H-5, H-6, M-9, plus F-S1-1 / F-S1-2). See *Infrastructure audit —
+2026-07-28* below.
 
 Production:
-Degraded — **16/17 containers running (verified 2026-07-31)**. `zigbee2mqtt` is `exited (2)`
-since 2026-07-28 15:52; both Zigbee entities are unavailable. Cause established
-2026-07-31 (read-only investigation): a shared external USB hub reset dropped the
-coordinator, and Docker's single `unless-stopped` restart attempt lost a ~100 ms race
-against udev recreating the `by-id` symlink. **The adapter is present and free**; the
-container has deliberately not been restarted. Evidence: `ROADMAP.md` → *C-1 recurrence
-2026-07-28 15:52* (**M-1** / **M-A** and **S-9**).
+Degraded — **16/17 containers running (verified 2026-08-17)**. `zigbee2mqtt` is `exited (2)`
+since **2026-08-17 13:12:24 CEST**; both Zigbee entities are unavailable. **This is a new
+outage, not the July one:** the container restarted automatically at the 2026-08-12 reboot,
+ran healthily for five days, and then exited again today by the same C-1 mechanism —
+coordinator USB disconnect, followed by Docker's single `unless-stopped` restart attempt
+losing a **101 ms** race against udev recreating the `by-id` symlink. **Unlike 2026-07-28
+there was no trigger** — zero USB enumerations preceded the disconnect. **The adapter is
+present and free**; the container has deliberately not been restarted, pending a separate
+operator-approved recovery. Evidence: `ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12* and
+`09_logs/2026-08-17_operational_reconciliation.md` (**M-1** / **M-A** and **S-9**).
 
 Next milestone:
 **Remediation Program E — backup lifecycle: I-5** (extend backup coverage, H-2). **I-4 is
 COMPLETE 2026-07-31** — the restic grouping defect is fixed and Gate 8 closed on real
 evidence (45 snapshots / **42 groups**, byte-identical path sets, parent detection restored,
 zero removals, no locks). Retention stays `--dry-run`. Then I-6 / I-8 / S-8, and only then
-S-10 — the single irreversible step in the whole roadmap. **S-1 (LAN trust posture) is
+S-10 — the single irreversible step in the whole roadmap. **The S-10 input now exists:** the
+first would-remove report landed **2026-08-05** exactly as I-4 predicted and has grown to
+**10 snapshots** by 2026-08-17, with **nothing removed** — see *Backups* below. **Note for
+I-5 sequencing:** editing the `PATHS` array changes the recorded path set and therefore
+**starts a new group**, which restarts that report from zero; the accrued trail is recorded
+in `09_logs/2026-08-17_operational_reconciliation.md` §5 before it is superseded. **S-1 (LAN trust posture) is
 DECIDED 2026-07-28** — S-2/S-3/S-4/S-5 are
 unblocked and are now conformance actions against a written bar rather than open questions.
 **S-7** (Health Aggregator) remains an open zero-cost decision and gates the monitoring
@@ -70,7 +81,25 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-07-31 (**I-4 — restic backup grouping defect — COMPLETE.** Gate 8 closed on
+Last updated: 2026-08-17 (**Operational reconciliation after seventeen unattended days.**
+Documentation only; no production change. Five facts recorded — **(1)** the host rebooted
+**2026-08-12 09:28 CEST** (previous boot ended 09:24:12 with no shutdown sequence; cause not
+established); **(2)** `zigbee2mqtt` restarted automatically at that reboot, ran five days, and
+**exited again 2026-08-17 13:12:24 CEST** — the **third** C-1 recurrence, this time with **no
+trigger at all** (zero USB enumerations preceded it), Docker's single restart attempt losing a
+**101 ms** race against udev; the container is **deliberately not restarted** and recovery is a
+separate approved intervention; **(3)** **I-4 holds** across eighteen further nights — unbroken
+nightly snapshots 2026-07-31→2026-08-17, parent detection working, installed script sha256
+unchanged; **(4)** the **S-10 input exists** — first would-remove report **2026-08-05** (as
+predicted), grown to **10 snapshots** by 2026-08-17, **13 reports, zero deletions**, and the
+D-1.5 anchor `63c072f4` has appeared in **none** of them, protected only by group shape (**I-6
+still required**); **(5)** the platform has read `degraded` since **2026-08-01** for a second,
+unrelated reason — `amarolab-audit.log` rotated empty on 2026-08-01 and no tool call has written
+to it since, so `check-audit-liveness` reports `missing`. Also confirmed: the F6.1 baseline
+survived the reboot **without container recreation** (D-F6-1 holds; only `StartedAt` moved).
+**Nothing was fixed** — S-9, M-1/M-A, S-10, I-6 all remain Open; **I-5 remains the next
+milestone**. Record: `09_logs/2026-08-17_operational_reconciliation.md`. Prior —
+**2026-07-31: I-4 — restic backup grouping defect — COMPLETE.** Gate 8 closed on
 real evidence: **G-I4-5 / G-I4-6 / G-I4-8 / G-I4-9 / G-I4-12 all PASS** across two unattended
 nightly cycles plus a root-verified repository read — 45 snapshots in **42 groups**,
 byte-identical `paths[]` across the three post-fix snapshots, parent detection restored, zero
@@ -608,7 +637,7 @@ Apply log:
 
 ## Zigbee2MQTT
 
-Status: **DOWN since 2026-07-28 15:52** — `exited (2)`, second C-1 recurrence that day
+Status: **DOWN since 2026-08-17 13:12:24 CEST** — `exited (2)`, **third** C-1 recurrence
 
 - Adapter: Sonoff Zigbee Dongle Plus
 - Frontend: **enabled**
@@ -619,16 +648,30 @@ Status: **DOWN since 2026-07-28 15:52** — `exited (2)`, second C-1 recurrence 
   re-enumeration removed the CP210x bridge; `zigbee2mqtt` treats adapter loss as fatal.
   Both Zigbee entities went `unavailable` and **nothing alerted** — the outage was found
   by an audit 2 h 39 m later, not by monitoring. Service restored 02:49 (`docker start`).
-- **It exited again the same day at 15:52 and is still down** (verified 2026-07-31,
-  `RestartCount 1`). Same mechanism, independent trigger: hot-plugging a Bluetooth adapter
-  into the **same external hub** as the coordinator reset that hub; Docker's single
-  `unless-stopped` restart attempt then failed with `error gathering device information …
-  no such file or directory` **80 ms before** udev recreated the node, and the restart
-  manager gave up permanently. The 13:28:48 power loss did **not** cause it — the container
-  ran healthily for 2 h 22 m after the reboot. **The adapter is present and free**; not
-  restarted pending an operator decision. Full timeline: `ROADMAP.md` → *C-1 recurrence
-  2026-07-28 15:52*. **Structural half: S-9. Notification gap: M-1 / M-A** (the signal layer
-  detected and recorded it every night; nothing reached a human).
+- **Second recurrence, 2026-07-28 15:52.** Same mechanism, independent trigger: hot-plugging
+  a Bluetooth adapter into the **same external hub** as the coordinator reset that hub;
+  Docker's single `unless-stopped` restart attempt then failed with `error gathering device
+  information … no such file or directory` **80 ms before** udev recreated the node, and the
+  restart manager gave up permanently. Timeline: `ROADMAP.md` → *C-1 recurrence 2026-07-28
+  15:52*.
+- **That outage ended on 2026-08-12 without being recorded.** The container restarted
+  automatically at the reboot (`2026-08-12T07:28:13Z`, thirteen seconds after boot —
+  `unless-stopped` restored at daemon start) and **ran healthily for five days**, publishing
+  device telemetry every ten seconds. The triad's prior "deliberately not restarted" claim
+  was true when written and was silently undone by the reboot.
+- **Third recurrence, 2026-08-17 13:12:24 CEST — current state** (`RestartCount 1`). Same
+  mechanism; **101 ms** margin this time. **What is new: there was no trigger.** Zero USB
+  enumerations occurred between 00:00 and the disconnect, and the Bluetooth adapter has been
+  resident on the shared hub since the 2026-08-12 boot. The coordinator dropped off the bus
+  with **no observable external cause**, which widens the failure mode beyond hot-plug and
+  must be reflected in any future S-9 design. **The adapter is present and free** — the node
+  and `by-id` symlink were recreated at 13:12:25 and both resolve, nothing holds the device.
+  **Not restarted**; recovery is a separate operator-approved intervention. Full timeline:
+  `ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12* and
+  `09_logs/2026-08-17_operational_reconciliation.md` §3.
+- **Structural half: S-9. Notification gap: M-1 / M-A** — both **Open**. The nightly signal
+  layer runs 04:00–04:25, so a 13:12 failure is not visible until the next cycle; the outage
+  was found by inspection seven hours later, not by monitoring.
 
 ---
 
@@ -645,6 +688,14 @@ Status: **Operational end-to-end** (Phase D-1 closed
   - Model: `base-int8`
   - Real-time factor on UM790 CPU: **0.055** on the
     G-D1 reference clip
+  - **D-F6-1 holds across the 2026-08-12 reboot — the container was restarted, not
+    recreated** (verified 2026-08-17): created `2026-06-17T14:21:14Z`, image id
+    `sha256:966e1b09…a58dd158` **identical** to the F6.1 baseline pin, command still
+    `--model base-int8 --language auto --beam-size 1 --compute-type int8`,
+    `RestartCount` 0. Only `StartedAt` moved (`2026-07-25T21:50:55Z` →
+    `2026-08-12T07:28:13Z`), so the F6.1 Step 2 baseline stands; the moved timestamp is
+    recorded so it is not misread as evidence of recreation.
+    **Do not recreate this container while F6.1 is open.**
 - `aurora-piper` (Wyoming TTS) on `ai-local_default`
   - Image: `rhasspy/wyoming-piper:<pinned tag>`
   - Endpoint: `tcp://aurora-piper:10200` (internal)
@@ -793,6 +844,11 @@ Status: **Backup PASS — grouping defect FIXED at I-4 (2026-07-31); retention l
 `--dry-run`, so no snapshot can be deleted.** The nightly `restic backup` step has
 succeeded every night and recoverability is proven (restore drill PASS E5-b 2026-06-27;
 empirical restic restore-drill G-F4-08 2026-07-27 on snapshot `7715bf6a`).
+**Re-verified 2026-08-17:** the fix has now held across **eighteen further unattended
+nights** — unbroken nightly snapshots from 2026-07-31 (`34def61f`) through 2026-08-17
+(`fe0409fb`), parent detection working throughout (`17990ec0` → `c1707709` → `fe0409fb`),
+installed script sha256 unchanged, and the 2026-08-12 reboot did not disturb the schedule.
+**G-I4-1…12 are not reopened** — this is continuing evidence, not a re-gate.
 
 - **The grouping defect is FIXED (H-1a / L-9 — CLOSED at I-4).** `homelab-backup.sh` used
   to embed `$(date +%F)` in the restic path set, and restic groups by `host,paths` by
@@ -816,15 +872,29 @@ empirical restic restore-drill G-F4-08 2026-07-27 on snapshot `7715bf6a`).
   41 dated groups no future snapshot can join. Removing them needs an explicit mechanism —
   selection by ID, or a deliberate one-off grouping override — executed attended at
   **S-10**. This is a handover, not a defect.
-- **First would-remove report expected on or shortly after 2026-08-04**, when the post-fix
-  group spans eight days and `6323b009` falls outside `--keep-daily 7`. With `--dry-run` it
-  will be **reported, never removed** — and that report is the input S-10 requires.
+- **The would-remove report arrived on 2026-08-05 — the prediction held.** I-4 expected it
+  "on or shortly after 2026-08-04"; the 2026-08-04 run produced none, and the 2026-08-05 run
+  produced the first, `{89966886}`. It has grown monotonically since: **1 (08-05) → 3 (08-08)
+  → 6 (08-12) → 9 (08-15) → 10 (08-17)**. **13 reports across 13 nights, and nothing was ever
+  removed** — every one is phrased `Would have removed the following snapshots:`, restic's
+  dry-run wording, and no deletion of any kind appears anywhere in the log history. **This is
+  the input S-10 requires.** Full night-by-night table:
+  `09_logs/2026-08-17_operational_reconciliation.md` §5.
+- **The report now proposes the two Gate 8 snapshots** (`89966886`, `d03f0e19`). They are
+  ordinary `nightly`-tagged snapshots with no protection and the policy is correctly aging
+  them out of `--keep-daily 7`. Expected, not a defect — but it is what S-10 would delete.
+- **The D-1.5 anchor `63c072f4` has appeared in none of the 13 reports.** It survives only
+  because it sits in a legacy dated group of one that no future snapshot can join — **group
+  shape, not protection**. This is exactly the risk I-4 named (*never rely on group shape for
+  protection*): **I-6 must land before S-10.**
 - **The nightly retention policy has never removed a snapshot** since repository creation on
-  2026-06-13 (14 `forget` executions, zero `remove` blocks). **Open observation, raised
-  2026-07-31:** snapshot `63c072f4` records `parent: 4f4177e8…`, and no snapshot with that
-  id exists in the repository — so *something* removed a snapshot on or before 2026-06-17.
-  Not the nightly policy, which was structurally inert throughout. Unexplained; no I-4 gate
-  depends on it.
+  2026-06-13. Re-verified 2026-08-17 across the retained log history (current log plus eight
+  rotated predecessors): **26 `forget` executions, 13 would-remove reports, zero real
+  removals.** **Open
+  observation, raised 2026-07-31:** snapshot `63c072f4` records `parent: 4f4177e8…`, and no
+  snapshot with that id exists in the repository — so *something* removed a snapshot on or
+  before 2026-06-17. Not the nightly policy, which was structurally inert throughout.
+  Unexplained; no I-4 gate depends on it.
 - **No tag-based protection exists for any snapshot** (§5 of the incident record).
 - **The backup probe cannot see any of this (H-1c, open).** `bin/backup-probe` evaluates
   only newest-snapshot age against a 4 h window, so `backup_status.json` reported `ok`
@@ -936,6 +1006,22 @@ ingest section, frames `ingest.log` with run boundaries — E3-a/E3-b) and
 across failures. `overall_status=ok` (resolved 2026-06-27 after E5-c closed F-10).
 Apply log:
 [`../09_logs/2026-06-27_phaseE_E3_observability_applied.md`](../09_logs/2026-06-27_phaseE_E3_observability_applied.md).
+
+**Open observation, raised 2026-08-17 — `overall_status` has read `degraded` since
+2026-08-01 because the audit log is empty.** `logrotate` rotates
+`/srv/homelab/data/openwebui/amarolab-audit.log` **monthly** (E4-a); it rotated at
+2026-08-01 00:00 creating a new empty file, and **no Aurora tool call has been made since**
+(July's content is intact in `amarolab-audit.log.1`, last entry `2026-07-28T16:09:40Z`). So
+`bin/check-audit-liveness` finds no entry and writes `audit.status = "missing"`, and
+`bin/aurora-context` has carried `degrades=['audit log missing']` on every nightly cycle
+since. **The cause is benign — monthly rotation plus genuine non-use, not a broken audit
+path** — but the probe cannot distinguish "nobody used the tools" from "the audit path is
+broken" and answers `missing` for both. This is the symptom shape of **F-10** (closed at
+E5-c) returning by a different mechanism, and a platform pinned at `degraded` on every
+nightly cycle since 2026-08-01 is a status that stops being read — it masked the Zigbee
+anomaly clearing on 2026-08-12 and returning on 2026-08-17. **Not fixed; no remediation identifier assigned**, on the
+R-I3-1…7 / F-S1-1 precedent. Record:
+[`../09_logs/2026-08-17_operational_reconciliation.md`](../09_logs/2026-08-17_operational_reconciliation.md) §6.
 
 ---
 
