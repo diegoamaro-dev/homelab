@@ -5,7 +5,23 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-08-17 (**Operational reconciliation after seventeen unattended days** —
+Last updated: 2026-08-19 (**I-5 — extend backup coverage (H-2) — COMPLETE.** The restic path
+set went from **13 to 16 static paths** — `portainer_data/_data`, `/etc/cron.d/aurora-signals`
+and the openedai `voice_to_speaker.yaml` — closing the **non-secret half of H-2**; the secret
+half stays open as **M-D**. Installed script sha256 **`330df064…5895a554`**. **G-I5-9 PASS**
+on the first unattended cycle: 2026-08-19 03:00 → `ae45cd50`, joining the new 16-path group
+with `afd3b4b4` as parent and a **byte-identical 16-element path set**; 65 → **66 snapshots**,
+**43 groups unchanged**, `--dry-run` intact, **zero real deletions**, anchor `63c072f4`
+untouched, awareness chain healthy. The repository-lock prediction closed **by observation**
+on 2026-08-19 — operator-run `restic list locks`, no lock IDs — so all eleven predictions are
+observed. **G-I5-1…11 all PASS**, with one stated evidence qualification: **G-I5-3**, whose
+attended-run exit code was not preserved. **A prediction the triad carried is corrected:** a
+`PATHS` change does **not** restart the S-10 dry-run trail — the would-remove set was
+byte-identical across the boundary and the 11 proposed snapshots now sit in a group **frozen
+at 22 that no future snapshot can join**. **Program E advances to I-6**, which must land
+before S-10. Documentation only; the production change was made 2026-08-18. Records
+`09_logs/2026-08-19_I5_closeout.md` and `09_logs/2026-08-18_I5_provisional_evidence.md`.
+Prior — 2026-08-17 (**Operational reconciliation after seventeen unattended days** —
 documentation only, no production change, nothing fixed, nothing authorized. **Third C-1
 recurrence:** `zigbee2mqtt` restarted automatically at the **2026-08-12 reboot**, ran five days,
 and **exited again 2026-08-17 13:12:24 CEST** — this time with **no trigger at all**, which
@@ -20,13 +36,14 @@ stability claim from a ten-minute window, fourth recurrence expected.**
 (**I-6** still required). **I-4 holds** across eighteen further nights; **G-I4-1…12 not
 reopened**. Platform has read `degraded` since **2026-08-01** for a second, unrelated reason —
 an empty, freshly-rotated audit log. **F6.1 baseline survived the reboot without container
-recreation** (D-F6-1 holds). **I-5 remains next.** Record
+recreation** (D-F6-1 holds). **I-5 was then next** (completed 2026-08-19; see the current
+entry above). Record
 `09_logs/2026-08-17_operational_reconciliation.md`. Prior — **2026-07-31: I-4 — restic backup
 grouping defect — COMPLETE.** Gate 8 closed on
 real evidence: 45 snapshots in **42 groups**, byte-identical `paths[]` across the three
 post-fix snapshots, parent detection restored, zero `remove` blocks, no repository locks;
 G-I4-5 / G-I4-6 / G-I4-8 / G-I4-9 / G-I4-12 all PASS. **Retention stays `--dry-run`.**
-Program E advances to **I-5**. Also reconciled: **`zigbee2mqtt` is down** since 2026-07-28
+Program E then advanced to **I-5**. Also reconciled: **`zigbee2mqtt` is down** since 2026-07-28
 15:52 (16/17 containers) — shared-hub USB reset + Docker/udev restart race, recorded as
 evidence for **M-1 / M-A** and **S-9**; **not restarted**. Prior — **S-1 — LAN trust posture
 DECIDED.** The LAN is a **trusted
@@ -447,12 +464,14 @@ ledger and `CURRENT_STATE.md` → *Infrastructure audit — 2026-07-28* for live
 **Done:** P0 (C-1 restore + stale restic lock cleared), I-1, I-2, **I-3 (Program A
 capture — 14 services at 103/103 parity, `319b2c58`)**, I-7, **I-4 (2026-07-31 — restic
 grouping defect fixed; Gate 8 closed on real evidence, G-I4-1…12 all PASS; retention held
-at `--dry-run`)**. **Next: I-5** — extend backup coverage (H-2). I-5 edits the script's
-`PATHS` array, which changes the recorded path set and therefore starts a new group:
-expected and harmless, but **it must not reintroduce a variable path component**. Then
-I-6, I-8 (now unblocked), S-8, and only then S-10, which is the **only irreversible item in
-the roadmap** — and is now genuinely live, with the first would-remove report expected on
-or shortly after 2026-08-04. **S-1 (LAN trust posture) was DECIDED 2026-07-28** — *the LAN is a
+at `--dry-run`)**, **I-5 (2026-08-19 — backup coverage extended 13 → 16 static paths; the
+non-secret half of H-2 closed; G-I5-9 PASS on the first unattended cycle;
+`09_logs/2026-08-19_I5_closeout.md`)**. **Next: I-6** — give the D-1.5 anchor `63c072f4` real
+protection; it is still protected by **group shape alone** and **must land before S-10**.
+Then I-8 (now unblocked — its tracking target is the I-5 script, sha256
+`330df064…5895a554`), S-8, and only then S-10, which is the **only irreversible item in
+the roadmap** — and is now genuinely live, its input accrued: **15 would-remove reports,
+zero deletions**. **S-1 (LAN trust posture) was DECIDED 2026-07-28** — *the LAN is a
 trusted transport; it is never a substitute for service authentication; every LAN-reachable
 service must authenticate, be explicitly justified, or remain closed*
 (`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`). **S-2/S-3/S-4/S-5 are unblocked**
@@ -471,11 +490,17 @@ Aggregator) remains an open zero-cost decision and can be taken at any time.
    deploys. The captured files carry redacted secrets and device paths and are not
    deployable as written.
 
-**Backups: the backup step passes, recovery is proven, and the retention grouping defect is
-FIXED (I-4, 2026-07-31) — verified still holding on 2026-08-17** across eighteen further
-unattended nights (unbroken snapshots, parent detection working, script sha256 unchanged;
-**G-I4-1…12 are not reopened**). Do not assume old snapshots are pruned — **nothing is deleted
-today**, because retention deliberately runs as `--dry-run`. The policy is no longer
+**Backups: the backup step passes, recovery is proven, the retention grouping defect is
+FIXED (I-4, 2026-07-31) and coverage was EXTENDED (I-5, 2026-08-19) — verified still holding
+on 2026-08-19** across twenty further unattended nights (unbroken snapshots, parent detection
+working; **G-I4-1…12 are not reopened**). **The installed script sha256 is now
+`330df064…5895a554`** — it changed at I-5 by design; `90e8eb91…a907a45f` is the pre-I-5
+rollback reference only. The path set is **16 static literals**, no date or variable
+component. **The non-secret half of H-2 is closed; the secret half is M-D, open** —
+`ai-stack/.env`, `/home/diego/.secrets/` and `/etc/restic/passwd-homelab` are still outside
+the backup, and without the last of those the repository cannot be decrypted at all.
+Do not assume old snapshots are pruned — **nothing is deleted today**, because retention
+deliberately runs as `--dry-run`. The policy is no longer
 structurally inert; it is intentionally held. Re-enabling deletion is **S-10**, attended and
 operator-approved per execution. The 42 legacy snapshots sit in 41 dated groups that no future
 snapshot can join, so S-10 needs an explicit mechanism for them
@@ -484,12 +509,16 @@ snapshot can join, so S-10 needs an explicit mechanism for them
 risks**).
 
 **The S-10 input now exists.** The first would-remove report landed **2026-08-05** — exactly as
-I-4 predicted — and has grown to **10 snapshots** by 2026-08-17. **13 reports across 13 nights,
-zero deletions**; the D-1.5 anchor `63c072f4` appears in **none** of them, protected by **group
-shape alone**, so **I-6 must still land before S-10**. Night-by-night table:
-`09_logs/2026-08-17_operational_reconciliation.md` §5. **Sequencing note: I-5 edits `PATHS`,
-which starts a new group and restarts this report from zero** — which is why the trail was
-recorded before I-5 runs.
+I-4 predicted — and reached **11 snapshots** on 2026-08-18, holding at 11 through 2026-08-19.
+**15 reports across 15 nights, zero deletions**; the D-1.5 anchor `63c072f4` appears in
+**none** of them, protected by **group shape alone**, so **I-6 must still land before S-10**.
+Night-by-night table to 2026-08-17: `09_logs/2026-08-17_operational_reconciliation.md` §5.
+**Correction, proven at I-5 (2026-08-19):** editing `PATHS` starts a new group but does
+**not** restart this report from zero — `restic forget` evaluates each `host,paths` group
+independently, so the set was byte-identical across the boundary and the new group
+contributed zero. Those 11 snapshots sit in a group **frozen at 22 members that no future
+snapshot can ever join**, so S-10 plans against a **closed** set
+(`09_logs/2026-08-19_I5_closeout.md` §5).
 
 **`zigbee2mqtt` is RUNNING again — recovered 2026-08-17 21:15:13 CEST** (17/17 containers)
 after the **third** C-1 recurrence, which was **a new outage, not the July one**. It restarted

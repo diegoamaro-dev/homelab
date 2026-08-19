@@ -14,7 +14,21 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-08-17 (**Operational reconciliation after seventeen unattended days.**
+Last updated: 2026-08-19 (**I-5 — extend backup coverage (H-2) — DONE.** The recorded restic
+path set went from **13 to 16 static paths**; the non-secret half of H-2 is closed and proven
+on snapshot content. **G-I5-9 PASS** on the first unattended cycle — 2026-08-19 03:00 →
+`ae45cd50`, joining the new 16-path group with `afd3b4b4` as parent and a **byte-identical
+16-element path set**; 65 → **66 snapshots**, **43 groups unchanged**, `--dry-run` intact,
+**zero real deletions**, anchor `63c072f4` untouched. The repository-lock prediction closed
+**by observation** on 2026-08-19 (operator-run `restic list locks`, no lock IDs), so all
+eleven predictions are observed. **G-I5-1…11 all PASS**, with exactly one stated evidence
+qualification — **G-I5-3**, whose attended-run exit code was not preserved. **Program E advances to I-6**, which
+must land before S-10. **A prediction this roadmap carried is corrected:** editing `PATHS`
+does **not** restart the S-10 dry-run trail — `restic forget` groups independently, the
+would-remove set was byte-identical across the boundary, and those 11 snapshots now sit in a
+group **frozen at 22 that no future snapshot can join**. Documentation only; the production
+change was made 2026-08-18. Record `09_logs/2026-08-19_I5_closeout.md`. Prior: 2026-08-17
+(**Operational reconciliation after seventeen unattended days.**
 Documentation only; no production change; nothing fixed and nothing authorized.
 **Third C-1 recurrence** — `zigbee2mqtt` restarted automatically at the **2026-08-12 reboot**,
 ran five days, and **exited again 2026-08-17 13:12:24 CEST**, this time with **no trigger at
@@ -30,13 +44,14 @@ deletions**, and the anchor `63c072f4` in none of them (**I-6** still required).
 across eighteen further unattended nights; **G-I4-1…12 not reopened**. Also recorded: the
 platform has read `degraded` since **2026-08-01** for an unrelated second reason — an empty,
 freshly-rotated audit log — and the **F6.1 baseline survived the reboot without container
-recreation** (D-F6-1 holds). **I-5 remains the next milestone.** Record
+recreation** (D-F6-1 holds). **I-5 was then the next milestone** (done 2026-08-19; see the
+current entry above). Record
 `09_logs/2026-08-17_operational_reconciliation.md`. Prior: **2026-07-31 — I-4 — restic backup
 grouping defect — DONE.** Gate 8 closed on real
 evidence across two unattended nightly cycles plus a root-verified repository read: 45 snapshots
 in **42 groups**, byte-identical `paths[]` across the three post-fix snapshots, parent detection
 restored, zero `remove` blocks, **no repository locks**. G-I4-5 / G-I4-6 / G-I4-8 / G-I4-9 /
-G-I4-12 all PASS. **Retention stays `--dry-run`.** Program E advances to **I-5**; **I-8 is
+G-I4-12 all PASS. **Retention stays `--dry-run`.** Program E then advanced to **I-5**; **I-8 is
 unblocked**; **S-10** is now genuinely live, with the first would-remove report expected on or
 shortly after 2026-08-04. Prior: **C-1 recurrence recorded as supporting evidence for M-1 / M-A
 and S-9.** The 2026-07-28 15:52 `zigbee2mqtt` exit is documented under *Infrastructure Remediation* —
@@ -697,7 +712,7 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **B** | Observability & alerting | Nothing observes anything in real time | Open |
 | **C** | Security posture | The LAN is the boundary by default, not by decision | **S-1 DECIDED 2026-07-28** — the boundary is now a decision with a minimum bar. S-2…S-5 unblocked; four listeners non-conforming |
 | **D** | Documentation truth | Operational drift in the declared source of truth | **I-7 COMPLETE.** Low items below |
-| **E** | Backup lifecycle | Retention inert; coverage incomplete; no anchor protection | **I-4 DONE 2026-07-31** — grouping fixed, retention no longer inert but held at `--dry-run`. I-5 next |
+| **E** | Backup lifecycle | Retention inert; coverage incomplete; no anchor protection | **I-4 DONE 2026-07-31** — grouping fixed, retention no longer inert but held at `--dry-run`. **I-5 DONE 2026-08-19** — coverage 13 → 16 paths, H-2 non-secret half closed. **I-6 next** |
 
 ### Ledger
 
@@ -709,15 +724,15 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **I-3** | Capture live container configs (Program A) | **DONE** — 14 services, 6 projects, parity 103/103, no production change (`09_logs/2026-07-28_I3_declarative_substrate_capture.md`) |
 | **I-7** | Triad reconciliation | **DONE 2026-07-28** — this update |
 | **I-4** | Fix the restic grouping defect | **DONE 2026-07-31** — Gate 8 closed on real evidence; G-I4-1…12 all PASS; retention held at `--dry-run` (closeout `09_logs/2026-07-31_I4_gate8_closeout.md`) |
-| **I-5** | Extend backup coverage (H-2) | **NEXT** — I-4 is closed. Must not reintroduce a variable path component. Editing `PATHS` starts a new group and **restarts the S-10 dry-run trail**, which is why that trail was recorded first (2026-08-17) |
-| **I-6** | Give anchor `63c072f4` real protection | Open — before S-10. **Reinforced 2026-08-17:** the anchor appeared in **none** of the 13 would-remove reports, i.e. it is protected by **group shape alone** |
-| **I-8** | Track `/usr/local/bin/homelab-backup.sh` in the repo | Open — **unblocked 2026-07-31** (I-4 closed; the installed script is the Gate-8-validated version, sha256 `90e8eb91…a907a45f`) |
+| **I-5** | Extend backup coverage (H-2) | **DONE 2026-08-19** — `PATHS` 13 → **16 static paths** (`portainer_data/_data`, `/etc/cron.d/aurora-signals`, `voice_to_speaker.yaml`); installed script sha256 `330df064…5895a554`. **G-I5-1…11 all PASS**; **G-I5-9 PASS** on the first unattended cycle (`ae45cd50`), all eleven predictions observed after the lock check closed by observation 2026-08-19; one stated evidence qualification remains (**G-I5-3**). **H-2 non-secret half closed; secret half open as M-D.** Closeout `09_logs/2026-08-19_I5_closeout.md` |
+| **I-6** | Give anchor `63c072f4` real protection | **NEXT** — before S-10. **Reinforced 2026-08-19:** the anchor has appeared in **none** of the 15 would-remove reports, i.e. it is protected by **group shape alone** |
+| **I-8** | Track `/usr/local/bin/homelab-backup.sh` in the repo | Open — **unblocked 2026-07-31** (I-4 closed). **Tracking target updated 2026-08-19:** the installed script is now the I-5 version, sha256 `330df064…5895a554`; `90e8eb91…a907a45f` is the pre-I-5 rollback reference only |
 | **I-9** | Reconcile `01_architecture/amarolab_architecture.md` | Open — **tracking only**, see below |
 | **S-1** | Decide + document the LAN trust posture | **DONE 2026-07-28** — *the LAN is a trusted transport, never a substitute for service authentication*; **S-2/S-3/S-4/S-5 unblocked** (`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`) |
 | **S-7** | Health Aggregator now, or accept a third writer | Open — gates the monitoring build |
 | **S-8** | Close the backup monitoring blind spot | Open — after I-4, S-7 |
 | **S-9** | Zigbee coordinator USB hardening (C-1 structural) | Open — **supporting evidence added 2026-07-31 and again 2026-08-17**, see below. The 2026-08-17 recurrence had **no trigger**, so the failure mode is not confined to hot-plug |
-| **S-10** | Retention decision + attended prune | Open — **the only irreversible item in the roadmap.** **Its input now exists:** the first would-remove report landed **2026-08-05** as predicted and reached **10 snapshots** by 2026-08-17 — 13 reports, **zero deletions**. Still needs an explicit mechanism for the 42 legacy snapshots, which no future snapshot can join. See *Retention dry-run evidence* below |
+| **S-10** | Retention decision + attended prune | Open — **the only irreversible item in the roadmap.** **Its input now exists:** the first would-remove report landed **2026-08-05** as predicted and reached **11 snapshots** by 2026-08-18, holding at 11 through 2026-08-19 — **15 reports, zero deletions**. **Clarified at I-5:** those 11 sit in a group **frozen at 22** that no future snapshot can join, so the set is closed, not growing. Still needs an explicit mechanism for the 42 legacy snapshots, which no future snapshot can join either. See *Retention dry-run evidence* below |
 | **S-11** | Decide whether to re-expose the voice canary | Open — **needed before F6.1 Step 7** |
 | **M-A** | Design and build real alerting | Open — largest single item. **Supporting evidence for M-1 added 2026-07-31 and again 2026-08-17**, see below. The 2026-08-17 outage occurred at 13:12 and the nightly signal layer does not run until 04:00 — awareness is nightly by design and is not a monitor |
 | **M-B** | Converge the `ai-local` definition with reality | Open — **needs I-3 (done) + F6.1 CLOSED** |
@@ -913,22 +928,39 @@ The I-4 closeout predicted the first would-remove report "on or shortly after **
 instructed a future session to check the nightly log. **Checked; the prediction held.** The
 2026-08-04 run produced none; **2026-08-05 produced the first**, `{89966886}`.
 
-Growth: **1 (08-05) → 3 (08-08) → 6 (08-12) → 9 (08-15) → 10 (08-17)**.
+Growth: **1 (08-05) → 3 (08-08) → 6 (08-12) → 9 (08-15) → 10 (08-17) → 11 (08-18, held at 11
+through 08-19)**.
 
-* **13 reports across 13 nights; zero deletions.** Every report is phrased `Would have removed the
-  following snapshots:` — restic's dry-run wording. No removal of any kind appears anywhere in the
-  retained log history (26 `forget` executions across the current log and eight rotated
-  predecessors).
+* **15 reports across 15 nights; zero deletions** (13 through 2026-08-17, plus 2026-08-18 and
+  2026-08-19). Every report is phrased `Would have removed the following snapshots:` — restic's
+  dry-run wording. No removal of any kind appears anywhere in the retained log history (26
+  `forget` executions across the current log and eight rotated predecessors as of 2026-08-17,
+  plus the two nights since).
 * **The report now proposes the two Gate 8 snapshots** (`89966886`, `d03f0e19`) — ordinary
   `nightly`-tagged snapshots, correctly aging out of `--keep-daily 7`.
 * **The D-1.5 anchor `63c072f4` appears in none of them**, protected by **group shape alone**.
   This is the risk I-4 named; **I-6 must land before S-10**.
-* **I-4 continues to hold**: unbroken nightly snapshots 2026-07-31 → 2026-08-17, parent detection
-  working, installed script sha256 unchanged. **G-I4-1…12 are not reopened.**
+* **I-4 continues to hold**: unbroken nightly snapshots 2026-07-31 → 2026-08-19, parent detection
+  working. **G-I4-1…12 are not reopened.** (The installed script sha256 changed at I-5 by
+  design — `330df064…5895a554` — and the path set is still fully static.)
 
-**Sequencing note for I-5.** I-5 edits the `PATHS` array, which changes the recorded path set and
-therefore **starts a new group** — expected and harmless, but it **restarts this report from
-zero**. The trail above was recorded before I-5 supersedes it.
+**Sequencing note for I-5 — CORRECTED 2026-08-19, on real data.** This note previously stated
+that editing `PATHS` **restarts this report from zero**. **It does not.** `restic forget`
+evaluates each `host,paths` group independently, so the *new group's* trail begins at zero
+while the report as a whole is unaffected. Measured across the boundary:
+
+| Run | Would-remove count |
+|---|---|
+| 2026-08-17 03:00 (13-path) | 10 |
+| 2026-08-18 03:00 (13-path, last of the old group) | **11** |
+| 2026-08-18 12:40 (attended, first 16-path) | **11** — identical set |
+| 2026-08-19 03:00 (unattended, 16-path) | **11** — identical set |
+
+The new group contributed **zero**. **What this means for S-10:** every one of those 11
+snapshots sits in a group **frozen at 22 members that no future snapshot can ever join**, so
+S-10 plans against a **closed** set rather than a growing one. This strengthens the S-10 input
+recorded on 2026-08-17 rather than superseding it. Evidence:
+`09_logs/2026-08-19_I5_closeout.md` §5.
 
 ### Standing constraints
 
