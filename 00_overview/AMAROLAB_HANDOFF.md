@@ -5,7 +5,25 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-08-20 (**I-6 — give the D-1.5 anchor real protection (N-2) — COMPLETE.**
+Last updated: 2026-08-20 (**I-8 — track the backup mechanism in the repository (N-5) —
+COMPLETE.** The nightly backup script existed in one place only, on the root disk, and had
+**never** been in Git — zero add-commits across all history — while also sitting outside the
+restic path set. **Scope widened by operator decision:** the scheduler
+`/etc/cron.d/homelab-backup` was equally untracked, so **both** were captured
+**byte-identically** under `07_operations/backups/`, mirroring the host paths
+(`330df064…5895a554` and `976aa694…7ebc8756`). No redaction needed — neither holds a secret
+value. They are **Recovery Artifacts, not a deployment source**; the script is committed
+**non-executable (0644) as a deliberate inertness control** while the live file stays `0755`,
+because running a *drifted* copy would create a real snapshot with a wrong path set and open a
+spurious group, polluting the S-10 input. **`07_operations/backups/README.md` is the authority
+for install targets and drift checks.** **G-I8-1…8 all PASS**, including **zero production
+change** (G-I8-4/5), evidenced by a live baseline taken before capture and compared after.
+**No overnight gate by design.** **I-8 closes version-control durability, NOT restic coverage —
+H-2 is unchanged**; Git adds an **off-host** copy the same-machine restic repository cannot.
+**Standing obligation:** whenever either live file changes, update the tracked copy in the same
+change. **Program E advances to S-8**, which **depends on S-7**. Record
+`09_logs/2026-08-20_I8_backup_script_tracked.md`. Prior — 2026-08-20
+(**I-6 — give the D-1.5 anchor real protection (N-2) — COMPLETE.**
 The anchor was an ordinary `nightly`-tagged snapshot surviving by accident — `--dry-run` plus a
 dated legacy group nothing can join. **Decision B: snapshot-level protection.** One
 `restic tag --set anchor,d15-rollback` moved it **out of `--tag nightly` scope**, so protection
@@ -26,9 +44,10 @@ real deletions**, the would-remove set **unchanged at the same 11**, the anchor'
 refuted:** the dangling `parent: 4f4177e8…` is **not** a prior-retag signature — zero snapshots
 carried an `original` field before I-6 — so a snapshot really was deleted by an unidentified
 mechanism, **after 2026-06-17 16:19**. **I-6 makes no claim against it.** **Program E advances
-to I-8**; S-10's anchor precondition is satisfied and S-10 stays Open and unapproved.
+to I-8** (DONE 2026-08-20 — see the current entry above); S-10's anchor precondition is
+satisfied and S-10 stays Open and unapproved.
 Documentation only; the production change was made 2026-08-19. Records
-`09_logs/2026-08-20_I6_closeout.md` and `09_logs/2026-08-20_I6_provisional_evidence.md`.
+`09_logs/2026-08-20_I6_closeout.md` and `09_logs/2026-08-20_I6_provisional_evidence.md`).
 Prior — 2026-08-19 (**I-5 — extend backup coverage (H-2) — COMPLETE.** The restic path
 set went from **13 to 16 static paths** — `portainer_data/_data`, `/etc/cron.d/aurora-signals`
 and the openedai `voice_to_speaker.yaml` — closing the **non-secret half of H-2**; the secret
@@ -499,9 +518,19 @@ names any snapshot — it survives as the `original` provenance field and stays 
 **Never run `restic tag` against `42506e44`** — that would change the id again. P1–P5 and
 G-I6-1…G-I6-8 all PASS; G-I6-8 closed on the first unattended cycle (`629f3e84`) with all
 fourteen predictions observed. The script was deliberately **not** modified;
-`09_logs/2026-08-20_I6_closeout.md`)**. **Next: I-8** — track
-`/usr/local/bin/homelab-backup.sh` in the repository. Its tracking target is
-**`330df064…5895a554`, unchanged by I-6**. Then S-8, and only then S-10, which is the **only irreversible item in
+`09_logs/2026-08-20_I6_closeout.md`)**, **I-8 (2026-08-20 — the backup mechanism is now
+version-controlled. `/usr/local/bin/homelab-backup.sh` (`330df064…5895a554`) **and** its
+scheduler `/etc/cron.d/homelab-backup` (`976aa694…7ebc8756`) are captured **byte-identically**
+under `07_operations/backups/`, which is **the authority for install targets and drift
+checks**. They are **Recovery Artifacts, not a deployment source**; the script is committed
+**non-executable (0644) as an inertness control** while the live file stays `0755` — that
+asymmetry is deliberate, **not drift**, and must not be "fixed". **Git durability, NOT restic
+coverage — H-2 unchanged.** **Whenever either live file changes, update the tracked copy in
+the same change.** G-I8-1…8 all PASS with zero production change;
+`09_logs/2026-08-20_I8_backup_script_tracked.md`)**. **Next: S-8** — close the backup
+monitoring blind spot (H-1c): `bin/backup-probe` still cannot see retention outcomes, script
+exit status, snapshot count, lock state or missed nights. **S-8 depends on S-7**, the open
+zero-cost Health Aggregator decision, which must be taken first. Then only S-10, which is the **only irreversible item in
 the roadmap** — and is now genuinely live, its input accrued: **15 would-remove reports,
 zero deletions**. **S-1 (LAN trust posture) was DECIDED 2026-07-28** — *the LAN is a
 trusted transport; it is never a substitute for service authentication; every LAN-reachable

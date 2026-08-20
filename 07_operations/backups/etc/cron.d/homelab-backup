@@ -1,0 +1,5 @@
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Nightly homelab backup — installed Phase 0 R-12 on 2026-06-13
+0 3 * * * root /usr/local/bin/homelab-backup.sh >> /var/log/homelab-backup.log 2>&1

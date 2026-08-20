@@ -14,7 +14,31 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-08-20 (**I-6 — give the D-1.5 anchor real protection (N-2) — DONE.**
+Last updated: 2026-08-20 (**I-8 — track the backup mechanism in the repository (N-5) — DONE.**
+The nightly backup script existed in exactly one place, on the root disk, and had **never**
+been in Git — zero matches in the tree and **zero add-commits across all history** — while
+also sitting outside the restic path set. **Scope widened by operator decision:** the
+scheduler `/etc/cron.d/homelab-backup` was equally untracked, so capturing the script alone
+would have restored a script nothing invokes; **both** were captured **byte-identically**
+under `07_operations/backups/`, mirroring the host paths (`330df064…5895a554` and
+`976aa694…7ebc8756`). **No redaction needed** — neither file holds a secret value. They are
+**Recovery Artifacts, not a deployment source**. The script is committed **non-executable
+(0644) as a deliberate inertness control** while the live file stays `0755`: running a
+*drifted* copy would create a real snapshot with a wrong path set and open a **spurious
+group**, polluting the S-10 input. A status header was rejected because it would break the
+byte-identity that makes the capture verifiable; that rule-2/rule-3 tension is recorded rather
+than papered over, and `07_operations/backups/README.md` is the authority for install targets
+and drift checks. **G-I8-1…8 all PASS**, including **G-I8-4/5 — zero production change**,
+evidenced by a live baseline taken before capture and compared after: both host files byte-
+and mtime-unchanged, no `restic` command run, cron untouched. **No overnight gate by design** —
+nothing changed in production, so a nightly cycle had nothing to prove. **I-8 closes
+version-control durability, NOT restic coverage — H-2 is unchanged**; what Git adds is an
+**off-host** copy, which the same-machine restic repository cannot give. **Standing
+obligation:** whenever either live file changes, the tracked copy must be updated in the same
+change. **Program E advances to S-8**, which **depends on S-7** — the open zero-cost Health
+Aggregator decision. Documentation only; no production change of any kind. Record
+`09_logs/2026-08-20_I8_backup_script_tracked.md`. Prior: 2026-08-20
+(**I-6 — give the D-1.5 anchor real protection (N-2) — DONE.**
 The anchor was an ordinary `nightly`-tagged snapshot surviving by accident — `--dry-run` plus a
 dated legacy group nothing can join. **Decision B: snapshot-level protection.** A single
 `restic tag --set anchor,d15-rollback` moved it **out of `--tag nightly` scope**, so protection
@@ -34,10 +58,11 @@ is **exactly one new snapshot**. **A hypothesis was refuted:** the dangling `par
 is **not** the signature of a prior retag — **zero** snapshots carried an `original` field
 before I-6 — so a snapshot really was deleted by an unidentified mechanism, **after 2026-06-17
 16:19** (this roadmap and `CURRENT_STATE.md` previously said "on or before"). **I-6 makes no
-claim against that mechanism.** **Program E advances to I-8**; **S-10's anchor-protection
+claim against that mechanism.** **Program E advanced to I-8** (DONE 2026-08-20 — see the
+current entry above); **S-10's anchor-protection
 precondition is now satisfied**, and S-10 itself stays Open and unapproved. Documentation only;
 the production change was made 2026-08-19. Record `09_logs/2026-08-20_I6_closeout.md`; dated
-pre-gate record `09_logs/2026-08-20_I6_provisional_evidence.md`. Prior: 2026-08-19
+pre-gate record `09_logs/2026-08-20_I6_provisional_evidence.md`). Prior: 2026-08-19
 (**I-5 — extend backup coverage (H-2) — DONE.** The recorded restic
 path set went from **13 to 16 static paths**; the non-secret half of H-2 is closed and proven
 on snapshot content. **G-I5-9 PASS** on the first unattended cycle — 2026-08-19 03:00 →
@@ -738,7 +763,7 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **B** | Observability & alerting | Nothing observes anything in real time | Open |
 | **C** | Security posture | The LAN is the boundary by default, not by decision | **S-1 DECIDED 2026-07-28** — the boundary is now a decision with a minimum bar. S-2…S-5 unblocked; four listeners non-conforming |
 | **D** | Documentation truth | Operational drift in the declared source of truth | **I-7 COMPLETE.** Low items below |
-| **E** | Backup lifecycle | Retention inert; coverage incomplete; no anchor protection | **I-4 DONE 2026-07-31** — grouping fixed, retention no longer inert but held at `--dry-run`. **I-5 DONE 2026-08-19** — coverage 13 → 16 paths, H-2 non-secret half closed. **I-6 DONE 2026-08-20** — anchor protected at snapshot level, now `42506e44`, outside `--tag nightly` scope. **I-8 next** |
+| **E** | Backup lifecycle | Retention inert; coverage incomplete; no anchor protection | **I-4 DONE 2026-07-31** — grouping fixed, retention no longer inert but held at `--dry-run`. **I-5 DONE 2026-08-19** — coverage 13 → 16 paths, H-2 non-secret half closed. **I-6 DONE 2026-08-20** — anchor protected at snapshot level, now `42506e44`, outside `--tag nightly` scope. **I-8 DONE 2026-08-20** — script + cron captured byte-identically under `07_operations/backups/` as Recovery Artifacts. **S-8 next**, gated on S-7 |
 
 ### Ledger
 
@@ -752,11 +777,11 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **I-4** | Fix the restic grouping defect | **DONE 2026-07-31** — Gate 8 closed on real evidence; G-I4-1…12 all PASS; retention held at `--dry-run` (closeout `09_logs/2026-07-31_I4_gate8_closeout.md`) |
 | **I-5** | Extend backup coverage (H-2) | **DONE 2026-08-19** — `PATHS` 13 → **16 static paths** (`portainer_data/_data`, `/etc/cron.d/aurora-signals`, `voice_to_speaker.yaml`); installed script sha256 `330df064…5895a554`. **G-I5-1…11 all PASS**; **G-I5-9 PASS** on the first unattended cycle (`ae45cd50`), all eleven predictions observed after the lock check closed by observation 2026-08-19; one stated evidence qualification remains (**G-I5-3**). **H-2 non-secret half closed; secret half open as M-D.** Closeout `09_logs/2026-08-19_I5_closeout.md` |
 | **I-6** | Give the D-1.5 anchor real protection | **DONE 2026-08-20** — **Decision B, snapshot-level.** `restic tag --set anchor,d15-rollback` moved it **out of `--tag nightly` scope**, so protection lives in the snapshot, not the invocation. **The anchor is now `42506e44`**; `63c072f4` no longer names a snapshot and survives as the `original` field. **P1–P5 + G-I6-1…G-I6-8 all PASS**; G-I6-8 closed on the first unattended cycle (`629f3e84`) with all fourteen predictions observed. Script **not** modified. **Never `restic tag` `42506e44`** — it would change the id again. Closeout `09_logs/2026-08-20_I6_closeout.md` |
-| **I-8** | Track `/usr/local/bin/homelab-backup.sh` in the repo | **NEXT** — unblocked 2026-07-31 (I-4 closed). **Tracking target `330df064…5895a554`** — the I-5 version, **unchanged by I-6**, which deliberately did not touch the script; `90e8eb91…a907a45f` is the pre-I-5 rollback reference only |
+| **I-8** | Track the backup mechanism in the repo | **DONE 2026-08-20** — `/usr/local/bin/homelab-backup.sh` (`330df064…5895a554`) **and**, by operator-approved scope extension, `/etc/cron.d/homelab-backup` (`976aa694…7ebc8756`) captured **byte-identically** under `07_operations/backups/`. **Recovery Artifacts, not a deployment source**; the script is committed **non-executable (0644)** as an inertness control while the live file stays `0755` — **documented as a control, not drift**. **Git durability, NOT restic coverage — H-2 unchanged.** G-I8-1…8 all PASS; **zero production change**. `90e8eb91…a907a45f` remains the pre-I-5 rollback reference only. Closeout `09_logs/2026-08-20_I8_backup_script_tracked.md` |
 | **I-9** | Reconcile `01_architecture/amarolab_architecture.md` | Open — **tracking only**, see below |
 | **S-1** | Decide + document the LAN trust posture | **DONE 2026-07-28** — *the LAN is a trusted transport, never a substitute for service authentication*; **S-2/S-3/S-4/S-5 unblocked** (`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`) |
 | **S-7** | Health Aggregator now, or accept a third writer | Open — gates the monitoring build |
-| **S-8** | Close the backup monitoring blind spot | Open — after I-4, S-7 |
+| **S-8** | Close the backup monitoring blind spot | **NEXT** — I-4 closed 2026-07-31; **still gated on S-7**, the open Health Aggregator decision. H-1c / N-3 unchanged by I-8 |
 | **S-9** | Zigbee coordinator USB hardening (C-1 structural) | Open — **supporting evidence added 2026-07-31 and again 2026-08-17**, see below. The 2026-08-17 recurrence had **no trigger**, so the failure mode is not confined to hot-plug |
 | **S-10** | Retention decision + attended prune | Open — **the only irreversible item in the roadmap.** **Its input now exists:** the first would-remove report landed **2026-08-05** as predicted and reached **11 snapshots** by 2026-08-18, holding at 11 through 2026-08-19 — **15 reports, zero deletions**. **Clarified at I-5:** those 11 sit in a group **frozen at 22** that no future snapshot can join, so the set is closed, not growing. **Held at 11 through 2026-08-20** — 16 reports, zero deletions. **Its I-6 precondition is satisfied:** the anchor now has real protection and is outside policy scope. Still needs an explicit mechanism for the 42 legacy snapshots, which no future snapshot can join either. See *Retention dry-run evidence* below |
 | **S-11** | Decide whether to re-expose the voice canary | Open — **needed before F6.1 Step 7** |
