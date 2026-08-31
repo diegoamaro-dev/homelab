@@ -14,7 +14,31 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-08-20 (**I-8 — track the backup mechanism in the repository (N-5) — DONE.**
+Last updated: 2026-08-31 (**C-1 FOURTH RECURRENCE — recorded; nothing fixed. New tracking
+item I-10.** `zigbee2mqtt` exited `code=2` at **2026-08-22 21:35:11 CEST**: a kernel `USB
+disconnect` on the coordinator, Docker's **single** `unless-stopped` attempt failing with
+`restartmanger wait error … no such file or directory` because the `by-id` symlink had not yet
+been recreated, and the device dropping off the bus **a second time three seconds later**. The
+service then stayed `exited` for **9 d 02 h 03 m 35 s — undetected**: never observed while in
+progress, and reconstructed only **after it had already ended**, during an investigation opened
+for an unrelated reason. **It was restored incidentally by the 2026-08-31 23:38 host reboot —
+no recovery command was required or executed**, the first C-1 occurrence to end without an
+operator-approved restart. Verified 2026-09-01 00:03: **17/17 containers**, **10/10 Zigbee
+devices joined** with **no re-pairing**, MQTT connected, HA entities present,
+`switch.impresora_3d` at its **`off`** baseline (**no actuation**), `RestartCount 0`, zero
+kernel USB disconnects since start. **Nothing was repaired — S-9, M-1 and M-A all stay Open**;
+the fourth occurrence strengthens all three and closes none, and it demonstrates the
+mechanism's worst property: **the failure is silent and permanent until something unrelated
+restarts the container. The physical cause of the USB disconnect is UNKNOWN and no hardware
+root cause is claimed.** Separately raised — **I-10: repeated host shutdowns without normal
+shutdown markers.** Ten of eleven retained boots ended with **zero** markers; boot −5 ended
+with **three**, which validates the test. The 2026-08-31 event is corroborated independently by
+Home Assistant reporting an **unclean SQLite shutdown** and an unfinished recorder session.
+**Cause UNKNOWN** — no PSU, thermal, BIOS, mains-power, hardware or software claim is made —
+**investigation Open**, and **no causal link to C-1 is asserted**. Documentation only; **no
+production change**. Records `../09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md` and
+`../09_logs/2026-08-31_unclean_host_shutdowns_finding.md`). Prior: 2026-08-20
+(**I-8 — track the backup mechanism in the repository (N-5) — DONE.**
 The nightly backup script existed in exactly one place, on the root disk, and had **never**
 been in Git — zero matches in the tree and **zero add-commits across all history** — while
 also sitting outside the restic path set. **Scope widened by operator decision:** the
@@ -779,13 +803,14 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **I-6** | Give the D-1.5 anchor real protection | **DONE 2026-08-20** — **Decision B, snapshot-level.** `restic tag --set anchor,d15-rollback` moved it **out of `--tag nightly` scope**, so protection lives in the snapshot, not the invocation. **The anchor is now `42506e44`**; `63c072f4` no longer names a snapshot and survives as the `original` field. **P1–P5 + G-I6-1…G-I6-8 all PASS**; G-I6-8 closed on the first unattended cycle (`629f3e84`) with all fourteen predictions observed. Script **not** modified. **Never `restic tag` `42506e44`** — it would change the id again. Closeout `09_logs/2026-08-20_I6_closeout.md` |
 | **I-8** | Track the backup mechanism in the repo | **DONE 2026-08-20** — `/usr/local/bin/homelab-backup.sh` (`330df064…5895a554`) **and**, by operator-approved scope extension, `/etc/cron.d/homelab-backup` (`976aa694…7ebc8756`) captured **byte-identically** under `07_operations/backups/`. **Recovery Artifacts, not a deployment source**; the script is committed **non-executable (0644)** as an inertness control while the live file stays `0755` — **documented as a control, not drift**. **Git durability, NOT restic coverage — H-2 unchanged.** G-I8-1…8 all PASS; **zero production change**. `90e8eb91…a907a45f` remains the pre-I-5 rollback reference only. Closeout `09_logs/2026-08-20_I8_backup_script_tracked.md` |
 | **I-9** | Reconcile `01_architecture/amarolab_architecture.md` | Open — **tracking only**, see below |
+| **I-10** | Repeated host shutdowns without normal shutdown markers | Open — **tracking only, raised 2026-08-31.** Ten of eleven retained boots ended with **zero** shutdown markers; boot −5 ended with three, which validates the test. The 2026-08-31 event is corroborated independently by Home Assistant reporting an unclean SQLite shutdown and an unfinished recorder session. **Cause UNKNOWN** — no PSU, thermal, BIOS, mains-power, hardware or software claim is made, and **no causal link to C-1 is asserted**. Tracked separately because repeated unclean stops threaten filesystem, database and service integrity beyond Zigbee. Record `09_logs/2026-08-31_unclean_host_shutdowns_finding.md` |
 | **S-1** | Decide + document the LAN trust posture | **DONE 2026-07-28** — *the LAN is a trusted transport, never a substitute for service authentication*; **S-2/S-3/S-4/S-5 unblocked** (`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`) |
 | **S-7** | Health Aggregator now, or accept a third writer | Open — gates the monitoring build |
 | **S-8** | Close the backup monitoring blind spot | **NEXT** — I-4 closed 2026-07-31; **still gated on S-7**, the open Health Aggregator decision. H-1c / N-3 unchanged by I-8 |
-| **S-9** | Zigbee coordinator USB hardening (C-1 structural) | Open — **supporting evidence added 2026-07-31 and again 2026-08-17**, see below. The 2026-08-17 recurrence had **no trigger**, so the failure mode is not confined to hot-plug |
+| **S-9** | Zigbee coordinator USB hardening (C-1 structural) | Open — **supporting evidence added 2026-07-31, 2026-08-17 and again 2026-08-22 (fourth occurrence)**, see below. The 2026-08-17 recurrence had **no trigger**, so the failure mode is not confined to hot-plug; the 2026-08-22 recurrence **did** have a logged kernel trigger and ran **nine days undetected**, showing the failure is **silent and permanent** until an unrelated event restarts the container. **Stronger evidence is not remediation — S-9 stays Open** |
 | **S-10** | Retention decision + attended prune | Open — **the only irreversible item in the roadmap.** **Its input now exists:** the first would-remove report landed **2026-08-05** as predicted and reached **11 snapshots** by 2026-08-18, holding at 11 through 2026-08-19 — **15 reports, zero deletions**. **Clarified at I-5:** those 11 sit in a group **frozen at 22** that no future snapshot can join, so the set is closed, not growing. **Held at 11 through 2026-08-20** — 16 reports, zero deletions. **Its I-6 precondition is satisfied:** the anchor now has real protection and is outside policy scope. Still needs an explicit mechanism for the 42 legacy snapshots, which no future snapshot can join either. See *Retention dry-run evidence* below |
 | **S-11** | Decide whether to re-expose the voice canary | Open — **needed before F6.1 Step 7** |
-| **M-A** | Design and build real alerting | Open — largest single item. **Supporting evidence for M-1 added 2026-07-31 and again 2026-08-17**, see below. The 2026-08-17 outage occurred at 13:12 and the nightly signal layer does not run until 04:00 — awareness is nightly by design and is not a monitor |
+| **M-A** | Design and build real alerting | Open — largest single item. **Supporting evidence for M-1 added 2026-07-31, 2026-08-17 and again 2026-08-22**, see below. The 2026-08-17 outage occurred at 13:12 and the nightly signal layer does not run until 04:00 — awareness is nightly by design and is not a monitor. **The 2026-08-22 outage ran 9 d 02 h undetected** and was reconstructed only after it had ended — the strongest evidence yet for this gap |
 | **M-B** | Converge the `ai-local` definition with reality | Open — **needs I-3 (done) + F6.1 CLOSED** |
 | **M-C** | Pin production images to digests | Open — after I-3 |
 | **M-D** | Secrets-backup strategy | Open |
@@ -969,6 +994,85 @@ ten-minute window supports no stability claim — the container ran five days be
 **On three occurrences in three weeks, a fourth is expected.** If it recurs, capture the kernel
 and `dockerd` evidence **before** restarting, so the occurrence strengthens the S-9 case instead
 of being erased by a reflex restart.
+
+### C-1 recurrence 2026-08-22 21:35 — fourth occurrence, nine days undetected
+
+**Recorded 2026-08-31 / 2026-09-01 from a read-only investigation. Evidence only.** Neither
+remediation is designed, scoped or authorized by this entry; **M-1 / M-A and S-9 remain Open.**
+**No production change was made** — the service was already running when the investigation
+began, and nothing was started, restarted, recreated or reconfigured. Full record:
+[`../09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md`](../09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md).
+
+**Both forward-looking claims in the previous entry held.** It stated that on three occurrences
+in three weeks a fourth was expected, and that a fourth would be found by inspection rather than
+by monitoring. Both were correct. The dated records are not rewritten (`PROJECT_RULES.md` →
+*Historical Documentation*); this is the confirmation.
+
+`zigbee2mqtt` exited `code=2` at **2026-08-22 21:35:11 CEST** — the **fourth** occurrence of
+the C-1 mechanism. The session that failed had started **2026-08-21 17:54:37** and ran
+≈ **27 h 40 m**.
+
+| Timestamp (CEST) | Source | Event |
+|---|---|---|
+| 21:35:11 | kernel | `cp210x ttyUSB0: usb_serial_generic_read_bulk_callback - urb stopped: -32` |
+| 21:35:11 | kernel | `usb 1-2.2.2: USB disconnect, device number 6` |
+| 21:35:11 | kernel | `cp210x converter now disconnected from ttyUSB0` — the `by-id` symlink ceases to exist |
+| 21:35:11 | zigbee2mqtt | `Adapter disconnected, stopping` → `Stopping Zigbee2MQTT (restart=false, code=2)` |
+| 21:35:11 | dockerd | `restarting container … exitCode=2 restartCount=1 restartPolicy="{unless-stopped 0}"` |
+| **21:35:11** | dockerd | `restartmanger wait error: error gathering device information while adding custom device "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_<DEVICE_ID>-if00-port0": no such file or directory` |
+| 21:35:11 | kernel | `usb 1-2.2.2: new full-speed USB device number 8` — re-enumerates, after the restart had already failed |
+| 21:35:11 | kernel | `cp210x converter now attached to ttyUSB0` |
+| **21:35:14** | kernel | `usb 1-2.2.2: USB disconnect, device number 8` — **the device drops off the bus a second time** |
+
+Mechanism identical to 2026-07-28 and 2026-08-17. Exactly one restart attempt exists in the
+Docker journal, and none since.
+
+#### What is new — a logged trigger, a second disconnect, and nine days of silence
+
+1. **There is a trigger this time, and it is logged.** `urb stopped: -32` followed by an
+   explicit kernel `USB disconnect`. The 2026-08-17 occurrence was recorded as having **no
+   observable trigger**; this one is not in that category.
+2. **The device disconnected a second time three seconds later**, so it did not drop once and
+   settle.
+3. **Nine days of post-failure quiescence** demonstrate over a long interval what was
+   previously inferred from a single journal line: `unless-stopped` makes **one** attempt and
+   then stops permanently.
+
+**The physical cause of the disconnect is UNKNOWN.** Whether the dongle, the hub, the USB path,
+power delivery or another hardware factor caused it was **not** determined, and **no hardware
+root cause is claimed**.
+
+#### M-1 / M-A — further evidence
+
+The outage began 2026-08-22 21:35 and was **never detected while it was in progress**. It ran
+**9 d 02 h 03 m 35 s** and was reconstructed only **after it had already ended**, during an
+investigation opened for an unrelated reason. The previous entry recorded seven hours unnoticed;
+this records nine days. Awareness remains nightly by design and is not a monitor — which is
+precisely M-1. Acceptance criterion unchanged: a critical service failure must notify the
+operator within a defined time budget. **Nothing here satisfies it.**
+
+#### S-9 — further evidence
+
+Four occurrences now. The fourth demonstrates the mechanism's worst property: **the failure is
+silent and permanent until something unrelated restarts the container.** The acceptance
+criterion is unchanged — *Zigbee2MQTT must recover automatically from a temporary coordinator
+disconnect without manual intervention, provided the adapter returns* — and on 2026-08-22 the
+adapter **did** return, roughly 100 ms too late, and the service still did not recover.
+**S-9 remains Open. Stronger evidence is not remediation.**
+
+#### Outcome — restored incidentally, not recovered
+
+The **2026-08-31 23:38 host reboot** re-enumerated the coordinator before Docker resolved the
+`--device` mapping, and the `unless-stopped` container came up clean at 23:38:46: `zigbee-herdsman
+started (resumed)`, **10 devices joined**, MQTT connected, bridge `online`, frontend up.
+**No recovery command was required or executed** — the first C-1 occurrence to end without an
+operator-approved restart. Verified 2026-09-01 00:03: **17/17 containers**, `RestartCount 0`,
+zero failure markers in the current session log, zero kernel USB disconnects since start,
+`switch.impresora_3d` at its **`off`** baseline (**no actuation**), `cover.toldo` `closed`.
+
+The host event itself is a **separate** finding — **I-10**, cause unknown, investigation Open
+([`../09_logs/2026-08-31_unclean_host_shutdowns_finding.md`](../09_logs/2026-08-31_unclean_host_shutdowns_finding.md)).
+**No causal link between it and C-1 is asserted.**
 
 ### Retention dry-run evidence 2026-08-05 → 2026-08-17 — the S-10 input
 

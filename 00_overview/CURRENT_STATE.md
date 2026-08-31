@@ -14,13 +14,20 @@ count is unchanged). Backup
 extended at I-5 (2026-08-19)**, closing the non-secret half of H-2 at 16 recorded paths — the
 secret half stays open as **M-D**; and **the D-1.5 anchor now has real protection (I-6,
 2026-08-20)** — snapshot-level, outside `--tag nightly` scope, id now `42506e44`. **17/17
-containers are running again**: `zigbee2mqtt` exited on **2026-08-17 at 13:12:24 CEST**
-— the **third** C-1 recurrence — and was **recovered 21:15:13 CEST** after 8 h 02 m 49 s
-down, all six validation checks PASS (`09_logs/2026-08-17_zigbee2mqtt_recovery.md`).
-**The recovery is not a fix: S-9 remains Open**, and there is still **no real-time
-monitoring or alerting of any kind** — the outage was found by inspection eight hours
-later, not by monitoring (**M-1** / **M-A**; evidence in `ROADMAP.md` → *C-1 recurrence
-2026-08-17 13:12*).
+containers are running (verified 2026-09-01 00:03)**, but that is **not** a recovery: the
+**fourth** C-1 recurrence exited `zigbee2mqtt` on **2026-08-22 at 21:35:11 CEST** and the
+service stayed down **9 d 02 h 03 m 35 s**, until the **2026-08-31 23:38 host reboot restored
+it incidentally**. **No recovery command was required or executed.** Current Zigbee state is
+healthy — **10/10 devices joined**, MQTT connected, Home Assistant entities present, no
+re-pairing (`09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md`).
+**Nothing was fixed: S-9 remains Open**, and there is still **no real-time
+monitoring or alerting of any kind** — this outage ran **nine days** undetected and was
+reconstructed only after it had already ended, which is stronger evidence for the same gap
+(**M-1** / **M-A**; evidence in `ROADMAP.md` → *C-1 recurrence
+2026-08-22 21:35*). **New tracking item I-10** — repeated host shutdowns without normal
+shutdown markers, cause **unknown**, investigation **Open**
+(`09_logs/2026-08-31_unclean_host_shutdowns_finding.md`); **no causal link to C-1 is
+asserted**.
 Independently, the platform reported `degraded` from **2026-08-01** for a *second*
 reason — an empty, freshly-rotated audit log (see *Ingest service* below). **Dated observation,
 2026-08-20 (not investigated, not a claim):** the 04:15 cycle reported `aurora-context: ok`
@@ -34,21 +41,30 @@ meet that bar** (H-5, H-6, M-9, plus F-S1-1 / F-S1-2). See *Infrastructure audit
 2026-07-28* below.
 
 Production:
-**17/17 containers running (verified 2026-08-17 21:25)** — `zigbee2mqtt` recovered.
-It had been `exited (2)` since **2026-08-17 13:12:24 CEST** and was restarted at
-**21:15:13 CEST** by a single operator-approved `docker start zigbee2mqtt`; the Zigbee
-network re-formed with all **10 devices joined**, and both Zigbee entities recovered from
-`unavailable` — `switch.impresora_3d` to its **`off`** baseline (no actuation) and
-`cover.toldo` to `closed`. **That outage was a new one, not the July one:** the container
-restarted automatically at the 2026-08-12 reboot, ran healthily for five days, then exited
-by the same C-1 mechanism — coordinator USB disconnect, followed by Docker's single
-`unless-stopped` restart attempt losing a **101 ms** race against udev recreating the
-`by-id` symlink. **Unlike 2026-07-28 there was no trigger** — zero USB enumerations
-preceded the disconnect. **Recovery is not a fix — S-9 remains Open**, and a fourth
-recurrence is expected on the evidence of three in three weeks. Records:
-`09_logs/2026-08-17_zigbee2mqtt_recovery.md` (recovery, six checks) and
-`09_logs/2026-08-17_operational_reconciliation.md` §3 (the outage and its mechanism);
-`ROADMAP.md` → *C-1 recurrence 2026-08-17 13:12* (**M-1** / **M-A** and **S-9**).
+**17/17 containers running (verified 2026-09-01 00:03)** — `zigbee2mqtt` running, stable, no
+restart loop (`RestartCount 0`, zero failure markers in the current session log, zero kernel
+USB disconnects since it started).
+**The fourth C-1 recurrence has occurred.** The container exited `code=2` at **2026-08-22
+21:35:11 CEST** — kernel `USB disconnect` on the coordinator, then Docker's single
+`unless-stopped` restart attempt failing with `restartmanger wait error: … no such file or
+directory` because the `by-id` symlink had not yet been recreated; the device re-enumerated
+moments later, and **disconnected a second time three seconds after that**. Exactly one
+restart attempt exists in the journal, and Docker did not try again — the service then stayed
+`exited` for **9 d 02 h 03 m 35 s**, **undetected**.
+**It was restored incidentally by the 2026-08-31 23:38 host reboot**, which re-enumerated the
+coordinator before Docker resolved the `--device` mapping. **No recovery command was required
+or executed**; this is the first C-1 occurrence to end without an operator-approved restart.
+The Zigbee network re-formed with all **10 devices joined**, no re-pairing, and the entities
+returned — `switch.impresora_3d` to its **`off`** baseline (no actuation) and `cover.toldo` to
+`closed`.
+**Nothing was repaired — S-9 remains Open**, and the fourth occurrence demonstrates the
+mechanism's worst property: the failure is **silent and permanent** until an unrelated event
+restarts the container. **The physical cause of the USB disconnect is UNKNOWN and no hardware
+root cause is claimed.** Records:
+`09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md` (this occurrence) and
+`09_logs/2026-08-17_zigbee2mqtt_recovery.md` + `09_logs/2026-08-17_operational_reconciliation.md`
+§3 (the third occurrence, historical);
+`ROADMAP.md` → *C-1 recurrence 2026-08-22 21:35* (**M-1** / **M-A** and **S-9**).
 
 Next milestone:
 **Remediation Program E — backup lifecycle: S-8** (close the backup monitoring blind spot,

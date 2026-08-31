@@ -5,7 +5,32 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-08-20 (**I-8 — track the backup mechanism in the repository (N-5) —
+Last updated: 2026-08-31 (**C-1 FOURTH RECURRENCE — recorded; nothing fixed. New tracking
+item I-10.** `zigbee2mqtt` exited `code=2` at **2026-08-22 21:35:11 CEST**: kernel `USB
+disconnect` on the coordinator, Docker's single `unless-stopped` attempt failing with
+`restartmanger wait error … no such file or directory` on the not-yet-recreated `by-id`
+symlink, and the device dropping off the bus **a second time three seconds later**. The
+service then stayed `exited` for **9 d 02 h 03 m 35 s — undetected**: it was never observed
+while in progress and was reconstructed only **after it had already ended**, during an
+investigation opened for an unrelated reason. **It was restored incidentally by the
+2026-08-31 23:38 host reboot — no recovery command was required or executed**, the first C-1
+occurrence to end without an operator-approved restart. Verified 2026-09-01 00:03: **17/17
+containers**, **10/10 Zigbee devices joined** with **no re-pairing**, MQTT connected, HA
+entities present, `switch.impresora_3d` at its **`off`** baseline (**no actuation**),
+`RestartCount 0`, zero kernel USB disconnects since start. **Nothing was repaired — S-9, M-1
+and M-A all stay Open**; the fourth occurrence strengthens all three and closes none.
+**The physical cause of the USB disconnect is UNKNOWN and no hardware root cause is claimed.**
+Separately raised — **I-10: repeated host shutdowns without normal shutdown markers.** Ten of
+eleven retained boots ended with **zero** markers; boot −5 ended with **three**, which
+validates the test. The 2026-08-31 event is corroborated independently by Home Assistant
+reporting an **unclean SQLite shutdown** and an unfinished recorder session. **Cause UNKNOWN**
+— no PSU, thermal, BIOS, mains-power, hardware or software claim is made — **investigation
+Open**, and **no causal link to C-1 is asserted**. Tracked separately because repeated unclean
+stops threaten filesystem, database and service integrity well beyond Zigbee. Documentation
+only; **no production change**. Records
+`09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md` and
+`09_logs/2026-08-31_unclean_host_shutdowns_finding.md`). Prior — 2026-08-20
+(**I-8 — track the backup mechanism in the repository (N-5) —
 COMPLETE.** The nightly backup script existed in one place only, on the root disk, and had
 **never** been in Git — zero add-commits across all history — while also sitting outside the
 restic path set. **Scope widened by operator decision:** the scheduler
