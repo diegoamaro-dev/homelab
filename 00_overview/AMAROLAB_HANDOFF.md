@@ -5,7 +5,19 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-08-31 (**C-1 FOURTH RECURRENCE — recorded; nothing fixed. New tracking
+Last updated: 2026-09-18 (**C-1 / I-10 operator-clarification reconciliation — I-10 CLOSED as a
+host-fault finding; C-1, S-9, M-1 and M-A unchanged and Open.** Read-only; **no production
+change**. **"No recovery command was executed" on 2026-08-31 is confirmed** by the session
+transcript, a single `dockerd` start at boot (positive-controlled) and a single Zigbee2MQTT
+session — the service was up at 23:38:46, before the operator asked for recovery at 23:45:50.
+**I-10:** every unclean stop, May → September, is reported by the operator as a **power-button
+hold** they caused; the 2026-08-31 "unexpectedly" was a misstatement. **OPERATOR-REPORTED, not
+proven per boot** — the journal cannot tell a button hold from power loss. **Correction:** 31
+boots are retained (from 2026-05-19), not eleven. **New:** unclean stop 2026-09-02 13:36.
+**Standing operating norm (constraint 4 below):** shut the UM790 down cleanly; never hold the
+button or cut power except in an emergency. **Next: S-7.** Record
+`09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md`). Prior — 2026-08-31
+(**C-1 FOURTH RECURRENCE — recorded; nothing fixed. New tracking
 item I-10.** `zigbee2mqtt` exited `code=2` at **2026-08-22 21:35:11 CEST**: kernel `USB
 disconnect` on the coordinator, Docker's single `unless-stopped` attempt failing with
 `restartmanger wait error … no such file or directory` on the not-yet-recreated `by-id`
@@ -565,7 +577,7 @@ and are now conformance actions against that bar; four listeners currently fail 
 H-6, M-9, plus new findings F-S1-1 / F-S1-2, no identifier assigned). **S-7** (Health
 Aggregator) remains an open zero-cost decision and can be taken at any time.
 
-**Three standing constraints that outlive this session:**
+**Four standing constraints that outlive this session:**
 
 1. **Do not recreate `aurora-whisper`** while F6.1 is open (D-F6-1).
 2. **Do not redeploy the Portainer `ai-local` stack** —
@@ -575,6 +587,14 @@ Aggregator) remains an open zero-cost decision and can be taken at any time.
    `PROJECT_RULES.md` → *Recovery Artifacts*. Only `ollama-proxy/docker-compose.yml`
    deploys. The captured files carry redacted secrets and device paths and are not
    deployable as written.
+4. **Shut the UM790 down cleanly** (adopted 2026-09-18): `sudo systemctl poweroff` /
+   `sudo systemctl reboot`, or a short power-button press **that visibly starts a shutdown** —
+   short presses are not always acted on here, so if one does nothing, use the command.
+   **Never hold the power button or cut power except in a genuine emergency**, and record any
+   forced stop in `09_logs/`. *AI Assistant Session Preservation* still applies first. A kernel
+   update is pending (`/var/run/reboot-required`); the next reboot should be a clean one.
+   Normative text: `PROJECT_RULES.md` → *Clean Host Shutdown*; origin
+   `09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md` §7.
 
 **Backups: the backup step passes, recovery is proven, the retention grouping defect is
 FIXED (I-4, 2026-07-31) and coverage was EXTENDED (I-5, 2026-08-19) — verified still holding
@@ -609,6 +629,10 @@ contributed zero. Those 11 snapshots sit in a group **frozen at 22 members that 
 snapshot can ever join**, so S-10 plans against a **closed** set
 (`09_logs/2026-08-19_I5_closeout.md` §5).
 
+**Superseded — status as of 2026-08-17, kept for context.** The expected fourth C-1 recurrence
+happened on **2026-08-22** and ran nine days undetected; `zigbee2mqtt` has been running since
+**2026-09-02 13:36:49** (17/17 verified 2026-09-18). Current Zigbee status lives in
+`CURRENT_STATE.md` → *Zigbee2MQTT*. *As written 2026-08-17:*
 **`zigbee2mqtt` is RUNNING again — recovered 2026-08-17 21:15:13 CEST** (17/17 containers)
 after the **third** C-1 recurrence, which was **a new outage, not the July one**. It restarted
 automatically at the 2026-08-12 reboot, ran healthily for five days, then exited again by the

@@ -1,6 +1,6 @@
 # PROJECT_RULES
 
-Last updated: 2026-07-17
+Last updated: 2026-09-18
 
 ---
 
@@ -479,6 +479,31 @@ Avoid:
 - Fragile
 - Hidden
 - Overengineered
+
+---
+
+# Clean Host Shutdown
+
+**The UM790 is shut down or rebooted only through the normal OS shutdown path.**
+
+Rules:
+
+1. **Use the OS mechanism.** Prefer `sudo systemctl poweroff` / `sudo systemctl reboot`.
+2. **A short press of the physical power button is valid only if it is observed to actually
+   start the shutdown sequence.**
+3. **If a short press does not start a shutdown, do not escalate to a long press.** Use the OS
+   mechanism instead.
+4. **Never hold the power button and never cut power**, except in a genuine emergency in which
+   the host cannot be shut down cleanly by any means.
+5. **Every exceptional forced stop is documented** in `09_logs/`, with its date and reason.
+6. **AI Assistant Session Preservation applies first** whenever an assistant session may be
+   interrupted by the shutdown or reboot.
+
+**Why.** A forced stop is invisible to the OS: databases, container state and logs are left
+mid-write, and the event is indistinguishable afterwards from a hardware fault.
+
+**Origin:** operator direction, 2026-09-18
+(`09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md`).
 
 ---
 

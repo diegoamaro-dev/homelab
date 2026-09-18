@@ -14,7 +14,26 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-08-31 (**C-1 FOURTH RECURRENCE — recorded; nothing fixed. New tracking
+Last updated: 2026-09-18 (**C-1 / I-10 operator-clarification reconciliation — I-10 CLOSED as a
+host-fault finding; C-1, S-9, M-1, M-A unchanged and Open.** Read-only; **no production change**.
+**Zigbee:** the 2026-08-31 statement that no recovery command was executed is **confirmed** by
+three independent sources — the session transcript (94 commands, none production-changing), a
+**single** `dockerd` start for `zigbee2mqtt` in that boot (positive control: both earlier manual
+`docker start` recoveries left one each) and a **single** Zigbee2MQTT session. The service was
+operational at 23:38:46, before the operator asked for recovery at 23:45:50. **I-10:** the
+operator reports having caused **every** unclean stop by **holding the power button**, May →
+September, and that the 2026-08-31 "unexpectedly powered off" wording was a misstatement —
+**OPERATOR-REPORTED**, not proven per boot; the evidence is compatible (27 of 30 retained boots
+ended with no OS-initiated shutdown) and cannot distinguish a button hold from power loss.
+**Correction:** the 2026-08-31 record's journal-retention claim was wrong — **31 boots retained,
+back to 2026-05-19**, not eleven. Control case: `Power key pressed short.` → `Powering off…` on
+2026-07-21; short presses on 2026-06-04 and 2026-06-27 were **not** acted on. **New, previously
+unrecorded unclean stop 2026-09-02 13:36** (journal, Docker, HA recorder, NUL-terminated
+Zigbee2MQTT log). **Operating norm adopted:** shut the UM790 down cleanly
+(`systemctl poweroff`/`reboot`, or a short press that visibly starts a shutdown); **never hold the
+button or cut power except in an emergency.** Stale *Zigbee2MQTT* status in `CURRENT_STATE.md`
+corrected. Record `../09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md`).
+Prior — 2026-08-31 (**C-1 FOURTH RECURRENCE — recorded; nothing fixed. New tracking
 item I-10.** `zigbee2mqtt` exited `code=2` at **2026-08-22 21:35:11 CEST**: a kernel `USB
 disconnect` on the coordinator, Docker's **single** `unless-stopped` attempt failing with
 `restartmanger wait error … no such file or directory` because the `by-id` symlink had not yet
@@ -803,7 +822,7 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **I-6** | Give the D-1.5 anchor real protection | **DONE 2026-08-20** — **Decision B, snapshot-level.** `restic tag --set anchor,d15-rollback` moved it **out of `--tag nightly` scope**, so protection lives in the snapshot, not the invocation. **The anchor is now `42506e44`**; `63c072f4` no longer names a snapshot and survives as the `original` field. **P1–P5 + G-I6-1…G-I6-8 all PASS**; G-I6-8 closed on the first unattended cycle (`629f3e84`) with all fourteen predictions observed. Script **not** modified. **Never `restic tag` `42506e44`** — it would change the id again. Closeout `09_logs/2026-08-20_I6_closeout.md` |
 | **I-8** | Track the backup mechanism in the repo | **DONE 2026-08-20** — `/usr/local/bin/homelab-backup.sh` (`330df064…5895a554`) **and**, by operator-approved scope extension, `/etc/cron.d/homelab-backup` (`976aa694…7ebc8756`) captured **byte-identically** under `07_operations/backups/`. **Recovery Artifacts, not a deployment source**; the script is committed **non-executable (0644)** as an inertness control while the live file stays `0755` — **documented as a control, not drift**. **Git durability, NOT restic coverage — H-2 unchanged.** G-I8-1…8 all PASS; **zero production change**. `90e8eb91…a907a45f` remains the pre-I-5 rollback reference only. Closeout `09_logs/2026-08-20_I8_backup_script_tracked.md` |
 | **I-9** | Reconcile `01_architecture/amarolab_architecture.md` | Open — **tracking only**, see below |
-| **I-10** | Repeated host shutdowns without normal shutdown markers | Open — **tracking only, raised 2026-08-31.** Ten of eleven retained boots ended with **zero** shutdown markers; boot −5 ended with three, which validates the test. The 2026-08-31 event is corroborated independently by Home Assistant reporting an unclean SQLite shutdown and an unfinished recorder session. **Cause UNKNOWN** — no PSU, thermal, BIOS, mains-power, hardware or software claim is made, and **no causal link to C-1 is asserted**. Tracked separately because repeated unclean stops threaten filesystem, database and service integrity beyond Zigbee. Record `09_logs/2026-08-31_unclean_host_shutdowns_finding.md` |
+| **I-10** | Repeated host shutdowns without normal shutdown markers | **CLOSED 2026-09-18 as a host-fault finding — explained by operator-initiated forced power-offs (power-button hold), OPERATOR-REPORTED for every unclean stop May → September; not proven per boot.** Evidence is compatible (27 of 30 retained boots ended with no OS-initiated shutdown) but cannot distinguish a button hold from power loss or a spontaneous reset. No hardware/software fault indicated or investigated. **Correction:** 31 boots are retained (from 2026-05-19), not eleven. Added: unclean stop 2026-09-02 13:36. **Residual risk is procedural** — handled by the operating norm (clean shutdown only; no button hold or power cut except in an emergency). **Reopens** on any unclean stop the operator did not cause. Record `09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md`. *As raised 2026-08-31:* tracking only. Ten of eleven retained boots ended with **zero** shutdown markers; boot −5 ended with three, which validates the test. The 2026-08-31 event is corroborated independently by Home Assistant reporting an unclean SQLite shutdown and an unfinished recorder session. **Cause UNKNOWN** — no PSU, thermal, BIOS, mains-power, hardware or software claim is made, and **no causal link to C-1 is asserted**. Tracked separately because repeated unclean stops threaten filesystem, database and service integrity beyond Zigbee. Record `09_logs/2026-08-31_unclean_host_shutdowns_finding.md` |
 | **S-1** | Decide + document the LAN trust posture | **DONE 2026-07-28** — *the LAN is a trusted transport, never a substitute for service authentication*; **S-2/S-3/S-4/S-5 unblocked** (`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`) |
 | **S-7** | Health Aggregator now, or accept a third writer | Open — gates the monitoring build |
 | **S-8** | Close the backup monitoring blind spot | **NEXT** — I-4 closed 2026-07-31; **still gated on S-7**, the open Health Aggregator decision. H-1c / N-3 unchanged by I-8 |
@@ -1073,6 +1092,15 @@ zero failure markers in the current session log, zero kernel USB disconnects sin
 The host event itself is a **separate** finding — **I-10**, cause unknown, investigation Open
 ([`../09_logs/2026-08-31_unclean_host_shutdowns_finding.md`](../09_logs/2026-08-31_unclean_host_shutdowns_finding.md)).
 **No causal link between it and C-1 is asserted.**
+
+**Reconciled 2026-09-18.** The host event was an **operator-caused** power-off
+(OPERATOR-REPORTED; the "unexpected" wording was a misstatement), and **I-10 is closed** as a
+host-fault finding. **"No recovery command was required or executed" is re-verified** against the
+session transcript, the `dockerd` journal (a single start at boot, with a positive control) and
+the Zigbee2MQTT session logs — the service was operational at 23:38:46, seven minutes before the
+operator asked for recovery. **This entry's C-1, M-1 / M-A and S-9 conclusions are unchanged.**
+Record:
+[`../09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md`](../09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md).
 
 ### Retention dry-run evidence 2026-08-05 → 2026-08-17 — the S-10 input
 

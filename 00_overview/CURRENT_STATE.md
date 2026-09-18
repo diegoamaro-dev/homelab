@@ -14,7 +14,7 @@ count is unchanged). Backup
 extended at I-5 (2026-08-19)**, closing the non-secret half of H-2 at 16 recorded paths — the
 secret half stays open as **M-D**; and **the D-1.5 anchor now has real protection (I-6,
 2026-08-20)** — snapshot-level, outside `--tag nightly` scope, id now `42506e44`. **17/17
-containers are running (verified 2026-09-01 00:03)**, but that is **not** a recovery: the
+containers are running (verified 2026-09-18 12:03)**, but that is **not** a repair: the
 **fourth** C-1 recurrence exited `zigbee2mqtt` on **2026-08-22 at 21:35:11 CEST** and the
 service stayed down **9 d 02 h 03 m 35 s**, until the **2026-08-31 23:38 host reboot restored
 it incidentally**. **No recovery command was required or executed.** Current Zigbee state is
@@ -24,10 +24,18 @@ re-pairing (`09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md`).
 monitoring or alerting of any kind** — this outage ran **nine days** undetected and was
 reconstructed only after it had already ended, which is stronger evidence for the same gap
 (**M-1** / **M-A**; evidence in `ROADMAP.md` → *C-1 recurrence
-2026-08-22 21:35*). **New tracking item I-10** — repeated host shutdowns without normal
-shutdown markers, cause **unknown**, investigation **Open**
-(`09_logs/2026-08-31_unclean_host_shutdowns_finding.md`); **no causal link to C-1 is
-asserted**.
+2026-08-22 21:35*). **The 2026-08-31 "no recovery command" statement was re-verified
+2026-09-18 and holds** — three independent sources (session transcript, `dockerd`, Zigbee2MQTT
+session logs) show only Docker's own start at boot. **I-10 is CLOSED 2026-09-18 as a host-fault
+finding:** the operator reports having caused every unclean stop in the journal by holding the
+power button (**OPERATOR-REPORTED**, not proven per boot; the evidence is compatible with it and
+shows no OS-initiated stop). The integrity risk remains and is handled procedurally — **the
+UM790 is shut down cleanly (`systemctl poweroff`/`reboot`, or a short press that visibly starts
+a shutdown); never hold the button or cut power except in an emergency.** A further unclean stop
+on **2026-09-02 13:36** was observed and is covered by that statement. The 2026-08-31 I-10 record's
+journal-retention claim was wrong — **31 boots are retained, back to 2026-05-19**
+(`09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md`). **No causal link to C-1
+is asserted.**
 Independently, the platform reported `degraded` from **2026-08-01** for a *second*
 reason — an empty, freshly-rotated audit log (see *Ingest service* below). **Dated observation,
 2026-08-20 (not investigated, not a claim):** the 04:15 cycle reported `aurora-context: ok`
@@ -41,9 +49,10 @@ meet that bar** (H-5, H-6, M-9, plus F-S1-1 / F-S1-2). See *Infrastructure audit
 2026-07-28* below.
 
 Production:
-**17/17 containers running (verified 2026-09-01 00:03)** — `zigbee2mqtt` running, stable, no
-restart loop (`RestartCount 0`, zero failure markers in the current session log, zero kernel
-USB disconnects since it started).
+**17/17 containers running (verified 2026-09-18 12:03)** — `zigbee2mqtt` running since
+**2026-09-02 13:36:49** (Docker's `unless-stopped` start after the operator-caused 2026-09-02
+power-off), no restart loop (`RestartCount 0`, zero failure markers in the retained session log
+files, zero kernel USB disconnects this boot).
 **The fourth C-1 recurrence has occurred.** The container exited `code=2` at **2026-08-22
 21:35:11 CEST** — kernel `USB disconnect` on the coordinator, then Docker's single
 `unless-stopped` restart attempt failing with `restartmanger wait error: … no such file or
@@ -51,9 +60,12 @@ directory` because the `by-id` symlink had not yet been recreated; the device re
 moments later, and **disconnected a second time three seconds after that**. Exactly one
 restart attempt exists in the journal, and Docker did not try again — the service then stayed
 `exited` for **9 d 02 h 03 m 35 s**, **undetected**.
-**It was restored incidentally by the 2026-08-31 23:38 host reboot**, which re-enumerated the
-coordinator before Docker resolved the `--device` mapping. **No recovery command was required
-or executed**; this is the first C-1 occurrence to end without an operator-approved restart.
+**It was restored incidentally by the 2026-08-31 23:38 host reboot** — an operator-caused
+power-off (**OPERATOR-REPORTED** 2026-09-18; the 2026-08-31 record's "unexpected" wording was a
+misstatement) — which re-enumerated the coordinator before Docker resolved the `--device`
+mapping. **No recovery command was required or executed** (re-verified 2026-09-18 against three
+independent sources); this is the first C-1 occurrence to end without an operator-approved
+restart.
 The Zigbee network re-formed with all **10 devices joined**, no re-pairing, and the entities
 returned — `switch.impresora_3d` to its **`off`** baseline (no actuation) and `cover.toldo` to
 `closed`.
@@ -785,8 +797,10 @@ Apply log:
 
 ## Zigbee2MQTT
 
-Status: **Operational — recovered 2026-08-17 21:15:13 CEST** after the third C-1 recurrence
-(down 8 h 02 m 49 s). All 10 devices rejoined; both entities recovered. **S-9 unfixed.**
+Status: **Operational — running since 2026-09-02 13:36:49 CEST** (Docker start at boot,
+`RestartCount 0`; verified 2026-09-18). **Four C-1 occurrences to date; the fourth
+(2026-08-22) ran 9 d 02 h undetected and ended at the 2026-08-31 boot with no recovery
+command.** **S-9 unfixed.**
 
 - Adapter: Sonoff Zigbee Dongle Plus
 - Frontend: **enabled**
@@ -808,7 +822,7 @@ Status: **Operational — recovered 2026-08-17 21:15:13 CEST** after the third C
   `unless-stopped` restored at daemon start) and **ran healthily for five days**, publishing
   device telemetry every ten seconds. The triad's prior "deliberately not restarted" claim
   was true when written and was silently undone by the reboot.
-- **Third recurrence, 2026-08-17 13:12:24 CEST — current state** (`RestartCount 1`). Same
+- **Third recurrence, 2026-08-17 13:12:24 CEST** (`RestartCount 1` at the time). Same
   mechanism; **101 ms** margin this time. **What is new: there was no trigger.** Zero USB
   enumerations occurred between 00:00 and the disconnect, and the Bluetooth adapter has been
   resident on the shared hub since the 2026-08-12 boot. The coordinator dropped off the bus
@@ -825,9 +839,22 @@ Status: **Operational — recovered 2026-08-17 21:15:13 CEST** after the third C
   markers, zero kernel USB events). Record:
   `09_logs/2026-08-17_zigbee2mqtt_recovery.md`. **`RestartCount` reset to 0 by the manual
   start** — the pre-recovery value of 1 is preserved in the records.
+- **Fourth recurrence, 2026-08-22 21:35:11 CEST.** Kernel `USB disconnect` (`urb stopped: -32`),
+  Docker's single restart attempt failing on the not-yet-recreated `by-id` symlink, and a second
+  disconnect three seconds later. The container then stayed `exited` for **9 d 02 h 03 m 35 s**,
+  **undetected**, until the **operator-caused 2026-08-31 23:38 power-off/boot**: Docker started it
+  under `unless-stopped` at 23:38:37 and it was operational at 23:38:46 (10 devices, MQTT,
+  bridge `online`), **before** the operator asked for recovery at 23:45:50. **No recovery command
+  was executed** — re-verified 2026-09-18 (session transcript, a single `dockerd` start, a single
+  Zigbee2MQTT session). Records: `09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md`,
+  `09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md` §3.
+- **2026-09-02 13:36 — not a C-1 event.** The container stopped with the host (an unclean,
+  operator-caused power-off; its session log ends in NUL bytes with no `Stopping` line) and was
+  started by Docker at boot. **Use a clean shutdown** — see the operating norm in the 2026-09-18
+  record §7.
 - **Structural half: S-9. Notification gap: M-1 / M-A** — both **Open**. The nightly signal
-  layer runs 04:00–04:25, so a 13:12 failure is not visible until the next cycle; the outage
-  was found by inspection seven hours later, not by monitoring.
+  layer runs 04:00–04:25 and is not a monitor; the third outage was found by inspection seven
+  hours later, and the fourth ran **nine days** without detection.
 
 ---
 
