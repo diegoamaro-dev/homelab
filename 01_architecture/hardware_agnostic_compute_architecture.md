@@ -321,6 +321,13 @@ Assistant ──┘                         └─▶ UM790 (CPU)        ~6 tok/
 - One capability (`llm.chat`), two providers, static priority, passive health
   (`max_fails=1 fail_timeout=10s`), automatic fallback, per-request upstream logging.
 - Both providers serve the same model id — equivalence holds **by operator discipline**.
+- **Model-aware fallback (F-INC-2 — DONE 2026-10-20, validated).**
+  - The model catalogue (`/api/tags`) is served by the always-on floor (§7.2), with Torre only
+    as backup.
+  - A Torre `404` ("model not found") passes that request to the UM790 without marking Torre
+    down.
+  - Validated on production: model missing → UM790, Torre offline → UM790, Torre recovery →
+    automatic return (`09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`).
 
 **Principle, NOT deployed — does not exist and is not authorized by this document:**
 
@@ -568,9 +575,10 @@ count, and this document names it so it is never rediscovered by surprise.
 **R-3 — The abstraction becomes the fragile thing.** An indirection layer concentrates risk.
 CURRENT_STATE already records this honestly: the proxy is *"a single point of failure in front
 of both front doors … only a proxy outage stops inference."* A Torre outage is survivable; a
-*proxy* outage is not. *(Qualified 2026-10-20: survivable only when the outage is a transport
-failure. A reachable Torre without the model does not trigger failover —
-`09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`, F-INC-2.)* Mitigation: the abstraction must be simpler than what it hides (nginx
+*proxy* outage is not. *(Qualified 2026-10-20: the 2026-10-20 incident showed that a reachable
+Torre without the model did not trigger failover —
+`09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`. F-INC-2 closed that gap, DONE and
+validated — §5.4.)* Mitigation: the abstraction must be simpler than what it hides (nginx
 config, not a service); the always-on floor stays directly reachable; rollback is repointing
 consumers back to `ollama:11434`. **The abstraction must never become the most complex thing
 in the path.** *Avoid: clever, fragile, hidden, overengineered.*

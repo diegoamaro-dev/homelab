@@ -1,6 +1,6 @@
 # Security Posture
 
-Last updated: 2026-10-20 (*ollama-proxy* accepted-risk statement corrected after the 2026-10-20 Torre drive-letter incident; nothing else changed). Prior — 2026-07-28 (**S-1 — LAN trust posture decided.** *Network Security →
+Last updated: 2026-10-20 (*ollama-proxy* accepted-risk statement corrected after the 2026-10-20 Torre drive-letter incident, then updated for the completed F-INC-2 model-aware fallback (DONE); nothing else changed). Prior — 2026-07-28 (**S-1 — LAN trust posture decided.** *Network Security →
 Internal Network* previously recorded `Trusted LAN` as an inherited assumption; it is now
 a dated operator decision with an explicit minimum bar. The threat model and the pending
 list are reconciled to that decision. No other section was reconciled in this change.)
@@ -514,9 +514,17 @@ repoint consumers to ollama:11434).
 ```
 
 Correction (2026-10-20): a proxy outage is not the only way
-inference stops — a reachable Torre without the model does not
-trigger failover. Availability finding only, no security impact:
+inference stops — a reachable Torre without the model did not
+trigger failover (before F-INC-2). Availability finding only, no security impact:
 `09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`.
+
+Update (2026-10-20, F-INC-2 — DONE): that gap is closed. The
+catalogue is served by the UM790, and a Torre `404` passes the
+request to the UM790. Model-missing, Torre-offline and
+return-to-Torre behaviour are validated on production. A Torre
+`500` is still not a fallback condition. No exposure change: the
+proxy remains loopback-only on the host.
+`09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`.
 
 Reference:
 

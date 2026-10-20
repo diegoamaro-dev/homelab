@@ -1,6 +1,6 @@
 # RTX Node Security — Torre
 
-Last updated: 2026-10-20 (fallback assurance qualified after the 2026-10-20 Torre drive-letter incident; nothing else changed). Prior: 2026-06-27
+Last updated: 2026-10-20 (fallback assurance qualified after the 2026-10-20 Torre drive-letter incident, then updated for the completed F-INC-2 model-aware fallback (DONE); nothing else changed). Prior: 2026-06-27
 
 - **Scope:** Security architecture of the **Torre** RTX
   compute node as deployed after **RTX-1.5**.
@@ -150,9 +150,17 @@ Torre IS NOT:
 
 > **Qualified 2026-10-20:** this holds for a Torre that is *down or
 > unreachable*. A Torre that is reachable but serves an empty model
-> store (its model volume behind a moved drive letter) does **not**
-> trigger the fallback and did break inference for Aurora —
+> store (its model volume behind a moved drive letter) did **not**
+> trigger the fallback before F-INC-2, and did break inference for Aurora —
 > [`../09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`](../09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md).
+>
+> **Update 2026-10-20 (F-INC-2 — DONE):** model-aware fallback is
+> deployed and validated in `ollama-proxy`. A Torre that answers `404`
+> for the model, or is offline, falls back to the UM790. The
+> catalogue comes from the UM790, and Torre recovery returns traffic
+> to the GPU automatically. The assurance above therefore holds for
+> both cases again. A Torre `500` is still not covered —
+> [`../09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`](../09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md).
 
 These map to the architectural invariants carried from
 [node-bridge §1](../04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md)

@@ -14,7 +14,7 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-10-20 (**Operational drift reconciliation — documentation only, no
+Last updated: 2026-10-20 (**F-INC-2 model-aware `ollama-proxy` fallback — DONE.** Production change: `nginx.conf` reloaded gracefully, no restart. **G-F2-0…G-F2-7 all PASS**: a missing model or an offline Torre falls back to the UM790, and Torre recovery returns to RTX automatically. Closeout `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`. F-INC-1 and F-INC-3 stay OPEN.) Prior — 2026-10-20 (**Operational drift reconciliation — documentation only, no
 production change.**
 - **Fifth C-1 recurrence** on 2026-09-30 23:44:30: about 7 days undetected, restored
   incidentally by the 2026-10-07 boot. **C-1, S-9, M-1 and M-A unchanged and Open.**
@@ -498,7 +498,10 @@ Apply logs:
 
 Raised by the 2026-10-20 incident in which Aurora disappeared from Open WebUI
 ([`09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`](../09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md),
-**RESOLVED**). Tracking only: **all three are OPEN, and none is implemented or authorized here.**
+**RESOLVED**).
+- **F-INC-2 is DONE** (2026-10-20, all gates PASS; row below).
+- **F-INC-1** and **F-INC-3** are **OPEN** and not started.
+
 Each needs its own approved change.
 
 **Intended architecture, unchanged by these items:**
@@ -512,7 +515,7 @@ Each needs its own approved change.
 | Item | Priority | Content | Status |
 |---|---|---|---|
 | **F-INC-1** | **HIGH** | Harden or remove the dependency of Torre's Ollama model store on a mutable Windows drive letter. Today `OLLAMA_MODELS` names a drive letter that moved when disks were re-attached. Candidates are Windows-side configuration: a pinned letter for the model volume, or a volume-stable path | OPEN |
-| **F-INC-2** | **HIGH** | Add functional provider-health / failover semantics to `ollama-proxy`. Today it fails over only on transport errors (`error \| timeout \| 502 \| 503 \| 504`). A Torre that answers `200` with an empty catalogue, or `404` for the model, is treated as healthy. Invariant to preserve: *see below* | OPEN |
+| **F-INC-2** | **HIGH** | Add functional provider-health / failover semantics to `ollama-proxy`. Before 2026-10-20 it failed over only on transport errors (`error \| timeout \| 502 \| 503 \| 504`): a Torre answering `200` with an empty catalogue, or `404` for the model, was treated as healthy. Invariant to preserve: *see below*. **Delivered 2026-10-20:** UM790-authoritative `/api/tags`, `http_404` next-upstream fallback, no `http_500`, `$upstream_status` logged. **G-F2-0…G-F2-7 all PASS**: model missing → UM790, Torre offline → UM790, Torre recovery → automatic return to RTX. Closeout: [`09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`](../09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md) | **DONE** 2026-10-20 |
 | **F-INC-3** | MEDIUM | Create or update the Torre recovery runbook: storage / drive mapping, `OllamaService` under NSSM (including the Paused/orphaned case and port-bind conflicts), model-store verification, and end-to-end validation from the UM790 | OPEN |
 
 **F-INC-2 — architectural invariant (binding on any design):**

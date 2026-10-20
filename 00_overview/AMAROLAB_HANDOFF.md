@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-10-20 (**Operational drift reconciliation — documentation only, no
+Last updated: 2026-10-20 (**F-INC-2 model-aware `ollama-proxy` fallback — DONE.** Production change: `nginx.conf` reloaded gracefully, no restart. **G-F2-0…G-F2-7 all PASS**: a missing model or an offline Torre falls back to the UM790, and Torre recovery returns to RTX automatically. Closeout `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`. F-INC-1 and F-INC-3 stay OPEN.) Prior — 2026-10-20 (**Operational drift reconciliation — documentation only, no
 production change.**
 - **Fifth C-1 recurrence:** `zigbee2mqtt` exited `code=2` at **2026-09-30 23:44:30** on a
   coordinator USB disconnect. Docker's single restart attempt failed on the `by-id` path, and the
@@ -547,7 +547,7 @@ Closeout document:
 
 > **Read this block first. Everything below it is historical context, kept for provenance.**
 
-**Two workstreams are live and independent.**
+**Three workstreams are live and independent.**
 
 **1 — AURORA engineering: Phase F / F-6 (Voice Quality). F6.1 is IN PROGRESS, stopped after
 Step 2a.** Rule N did **not** fire (B/N = 14/30 = 0.467), so the defect reproduces on a fair
@@ -600,6 +600,17 @@ service must authenticate, be explicitly justified, or remain closed*
 and are now conformance actions against that bar; four listeners currently fail it (H-5,
 H-6, M-9, plus new findings F-S1-1 / F-S1-2, no identifier assigned). **S-7** (Health
 Aggregator) remains an open zero-cost decision and can be taken at any time.
+
+**3 — Post-RTX-1 follow-ups from the 2026-10-20 Aurora incident** (RESOLVED;
+`09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`).
+- **F-INC-2 (model-aware fallback) is DONE 2026-10-20 — G-F2-0…G-F2-7 all PASS.**
+  - `ollama-proxy` serves `/api/tags` from the UM790 and passes a Torre `404` to the UM790.
+  - A missing model or an offline Torre falls back to the UM790, and Torre recovery returns to
+    RTX automatically.
+  - Closeout: `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`.
+- **F-INC-1** (drive-letter dependency) and **F-INC-3** (Torre recovery runbook) are OPEN and
+  not started.
+- Ledger: `ROADMAP.md` → *Post-RTX-1 follow-ups*.
 
 **Four standing constraints that outlive this session:**
 

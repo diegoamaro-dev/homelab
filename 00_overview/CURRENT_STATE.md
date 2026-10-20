@@ -255,7 +255,7 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-10-20 (**Operational drift reconciliation — documentation only, no
+Last updated: 2026-10-20 (**F-INC-2 model-aware `ollama-proxy` fallback — DONE.** Production change: `nginx.conf` reloaded gracefully, no restart. **G-F2-0…G-F2-7 all PASS**: a missing model or an offline Torre falls back to the UM790, and Torre recovery returns to RTX automatically. Closeout `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`. F-INC-1 and F-INC-3 stay OPEN.) Prior — 2026-10-20 (**Operational drift reconciliation — documentation only, no
 production change.**
 - **Inventory:** 20 containers running (observed 01:04 CEST), not the documented 17. The extra
   ones are `amarolab-portfolio` (the company website; deployment definition not found) and the
@@ -749,19 +749,26 @@ Status: Operational (added RTX-1.6, 2026-06-27)
   `restart: unless-stopped` + healthcheck. A Torre *transport*
   failure (`error | timeout | 502 | 503 | 504`) fails over to the
   UM790 (rollback = repoint consumers back to `ollama:11434`).
-  **Correction 2026-10-20:** a proxy outage is *not* the only way
-  inference stops. A Torre that is reachable but lacks the model
-  (`200` empty list / `404`) does **not** trigger failover. That
-  happened on 2026-10-20: after an SSD/boot troubleshooting session
-  moved Torre's model volume off its drive letter, Aurora
-  disappeared from Open WebUI.
-  **RESOLVED 2026-10-20 03:18 CEST** — normal operation through
-  Torre is restored, verified from the UM790 (V-1 PASS), with no
-  data loss and no change on the UM790. Follow-ups **F-INC-1**
-  (drive-letter dependency), **F-INC-2** (functional health check)
-  and **F-INC-3** (Torre recovery runbook) are open, not
-  implemented. Record:
-  `09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`.
+  **Incident 2026-10-20 (RESOLVED 03:18 CEST):** a Torre that was
+  reachable but lacked the model (`200` empty list / `404`) did
+  **not** trigger failover, and Aurora disappeared from Open WebUI
+  after Torre's model volume moved off its drive letter.
+  Record: `09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`.
+- **Model-aware fallback — F-INC-2 DONE 2026-10-20 (G-F2-0…7 all PASS).**
+  - `/api/tags` is served by the UM790, with Torre only as the
+    catalogue backup, so Aurora's base model stays listed.
+  - A Torre `404` ("model not found") passes the same request to the
+    UM790, per request and per model, without marking Torre down.
+  - **Validated on production:**
+    - model missing on Torre → UM790;
+    - Torre offline → UM790;
+    - Torre recovery → automatic return to RTX.
+    The result is a loss of performance, not Aurora's disappearance.
+  - `http_500` is deliberately not a fallback condition.
+  - The access log carries `ustatus=$upstream_status`.
+  - F-INC-1 and F-INC-3 remain open.
+
+  Closeout: `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`.
 - Config + compose:
   [`03_services/ollama-proxy/`](../03_services/ollama-proxy/).
 
