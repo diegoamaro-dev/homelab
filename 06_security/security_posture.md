@@ -1,6 +1,6 @@
 # Security Posture
 
-Last updated: 2026-07-28 (**S-1 — LAN trust posture decided.** *Network Security →
+Last updated: 2026-10-20 (*ollama-proxy* accepted-risk statement corrected after the 2026-10-20 Torre drive-letter incident; nothing else changed). Prior — 2026-07-28 (**S-1 — LAN trust posture decided.** *Network Security →
 Internal Network* previously recorded `Trusted LAN` as an inherited assumption; it is now
 a dated operator decision with an explicit minimum bar. The threat model and the pending
 list are reconciled to that decision. No other section was reconciled in this change.)
@@ -509,9 +509,14 @@ Accepted risk:
 ```text
 The proxy is a single point of failure in front of both
 front doors. restart=unless-stopped + healthcheck. A Torre
-outage fails over to the UM790; only a proxy outage stops
-inference (rollback = repoint consumers to ollama:11434).
+transport failure fails over to the UM790 (rollback =
+repoint consumers to ollama:11434).
 ```
+
+Correction (2026-10-20): a proxy outage is not the only way
+inference stops — a reachable Torre without the model does not
+trigger failover. Availability finding only, no security impact:
+`09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`.
 
 Reference:
 

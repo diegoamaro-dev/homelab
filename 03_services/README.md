@@ -36,6 +36,18 @@ Out of scope for I-3: `guardian-web` (Guardian Cloud is production), `cloudflare
 (plaintext token — S-4 rotation must come first), `cloudflared-amarolab` (already correct).
 All three live under `/home/diego/webs/`.
 
+## Hosted services not captured here (recorded 2026-10-20)
+
+These containers postdate I-3 and have **no** file in this directory. They are intentional
+(operator-confirmed). Their absence from this inventory was documentation drift
+(`../09_logs/2026-10-20_operational_drift_reconciliation.md` §3–§5). Listing them here does
+**not** make this directory their deployment source.
+
+| Container | Purpose | Deployment definition | Notes |
+|---|---|---|---|
+| `amarolab-portfolio` | Amarolab company website (`amarolab.es`) — production | **Not found.** The compose label names `/home/diego/webs/amarolab-portfolio/docker-compose.yml`, which does not exist | `nginx:alpine`, read-only content bind from `/home/diego/webs/amarolab-portfolio`; `ai-local_default` only, no published port; served via `cloudflared-amarolab` |
+| QR/NFC application components (observed 2026-10-20: `qr-amarolab`, `qr-public-edge`) | Amarolab QR/NFC application, hosted on the UM790 — **deployment in progress** | The QR project's own repository (`/home/diego/webs/generador-qr`, compose project `generador-qr`) — **authoritative for its topology**; this table does not track its component set | `qr-amarolab` is published on `127.0.0.1:18000` only. `qr.amarolab.es` is **not** published. Production data is **outside** the restic path set |
+
 ## Why the files are not directly deployable
 
 Two value classes are redacted for publication, per
@@ -68,3 +80,22 @@ are not pinned anywhere:
 
 A rebuild that creates these in a different order silently breaks Home Assistant's
 reverse-proxy trust while every container reports healthy. Queued as **R-I3-1**.
+
+### Other networks on the engine (observed 2026-10-20 01:04 CEST)
+
+None of these is referenced by a captured file. They are listed because they take part in the
+same creation-order assignment:
+
+| Network | Subnet | Members at observation |
+|---|---|---|
+| `html_default` | 172.21.0.0/16 | none |
+| `guardian-cloud_default` | 172.22.0.0/16 | `guardian-web` |
+| `cloudflared_default` | 172.23.0.0/16 | none |
+| `cloudflare-net` | 172.24.0.0/16 | `cloudflared`, `guardian-web` |
+| `voicelab_net` | 172.25.0.0/16 | none |
+| `generador-qr_qr-interna` | 172.26.0.0/16 | `qr-amarolab`, `qr-public-edge` |
+| `qr-edge` (internal) | 172.27.0.0/16 | `qr-public-edge` |
+
+**Subnets are reused, not only assigned in order.** At 00:30 `172.27.0.0/16` belonged to a
+network named `qr-g7_test`. By 01:04 that network was gone and `qr-edge`, created at 01:03, held
+the same subnet. This strengthens R-I3-1, which remains recorded and unimplemented.

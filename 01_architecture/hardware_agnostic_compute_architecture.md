@@ -568,7 +568,9 @@ count, and this document names it so it is never rediscovered by surprise.
 **R-3 — The abstraction becomes the fragile thing.** An indirection layer concentrates risk.
 CURRENT_STATE already records this honestly: the proxy is *"a single point of failure in front
 of both front doors … only a proxy outage stops inference."* A Torre outage is survivable; a
-*proxy* outage is not. Mitigation: the abstraction must be simpler than what it hides (nginx
+*proxy* outage is not. *(Qualified 2026-10-20: survivable only when the outage is a transport
+failure. A reachable Torre without the model does not trigger failover —
+`09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`, F-INC-2.)* Mitigation: the abstraction must be simpler than what it hides (nginx
 config, not a service); the always-on floor stays directly reachable; rollback is repointing
 consumers back to `ollama:11434`. **The abstraction must never become the most complex thing
 in the path.** *Avoid: clever, fragile, hidden, overengineered.*

@@ -14,7 +14,24 @@ hosted on AMAROLAB infrastructure; its roadmap is
 tracked by the Guardian Cloud project, not in this
 document.
 
-Last updated: 2026-09-18 (**C-1 / I-10 operator-clarification reconciliation — I-10 CLOSED as a
+Last updated: 2026-10-20 (**Operational drift reconciliation — documentation only, no
+production change.**
+- **Fifth C-1 recurrence** on 2026-09-30 23:44:30: about 7 days undetected, restored
+  incidentally by the 2026-10-07 boot. **C-1, S-9, M-1 and M-A unchanged and Open.**
+- **Four unclean stops after 2026-09-18**, all OPERATOR-REPORTED as operator-caused. Three are
+  journal-evidenced; for 2026-09-22 only a Zigbee2MQTT session boundary is observed. **I-10 stays
+  CLOSED.** Not recorded at the time, which is *Clean Host Shutdown* rule 5 drift, now recorded.
+- **Runtime inventory:** 20 containers (observed 01:04 CEST), not 17. The additions are the
+  company website `amarolab-portfolio`, whose deployment definition was not found, and the
+  QR/NFC application, hosted on the UM790 and in deployment. It is not published, and its
+  component set is not tracked here: the QR project repository is authoritative.
+- **Backups:** QR production data is outside restic. A `/home/diego/webs` path-vs-snapshot
+  discrepancy **requires verification**. M-D is unchanged.
+- **S-7, S-8 and S-10 are not started.**
+
+Records `../09_logs/2026-10-20_operational_drift_reconciliation.md` and
+`../09_logs/2026-10-20_zigbee2mqtt_c1_fifth_recurrence.md`.)
+Prior — 2026-09-18 (**C-1 / I-10 operator-clarification reconciliation — I-10 CLOSED as a
 host-fault finding; C-1, S-9, M-1, M-A unchanged and Open.** Read-only; **no production change**.
 **Zigbee:** the 2026-08-31 statement that no recovery command was executed is **confirmed** by
 three independent sources — the session transcript (94 commands, none production-changing), a
@@ -477,6 +494,37 @@ Apply logs:
 ·
 [`09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md`](../09_logs/2026-06-27_phaseRTX1_6_endpoint_swap_applied.md) (RTX-1.6 endpoint swap).
 
+### Post-RTX-1 follow-ups (NOT new phases)
+
+Raised by the 2026-10-20 incident in which Aurora disappeared from Open WebUI
+([`09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`](../09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md),
+**RESOLVED**). Tracking only: **all three are OPEN, and none is implemented or authorized here.**
+Each needs its own approved change.
+
+**Intended architecture, unchanged by these items:**
+- **The UM790 is the persistent Aurora / control-plane node.** Aurora's identity, configuration
+  and persistent state live there, in Open WebUI and the platform around it.
+- **Torre is a replaceable, on-demand GPU inference accelerator.**
+- The base model `qwen2.5:7b-instruct` may exist on both nodes. It is the model Aurora uses, not
+  Aurora itself.
+- **Loss or functional degradation of Torre must degrade performance, never remove Aurora.**
+
+| Item | Priority | Content | Status |
+|---|---|---|---|
+| **F-INC-1** | **HIGH** | Harden or remove the dependency of Torre's Ollama model store on a mutable Windows drive letter. Today `OLLAMA_MODELS` names a drive letter that moved when disks were re-attached. Candidates are Windows-side configuration: a pinned letter for the model volume, or a volume-stable path | OPEN |
+| **F-INC-2** | **HIGH** | Add functional provider-health / failover semantics to `ollama-proxy`. Today it fails over only on transport errors (`error \| timeout \| 502 \| 503 \| 504`). A Torre that answers `200` with an empty catalogue, or `404` for the model, is treated as healthy. Invariant to preserve: *see below* | OPEN |
+| **F-INC-3** | MEDIUM | Create or update the Torre recovery runbook: storage / drive mapping, `OllamaService` under NSSM (including the Paused/orphaned case and port-bind conflicts), model-store verification, and end-to-end validation from the UM790 | OPEN |
+
+**F-INC-2 — architectural invariant (binding on any design):**
+
+> If the preferred RTX provider is reachable but does not expose Aurora's required base model, it
+> must be treated as functionally unavailable for that model, and inference must fall back to
+> the UM790. Aurora must remain available in Open WebUI.
+
+The design stays proportionate (`PROJECT_RULES.md` → *Infrastructure Philosophy*). It does not
+change *Hardware-Agnostic Platform* rule 2: the fallback must serve the same model id, never a
+different one.
+
 ---
 
 ## Phase E
@@ -822,14 +870,14 @@ as-of-2026-07-28 and do **not** track execution; live status is here and in
 | **I-6** | Give the D-1.5 anchor real protection | **DONE 2026-08-20** — **Decision B, snapshot-level.** `restic tag --set anchor,d15-rollback` moved it **out of `--tag nightly` scope**, so protection lives in the snapshot, not the invocation. **The anchor is now `42506e44`**; `63c072f4` no longer names a snapshot and survives as the `original` field. **P1–P5 + G-I6-1…G-I6-8 all PASS**; G-I6-8 closed on the first unattended cycle (`629f3e84`) with all fourteen predictions observed. Script **not** modified. **Never `restic tag` `42506e44`** — it would change the id again. Closeout `09_logs/2026-08-20_I6_closeout.md` |
 | **I-8** | Track the backup mechanism in the repo | **DONE 2026-08-20** — `/usr/local/bin/homelab-backup.sh` (`330df064…5895a554`) **and**, by operator-approved scope extension, `/etc/cron.d/homelab-backup` (`976aa694…7ebc8756`) captured **byte-identically** under `07_operations/backups/`. **Recovery Artifacts, not a deployment source**; the script is committed **non-executable (0644)** as an inertness control while the live file stays `0755` — **documented as a control, not drift**. **Git durability, NOT restic coverage — H-2 unchanged.** G-I8-1…8 all PASS; **zero production change**. `90e8eb91…a907a45f` remains the pre-I-5 rollback reference only. Closeout `09_logs/2026-08-20_I8_backup_script_tracked.md` |
 | **I-9** | Reconcile `01_architecture/amarolab_architecture.md` | Open — **tracking only**, see below |
-| **I-10** | Repeated host shutdowns without normal shutdown markers | **CLOSED 2026-09-18 as a host-fault finding — explained by operator-initiated forced power-offs (power-button hold), OPERATOR-REPORTED for every unclean stop May → September; not proven per boot.** Evidence is compatible (27 of 30 retained boots ended with no OS-initiated shutdown) but cannot distinguish a button hold from power loss or a spontaneous reset. No hardware/software fault indicated or investigated. **Correction:** 31 boots are retained (from 2026-05-19), not eleven. Added: unclean stop 2026-09-02 13:36. **Residual risk is procedural** — handled by the operating norm (clean shutdown only; no button hold or power cut except in an emergency). **Reopens** on any unclean stop the operator did not cause. Record `09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md`. *As raised 2026-08-31:* tracking only. Ten of eleven retained boots ended with **zero** shutdown markers; boot −5 ended with three, which validates the test. The 2026-08-31 event is corroborated independently by Home Assistant reporting an unclean SQLite shutdown and an unfinished recorder session. **Cause UNKNOWN** — no PSU, thermal, BIOS, mains-power, hardware or software claim is made, and **no causal link to C-1 is asserted**. Tracked separately because repeated unclean stops threaten filesystem, database and service integrity beyond Zigbee. Record `09_logs/2026-08-31_unclean_host_shutdowns_finding.md` |
+| **I-10** | Repeated host shutdowns without normal shutdown markers | **CLOSED 2026-09-18 as a host-fault finding — explained by operator-initiated forced power-offs (power-button hold), OPERATOR-REPORTED for every unclean stop May → September; not proven per boot.** Evidence is compatible (27 of 30 retained boots ended with no OS-initiated shutdown) but cannot distinguish a button hold from power loss or a spontaneous reset. No hardware/software fault indicated or investigated. **Correction:** 31 boots are retained (from 2026-05-19), not eleven. Added: unclean stop 2026-09-02 13:36. **Residual risk is procedural** — handled by the operating norm (clean shutdown only; no button hold or power cut except in an emergency). **Reopens** on any unclean stop the operator did not cause. Record `09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md`. **Reconciled 2026-10-20 — still CLOSED.** Four further unclean stops are **OPERATOR-REPORTED as operator-caused**, with the mechanism not stated, so the reopen condition is not met. Three are journal-evidenced (OBSERVED, zero shutdown markers): 2026-09-27 ~23:40, 2026-09-27 23:50 and 2026-10-07 22:10. For 2026-09-22 ~10:57 the host stop itself is **not** technically observed: only a Zigbee2MQTT session ending without a graceful stop is seen, followed shortly by the next session, and that boot's journal is unavailable. None was recorded at the time, which is *Clean Host Shutdown* rule 5 drift, now recorded late. The 2026-09-29 clean shutdown is the positive control. Record `09_logs/2026-10-20_operational_drift_reconciliation.md` §2. *As raised 2026-08-31:* tracking only. Ten of eleven retained boots ended with **zero** shutdown markers; boot −5 ended with three, which validates the test. The 2026-08-31 event is corroborated independently by Home Assistant reporting an unclean SQLite shutdown and an unfinished recorder session. **Cause UNKNOWN** — no PSU, thermal, BIOS, mains-power, hardware or software claim is made, and **no causal link to C-1 is asserted**. Tracked separately because repeated unclean stops threaten filesystem, database and service integrity beyond Zigbee. Record `09_logs/2026-08-31_unclean_host_shutdowns_finding.md` |
 | **S-1** | Decide + document the LAN trust posture | **DONE 2026-07-28** — *the LAN is a trusted transport, never a substitute for service authentication*; **S-2/S-3/S-4/S-5 unblocked** (`09_logs/2026-07-28_S1_lan_trust_posture_decision.md`) |
 | **S-7** | Health Aggregator now, or accept a third writer | Open — gates the monitoring build |
 | **S-8** | Close the backup monitoring blind spot | **NEXT** — I-4 closed 2026-07-31; **still gated on S-7**, the open Health Aggregator decision. H-1c / N-3 unchanged by I-8 |
-| **S-9** | Zigbee coordinator USB hardening (C-1 structural) | Open — **supporting evidence added 2026-07-31, 2026-08-17 and again 2026-08-22 (fourth occurrence)**, see below. The 2026-08-17 recurrence had **no trigger**, so the failure mode is not confined to hot-plug; the 2026-08-22 recurrence **did** have a logged kernel trigger and ran **nine days undetected**, showing the failure is **silent and permanent** until an unrelated event restarts the container. **Stronger evidence is not remediation — S-9 stays Open** |
+| **S-9** | Zigbee coordinator USB hardening (C-1 structural) | Open — **supporting evidence added 2026-07-31, 2026-08-17 and again 2026-08-22 (fourth occurrence)**, see below. The 2026-08-17 recurrence had **no trigger**, so the failure mode is not confined to hot-plug; the 2026-08-22 recurrence **did** have a logged kernel trigger and ran **nine days undetected**, showing the failure is **silent and permanent** until an unrelated event restarts the container. **Fifth occurrence 2026-09-30** (recorded 2026-10-20): the same signature, about seven days `exited`, restored incidentally by the 2026-10-07 boot. **Stronger evidence is not remediation — S-9 stays Open** |
 | **S-10** | Retention decision + attended prune | Open — **the only irreversible item in the roadmap.** **Its input now exists:** the first would-remove report landed **2026-08-05** as predicted and reached **11 snapshots** by 2026-08-18, holding at 11 through 2026-08-19 — **15 reports, zero deletions**. **Clarified at I-5:** those 11 sit in a group **frozen at 22** that no future snapshot can join, so the set is closed, not growing. **Held at 11 through 2026-08-20** — 16 reports, zero deletions. **Its I-6 precondition is satisfied:** the anchor now has real protection and is outside policy scope. Still needs an explicit mechanism for the 42 legacy snapshots, which no future snapshot can join either. See *Retention dry-run evidence* below |
 | **S-11** | Decide whether to re-expose the voice canary | Open — **needed before F6.1 Step 7** |
-| **M-A** | Design and build real alerting | Open — largest single item. **Supporting evidence for M-1 added 2026-07-31, 2026-08-17 and again 2026-08-22**, see below. The 2026-08-17 outage occurred at 13:12 and the nightly signal layer does not run until 04:00 — awareness is nightly by design and is not a monitor. **The 2026-08-22 outage ran 9 d 02 h undetected** and was reconstructed only after it had ended — the strongest evidence yet for this gap |
+| **M-A** | Design and build real alerting | Open — largest single item. **Supporting evidence for M-1 added 2026-07-31, 2026-08-17 and again 2026-08-22**, see below. The 2026-08-17 outage occurred at 13:12 and the nightly signal layer does not run until 04:00 — awareness is nightly by design and is not a monitor. **The 2026-08-22 outage ran 9 d 02 h undetected** and was reconstructed only after it had ended — the strongest evidence yet for this gap. **The 2026-09-30 outage ran 7 d 00 h undetected** and was found twelve days after it ended, by a documentation reconciliation, not a monitor |
 | **M-B** | Converge the `ai-local` definition with reality | Open — **needs I-3 (done) + F6.1 CLOSED** |
 | **M-C** | Pin production images to digests | Open — after I-3 |
 | **M-D** | Secrets-backup strategy | Open |
@@ -1101,6 +1149,29 @@ the Zigbee2MQTT session logs — the service was operational at 23:38:46, seven 
 operator asked for recovery. **This entry's C-1, M-1 / M-A and S-9 conclusions are unchanged.**
 Record:
 [`../09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md`](../09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md).
+
+### C-1 recurrence 2026-09-30 23:44 — fifth occurrence, seven days undetected
+
+**Recorded 2026-10-20.** Found by a documentation reconciliation, twelve days after it ended.
+
+**What happened.**
+- **Disconnect:** a kernel `USB disconnect` on the coordinator, six minutes after
+  `urb stopped: -32`.
+- **Zigbee2MQTT:** logged `Adapter disconnected, stopping` (`code=2`, `restart=false`).
+- **Docker:** made exactly one restart attempt, at 23:44:31, which failed with the same
+  `restartmanger … no such file or directory` error on the `by-id` path.
+- **Then:** no Zigbee2MQTT session until the **2026-10-07 23:55 boot**, which followed an
+  operator-caused unclean stop. Docker started the container at daemon start, so recovery was
+  **incidental**.
+- **Downtime:** **7 d 00 h 10 m 47 s**. Nothing detected it.
+
+**Additional context, no causal claim:** other devices on the same hub branch disconnected and
+enumerated within the next minute.
+
+**M-1 / M-A and S-9: further evidence, nothing fixed. All three stay Open.**
+
+Record:
+[`../09_logs/2026-10-20_zigbee2mqtt_c1_fifth_recurrence.md`](../09_logs/2026-10-20_zigbee2mqtt_c1_fifth_recurrence.md).
 
 ### Retention dry-run evidence 2026-08-05 → 2026-08-17 — the S-10 input
 

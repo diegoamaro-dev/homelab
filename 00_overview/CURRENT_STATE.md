@@ -13,18 +13,21 @@ count is unchanged). Backup
 `--dry-run`) and **holding across twenty-one further unattended nights**; **backup coverage was
 extended at I-5 (2026-08-19)**, closing the non-secret half of H-2 at 16 recorded paths — the
 secret half stays open as **M-D**; and **the D-1.5 anchor now has real protection (I-6,
-2026-08-20)** — snapshot-level, outside `--tag nightly` scope, id now `42506e44`. **17/17
-containers are running (verified 2026-09-18 12:03)**, but that is **not** a repair: the
-**fourth** C-1 recurrence exited `zigbee2mqtt` on **2026-08-22 at 21:35:11 CEST** and the
-service stayed down **9 d 02 h 03 m 35 s**, until the **2026-08-31 23:38 host reboot restored
-it incidentally**. **No recovery command was required or executed.** Current Zigbee state is
-healthy — **10/10 devices joined**, MQTT connected, Home Assistant entities present, no
-re-pairing (`09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md`).
+2026-08-20)** — snapshot-level, outside `--tag nightly` scope, id now `42506e44`. **All
+containers are running (observed 2026-10-20 01:04 CEST: 20 running, none stopped — 18
+non-QR plus the QR/NFC components present at that moment, whose deployment is in
+progress)**, but that is **not** a repair. The **fifth** C-1 recurrence exited `zigbee2mqtt` on **2026-09-30 at 23:44:30
+CEST**. The service stayed down **7 d 00 h 10 m 47 s**, until the **2026-10-07 boot restored it
+incidentally** (`09_logs/2026-10-20_zigbee2mqtt_c1_fifth_recurrence.md`). The fourth
+(2026-08-22, **9 d 02 h 03 m 35 s** down, restored by the 2026-08-31 reboot with no recovery
+command) is recorded in `09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md`. Current Zigbee
+state is healthy: **10 devices** in the coordinator database, Home Assistant entities at
+baseline, no re-pairing.
 **Nothing was fixed: S-9 remains Open**, and there is still **no real-time
-monitoring or alerting of any kind** — this outage ran **nine days** undetected and was
-reconstructed only after it had already ended, which is stronger evidence for the same gap
-(**M-1** / **M-A**; evidence in `ROADMAP.md` → *C-1 recurrence
-2026-08-22 21:35*). **The 2026-08-31 "no recovery command" statement was re-verified
+monitoring or alerting of any kind**. Both outages ran **for days** undetected and were
+reconstructed only after they had already ended, which is stronger evidence for the same gap
+(**M-1** / **M-A**; evidence in `ROADMAP.md` → *C-1 recurrence 2026-09-30 23:44* and
+*2026-08-22 21:35*). **The 2026-08-31 "no recovery command" statement was re-verified
 2026-09-18 and holds** — three independent sources (session transcript, `dockerd`, Zigbee2MQTT
 session logs) show only Docker's own start at boot. **I-10 is CLOSED 2026-09-18 as a host-fault
 finding:** the operator reports having caused every unclean stop in the journal by holding the
@@ -35,7 +38,19 @@ a shutdown); never hold the button or cut power except in an emergency.** A furt
 on **2026-09-02 13:36** was observed and is covered by that statement. The 2026-08-31 I-10 record's
 journal-retention claim was wrong — **31 boots are retained, back to 2026-05-19**
 (`09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md`). **No causal link to C-1
-is asserted.**
+is asserted.** **Four further unclean stops after 2026-09-18 are OPERATOR-REPORTED as
+operator-caused**, with the mechanism not stated. **I-10 stays CLOSED.**
+- **Journal-evidenced (OBSERVED):** 2026-09-27 ~23:40, 2026-09-27 23:50 and 2026-10-07 22:10,
+  each with zero shutdown markers.
+- **2026-09-22 ~10:57 — the host stop itself is not technically observed.**
+  - OBSERVED is only that a Zigbee2MQTT session ended without a graceful stop and the next one
+    began shortly afterwards.
+  - That boot's journal is unavailable from the inspection context used (a non-root view
+    starting 2026-09-22). That is a visibility limit, and no loss is claimed.
+  - Its classification rests on the operator's report. None was recorded at the time, which is
+*Clean Host Shutdown* rule 5 drift, recorded late in
+`09_logs/2026-10-20_operational_drift_reconciliation.md` §2. The clean shutdown of
+2026-09-29 01:45 is the positive control.
 Independently, the platform reported `degraded` from **2026-08-01** for a *second*
 reason — an empty, freshly-rotated audit log (see *Ingest service* below). **Dated observation,
 2026-08-20 (not investigated, not a claim):** the 04:15 cycle reported `aurora-context: ok`
@@ -49,11 +64,37 @@ meet that bar** (H-5, H-6, M-9, plus F-S1-1 / F-S1-2). See *Infrastructure audit
 2026-07-28* below.
 
 Production:
-**17/17 containers running (verified 2026-09-18 12:03)** — `zigbee2mqtt` running since
-**2026-09-02 13:36:49** (Docker's `unless-stopped` start after the operator-caused 2026-09-02
-power-off), no restart loop (`RestartCount 0`, zero failure markers in the retained session log
-files, zero kernel USB disconnects this boot).
-**The fourth C-1 recurrence has occurred.** The container exited `code=2` at **2026-08-22
+**20 containers running, none stopped (observed 2026-10-20 01:04 CEST).**
+- **Documented services (17):** the 14 captured in `03_services/` plus `guardian-web`,
+  `cloudflared` and `cloudflared-amarolab`.
+- **`amarolab-portfolio` (1):** the Amarolab company website (`amarolab.es`). Intentional
+  production. **Its deployment definition has not been found.**
+- **QR/NFC application — hosted on the UM790, deployment in progress:** the components observed
+  at 01:04 were `qr-amarolab` and `qr-public-edge`, the second created at 01:03 during the
+  reconciliation.
+  - The component set is changing. This document does **not** track it and assumes no fixed
+    number of QR containers.
+  - **The QR project's repository is authoritative for its topology.**
+  - `qr.amarolab.es` is **not** published.
+
+Both newer services were missing from the inventory; that is documentation drift
+(`09_logs/2026-10-20_operational_drift_reconciliation.md` §3–§5).
+
+`zigbee2mqtt` has been running since **2026-10-07 23:55:17**, when Docker started it under
+`unless-stopped` at the boot after the operator-caused 2026-10-07 stop. `RestartCount 0`, and
+there have been zero coordinator disconnects this boot.
+**The fifth C-1 recurrence has occurred** (2026-09-30 23:44:30 CEST):
+- the coordinator disconnected and Zigbee2MQTT logged `Adapter disconnected, stopping`
+  (`code=2`, `restart=false`);
+- Docker made one restart attempt, which failed with the same `restartmanger … no such file or
+  directory` error on the `by-id` path;
+- the service then stayed `exited` for **7 d 00 h 10 m 47 s**, **undetected**, until the
+  2026-10-07 boot restored it **incidentally**.
+
+Nothing alerted, and the outage was found on 2026-10-20 by a documentation reconciliation.
+Record: `09_logs/2026-10-20_zigbee2mqtt_c1_fifth_recurrence.md`.
+*Prior occurrence, kept for context:*
+**The fourth C-1 recurrence.** The container exited `code=2` at **2026-08-22
 21:35:11 CEST** — kernel `USB disconnect` on the coordinator, then Docker's single
 `unless-stopped` restart attempt failing with `restartmanger wait error: … no such file or
 directory` because the `by-id` symlink had not yet been recreated; the device re-enumerated
@@ -69,11 +110,12 @@ restart.
 The Zigbee network re-formed with all **10 devices joined**, no re-pairing, and the entities
 returned — `switch.impresora_3d` to its **`off`** baseline (no actuation) and `cover.toldo` to
 `closed`.
-**Nothing was repaired — S-9 remains Open**, and the fourth occurrence demonstrates the
+**Nothing was repaired — S-9 remains Open.** The fourth and fifth occurrences both show the
 mechanism's worst property: the failure is **silent and permanent** until an unrelated event
 restarts the container. **The physical cause of the USB disconnect is UNKNOWN and no hardware
 root cause is claimed.** Records:
-`09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md` (this occurrence) and
+`09_logs/2026-10-20_zigbee2mqtt_c1_fifth_recurrence.md` (the fifth),
+`09_logs/2026-08-31_zigbee2mqtt_c1_fourth_recurrence.md` (the fourth) and
 `09_logs/2026-08-17_zigbee2mqtt_recovery.md` + `09_logs/2026-08-17_operational_reconciliation.md`
 §3 (the third occurrence, historical);
 `ROADMAP.md` → *C-1 recurrence 2026-08-22 21:35* (**M-1** / **M-A** and **S-9**).
@@ -213,7 +255,27 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-08-19 (**I-5 — extend backup coverage (H-2) — COMPLETE.** The last open
+Last updated: 2026-10-20 (**Operational drift reconciliation — documentation only, no
+production change.**
+- **Inventory:** 20 containers running (observed 01:04 CEST), not the documented 17. The extra
+  ones are `amarolab-portfolio` (the company website; deployment definition not found) and the
+  QR/NFC application's components observed at that time. Its deployment is in progress, the QR
+  project repository is authoritative for its topology, and `qr.amarolab.es` is not published.
+- **Fifth C-1 recurrence:** 2026-09-30, about 7 days undetected, restored incidentally by the
+  2026-10-07 boot. **S-9, M-1 and M-A stay Open.**
+- **Unclean stops:** four after 2026-09-18, all OPERATOR-REPORTED as operator-caused. Three are
+  also journal-evidenced; for 2026-09-22 only a Zigbee2MQTT session boundary is observed.
+  **I-10 stays CLOSED.**
+- **Backups:** QR production data is outside restic, and there is a path-vs-snapshot discrepancy
+  for `/home/diego/webs` that **requires verification**.
+- **Documentation recovery:** `zigbee2mqtt_first_devices.md` was restored to the working tree
+  from HEAD (documentation only).
+
+Records: `09_logs/2026-10-20_operational_drift_reconciliation.md` and
+`09_logs/2026-10-20_zigbee2mqtt_c1_fifth_recurrence.md`. **S-7, S-8 and S-10 are not started.**
+This header line had not been updated since 2026-08-19; the 2026-08-31 and 2026-09-18 changes
+are in `ROADMAP.md` and `AMAROLAB_HANDOFF.md` → *Last updated*.)
+Prior — 2026-08-19 (**I-5 — extend backup coverage (H-2) — COMPLETE.** The last open
 gate, **G-I5-9**, closed on the first unattended cycle: 2026-08-19 03:00 produced snapshot
 `ae45cd50`, which joined the new 16-path group naming `afd3b4b4` as its parent, with a
 **byte-identical 16-element path set** — 65 → **66 snapshots**, group count **unchanged at
@@ -684,10 +746,22 @@ Status: Operational (added RTX-1.6, 2026-06-27)
   with `proxy_next_upstream … non_idempotent` and
   `proxy_buffering off` (streaming preserved).
 - Single point of failure in front of both front doors;
-  `restart: unless-stopped` + healthcheck. A *Torre* outage
-  fails over to the UM790; only a *proxy* outage stops
-  inference (rollback = repoint consumers back to
-  `ollama:11434`).
+  `restart: unless-stopped` + healthcheck. A Torre *transport*
+  failure (`error | timeout | 502 | 503 | 504`) fails over to the
+  UM790 (rollback = repoint consumers back to `ollama:11434`).
+  **Correction 2026-10-20:** a proxy outage is *not* the only way
+  inference stops. A Torre that is reachable but lacks the model
+  (`200` empty list / `404`) does **not** trigger failover. That
+  happened on 2026-10-20: after an SSD/boot troubleshooting session
+  moved Torre's model volume off its drive letter, Aurora
+  disappeared from Open WebUI.
+  **RESOLVED 2026-10-20 03:18 CEST** — normal operation through
+  Torre is restored, verified from the UM790 (V-1 PASS), with no
+  data loss and no change on the UM790. Follow-ups **F-INC-1**
+  (drive-letter dependency), **F-INC-2** (functional health check)
+  and **F-INC-3** (Torre recovery runbook) are open, not
+  implemented. Record:
+  `09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`.
 - Config + compose:
   [`03_services/ollama-proxy/`](../03_services/ollama-proxy/).
 
@@ -797,10 +871,11 @@ Apply log:
 
 ## Zigbee2MQTT
 
-Status: **Operational — running since 2026-09-02 13:36:49 CEST** (Docker start at boot,
-`RestartCount 0`; verified 2026-09-18). **Four C-1 occurrences to date; the fourth
+Status: **Operational — running since 2026-10-07 23:55:17 CEST** (Docker start at boot,
+`RestartCount 0`; observed 2026-10-20). **Five C-1 occurrences to date.** The fifth
+(2026-09-30) ran about 7 days undetected and ended at the 2026-10-07 boot. The fourth
 (2026-08-22) ran 9 d 02 h undetected and ended at the 2026-08-31 boot with no recovery
-command.** **S-9 unfixed.**
+command. **S-9 unfixed.**
 
 - Adapter: Sonoff Zigbee Dongle Plus
 - Frontend: **enabled**
@@ -852,9 +927,20 @@ command.** **S-9 unfixed.**
   operator-caused power-off; its session log ends in NUL bytes with no `Stopping` line) and was
   started by Docker at boot. **Use a clean shutdown** — see the operating norm in the 2026-09-18
   record §7.
+- **Fifth recurrence, 2026-09-30 23:44:30 CEST.** Kernel `USB disconnect` on the coordinator,
+  six minutes after `urb stopped: -32`. Zigbee2MQTT logged `Adapter disconnected, stopping`
+  (`code=2`). Docker's single restart attempt failed on the `by-id` path at 23:44:31. The
+  container then stayed `exited` for **7 d 00 h 10 m 47 s**, **undetected**. Docker started it
+  at the **2026-10-07 23:55 boot**, which followed an operator-caused unclean stop. There was no
+  Zigbee2MQTT session in between. Record: `09_logs/2026-10-20_zigbee2mqtt_c1_fifth_recurrence.md`.
+- **The later host stops are not C-1 events.** These are 2026-09-22 ~10:57, 2026-09-27 ~23:40 /
+  23:50 and 2026-10-07 22:10. Each Zigbee2MQTT session ended without a `Stopped` line, and Docker
+  started the container at the next boot. The stops are OPERATOR-REPORTED as operator-caused. For
+  2026-09-22 only that session boundary is observed; the host journal is not available
+  (`09_logs/2026-10-20_operational_drift_reconciliation.md` §2).
 - **Structural half: S-9. Notification gap: M-1 / M-A** — both **Open**. The nightly signal
-  layer runs 04:00–04:25 and is not a monitor; the third outage was found by inspection seven
-  hours later, and the fourth ran **nine days** without detection.
+  layer runs 04:00–04:25 and is not a monitor. The third outage was found by inspection seven
+  hours later, the fourth ran **nine days** without detection, and the fifth ran **seven days**.
 
 ---
 
@@ -988,6 +1074,17 @@ Status: Operational with **two separate tunnels**.
     (Home Assistant)
   - `ai.amarolab.es` → Open WebUI (bound during D-1.7;
     serves both chat and audio)
+  - **`amarolab.es` (apex)** → the company website, `amarolab-portfolio` on
+    `ai-local_default`. It answered **200** on 2026-10-20, and every request in its access log
+    comes from `cloudflared-amarolab`. *Added 2026-10-20; the hostname has been served since at
+    least the container's creation on 2026-09-25.*
+  - **`qr.amarolab.es` — NOT published.** It answered **HTTP 521** at the Cloudflare edge on
+    2026-10-20. The QR/NFC stack is in deployment and is reachable from the host only
+    (`127.0.0.1:18000`). The QR project's own repository is authoritative for its ingress plan.
+  - The ingress is remote, token-managed configuration. The targets above are the **last
+    logged** configuration (2026-07-20) plus observed traffic, because `docker logs` shows no
+    entries after 2026-07-21. **Not read from the Cloudflare dashboard**
+    (`09_logs/2026-10-20_operational_drift_reconciliation.md` §7).
 - Connector token persisted at
   `/home/diego/.secrets/cloudflared-amarolab.env`
   (mode `0600`, never in repo). Per Lesson 008.
@@ -1138,6 +1235,23 @@ evidence, not a re-gate.
   remains open as M-D** — `ai-stack/.env`, `/home/diego/.secrets/` and
   `/etc/restic/passwd-homelab` are still outside it, so a root-disk loss is **not yet** fully
   recoverable to a running state from restic alone.
+- **QR/NFC application data is outside restic coverage (observed 2026-10-20).** The path set
+  contains no path for `qr-amarolab`.
+  - **Data:** the production SQLite lives in `/srv/homelab/data/qr-amarolab` on the NVMe.
+  - **Backups:** the application writes its own **manual** backups to
+    `/mnt/storage/backups/qr-amarolab`, on the same USB disk as the restic repository. That disk
+    is mounted `nofail`, so if it is absent the writes land on the root filesystem.
+  - **Restore:** per the QR project's own records, no restore against the production database has
+    been tested and no backup scheduler exists. **Restore is not validated.**
+  - Configuration is unchanged; this records state only.
+- **Discrepancy — VERIFICATION REQUIRED.** `/home/diego/webs` is in the path set as a whole, and
+  by file name it contains **secret-bearing files**: the QR project's environment file and the
+  compose files of both tunnels, see R-01.
+  - **Path configuration** implies restic would read them. **Snapshot contents were not
+    verified**, because that needs root and a restic listing, and none was run.
+  - That sits uneasily with the M-D framing above.
+  - **No claim is made that secrets are inside any snapshot.** M-D is unchanged. Record:
+    `09_logs/2026-10-20_operational_drift_reconciliation.md` §6.2.
 - **The backup mechanism is version-controlled as of I-8 (2026-08-20)** —
   `/usr/local/bin/homelab-backup.sh` **and** `/etc/cron.d/homelab-backup` are captured
   byte-identically under `07_operations/backups/`, which is the authority for install targets

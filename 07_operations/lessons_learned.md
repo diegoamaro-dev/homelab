@@ -1,6 +1,6 @@
 # Lessons Learned
 
-Last updated: 2026-06-18
+Last updated: 2026-10-20
 
 ---
 
@@ -481,6 +481,49 @@ Implication:
 
 Reinforces headless persistence (RTX-1.5) and a
 "run lean while serving" operational discipline.
+
+---
+
+## Lesson L-RTX-3
+
+### A drive letter is not a storage identity
+
+Date:
+
+```text
+2026-10-20
+```
+
+Problem:
+
+Aurora disappeared from Open WebUI. Torre's Ollama was
+running and answering, but with an empty model list.
+
+Assumption:
+
+```text
+OLLAMA_MODELS=D:\... always points at the model volume.
+```
+
+Reality:
+
+```text
+After SSD/boot troubleshooting changed the attached disks,
+the model volume received another letter and a cloud-sync
+virtual drive took D:. Ollama answered with an empty model
+catalogue, and the proxy did not fail over because Torre
+was reachable.
+```
+
+Rule:
+
+```text
+Reference service data by a stable volume identity, not a
+mutable drive letter. Before blaming data loss, check
+which volume the configured path actually resolves to.
+```
+
+Record: `09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`.
 
 ---
 

@@ -5,7 +5,31 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-09-18 (**C-1 / I-10 operator-clarification reconciliation — I-10 CLOSED as a
+Last updated: 2026-10-20 (**Operational drift reconciliation — documentation only, no
+production change.**
+- **Fifth C-1 recurrence:** `zigbee2mqtt` exited `code=2` at **2026-09-30 23:44:30** on a
+  coordinator USB disconnect. Docker's single restart attempt failed on the `by-id` path, and the
+  service stayed down **7 d 00 h 10 m 47 s**, undetected, until the 2026-10-07 boot restored it
+  incidentally. **S-9, M-1 and M-A stay Open.**
+- **Four unclean stops after 2026-09-18:** 2026-09-22 ~10:57, 2026-09-27 ~23:40 / 23:50 and
+  2026-10-07 22:10. All are OPERATOR-REPORTED as operator-caused, with the mechanism not stated.
+  Three are journal-evidenced; for 2026-09-22 only a Zigbee2MQTT session boundary is observed,
+  because that boot's journal is unavailable. **I-10 stays CLOSED.** They were not recorded at the time; that is *Clean Host Shutdown* rule 5
+  drift, now recorded.
+- **Runtime:** **20 containers** (observed 01:04 CEST), not 17.
+  - `amarolab-portfolio`: the company website at `amarolab.es`; deployment definition not found.
+  - QR/NFC application: hosted on the UM790, in deployment, host-only. The components observed
+    at 01:04 were `qr-amarolab` and `qr-public-edge`. The set is changing, and the QR project
+    repository is authoritative for its topology. `qr.amarolab.es` answers 521 and is **not**
+    published.
+- **Backups:** QR production data is outside restic. A `/home/diego/webs` path-vs-snapshot
+  discrepancy requires verification, and M-D is unchanged.
+- **Documentation recovery:** `03_services/zigbee-stack/zigbee2mqtt_first_devices.md` was missing
+  from the working tree, cause UNKNOWN, and has been restored from HEAD.
+- **S-7, S-8 and S-10 are not started.**
+
+Records `09_logs/2026-10-20_operational_drift_reconciliation.md` and
+`09_logs/2026-10-20_zigbee2mqtt_c1_fifth_recurrence.md`.) Prior — 2026-09-18 (**C-1 / I-10 operator-clarification reconciliation — I-10 CLOSED as a
 host-fault finding; C-1, S-9, M-1 and M-A unchanged and Open.** Read-only; **no production
 change**. **"No recovery command was executed" on 2026-08-31 is confirmed** by the session
 transcript, a single `dockerd` start at boot (positive-controlled) and a single Zigbee2MQTT
@@ -595,6 +619,11 @@ Aggregator) remains an open zero-cost decision and can be taken at any time.
    update is pending (`/var/run/reboot-required`); the next reboot should be a clean one.
    Normative text: `PROJECT_RULES.md` → *Clean Host Shutdown*; origin
    `09_logs/2026-09-18_c1_i10_operator_clarification_reconciliation.md` §7.
+   **Since adoption:** one clean shutdown (2026-09-29, the positive control) and **four unclean
+   stops**, all OPERATOR-REPORTED as operator-caused, three of them journal-evidenced, none
+   recorded at the time. They were
+   recorded late in `09_logs/2026-10-20_operational_drift_reconciliation.md` §2. Record each
+   future forced stop **when it happens**.
 
 **Backups: the backup step passes, recovery is proven, the retention grouping defect is
 FIXED (I-4, 2026-07-31) and coverage was EXTENDED (I-5, 2026-08-19) — verified still holding
@@ -630,9 +659,10 @@ snapshot can ever join**, so S-10 plans against a **closed** set
 (`09_logs/2026-08-19_I5_closeout.md` §5).
 
 **Superseded — status as of 2026-08-17, kept for context.** The expected fourth C-1 recurrence
-happened on **2026-08-22** and ran nine days undetected; `zigbee2mqtt` has been running since
-**2026-09-02 13:36:49** (17/17 verified 2026-09-18). Current Zigbee status lives in
-`CURRENT_STATE.md` → *Zigbee2MQTT*. *As written 2026-08-17:*
+happened on **2026-08-22** and ran nine days undetected. A **fifth** followed on **2026-09-30**
+and ran about seven days undetected (`09_logs/2026-10-20_zigbee2mqtt_c1_fifth_recurrence.md`).
+`zigbee2mqtt` has been running since **2026-10-07 23:55:17** (observed 2026-10-20). Current
+Zigbee status lives in `CURRENT_STATE.md` → *Zigbee2MQTT*. *As written 2026-08-17:*
 **`zigbee2mqtt` is RUNNING again — recovered 2026-08-17 21:15:13 CEST** (17/17 containers)
 after the **third** C-1 recurrence, which was **a new outage, not the July one**. It restarted
 automatically at the 2026-08-12 reboot, ran healthily for five days, then exited again by the

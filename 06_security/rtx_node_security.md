@@ -1,6 +1,6 @@
 # RTX Node Security — Torre
 
-Last updated: 2026-06-27
+Last updated: 2026-10-20 (fallback assurance qualified after the 2026-10-20 Torre drive-letter incident; nothing else changed). Prior: 2026-06-27
 
 - **Scope:** Security architecture of the **Torre** RTX
   compute node as deployed after **RTX-1.5**.
@@ -147,6 +147,12 @@ Torre IS NOT:
     always-on UM790 CPU fallback means a Torre outage
     degrades performance — it does not break inference.
 ```
+
+> **Qualified 2026-10-20:** this holds for a Torre that is *down or
+> unreachable*. A Torre that is reachable but serves an empty model
+> store (its model volume behind a moved drive letter) does **not**
+> trigger the fallback and did break inference for Aurora —
+> [`../09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`](../09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md).
 
 These map to the architectural invariants carried from
 [node-bridge §1](../04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md)
