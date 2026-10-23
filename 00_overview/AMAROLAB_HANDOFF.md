@@ -5,7 +5,7 @@
 2. CURRENT_STATE.md
 3. ROADMAP.md
 4. INITIAL_SYSTEM_STATUS.md (optional historical context)
-Last updated: 2026-10-20 (**F-INC-2 model-aware `ollama-proxy` fallback — DONE.** Production change: `nginx.conf` reloaded gracefully, no restart. **G-F2-0…G-F2-7 all PASS**: a missing model or an offline Torre falls back to the UM790, and Torre recovery returns to RTX automatically. Closeout `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`. F-INC-1 and F-INC-3 stay OPEN.) Prior — 2026-10-20 (**Operational drift reconciliation — documentation only, no
+Last updated: 2026-10-23 (**F-INC-2 model-aware `ollama-proxy` fallback — DONE.** Production change: `nginx.conf` reloaded gracefully, no restart. **G-F2-0…G-F2-7 all PASS**: a missing model or an offline Torre falls back to the UM790, and Torre recovery returns to RTX automatically. Closeout `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`. F-INC-1 is DONE 2026-10-23; F-INC-3 remains OPEN.) Prior — 2026-10-20 (**Operational drift reconciliation — documentation only, no
 production change.**
 - **Fifth C-1 recurrence:** `zigbee2mqtt` exited `code=2` at **2026-09-30 23:44:30** on a
   coordinator USB disconnect. Docker's single restart attempt failed on the `by-id` path, and the
@@ -608,8 +608,8 @@ Aggregator) remains an open zero-cost decision and can be taken at any time.
   - A missing model or an offline Torre falls back to the UM790, and Torre recovery returns to
     RTX automatically.
   - Closeout: `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`.
-- **F-INC-1** (drive-letter dependency) and **F-INC-3** (Torre recovery runbook) are OPEN and
-  not started.
+- **F-INC-1 DONE 2026-10-23:** Torre Ollama now uses the stable NTFS mount `C:\AmaroLab\Volumes\Contenedor\ai\ollama\models` rather than a mutable drive letter. Service restart, GPU inference, UM790 proxy routing, and temporary drive-letter removal were validated. Closeout: `09_logs/2026-10-23_f_inc_1_stable_model_store_closeout.md`.
+- **F-INC-3** (Torre recovery runbook) remains OPEN.
 - Ledger: `ROADMAP.md` → *Post-RTX-1 follow-ups*.
 
 **Four standing constraints that outlive this session:**

@@ -61,10 +61,10 @@ consistency with the source of truth.
 
 | Identifier | Role |
 |---|---|
-| `100.68.180.69` | UM790 (`homelab`) Tailscale IP — the **only** host allowed to reach Torre's Ollama |
-| `100.91.154.124` | Torre (`torre`) Tailscale IP — the address the UM790 reaches over the tailnet |
-| `192.168.178.21` | Torre LAN IP — the address that is **firewall-blocked** on port 11434 |
-| `192.168.178.0/24` | Home LAN subnet — explicitly blocked on port 11434 |
+| `<UM790_TAILSCALE_IP>` | UM790 (`homelab`) Tailscale IP — the **only** host allowed to reach Torre's Ollama |
+| `<TORRE_TAILSCALE_IP>` | Torre (`torre`) Tailscale IP — the address the UM790 reaches over the tailnet |
+| `<TORRE_LAN_IP>` | Torre LAN IP — the address that is **firewall-blocked** on port 11434 |
+| `<LAN_CIDR>` | Home LAN subnet — explicitly blocked on port 11434 |
 
 No passwords, tokens, keys, or other secrets appear in
 this document.
@@ -178,17 +178,17 @@ highly available depends on it.
            │   (FRITZ!Box — NO inbound port-forward to Torre)
            ▼
    ┌───────────────────────────────────────────────┐
-   │  Home LAN  192.168.178.0/24                    │
+   │  Home LAN  <LAN_CIDR>                    │
    │                                                │
    │   UM790 (homelab)            Torre (torre)     │
-   │   192.168.178.79            192.168.178.21     │
+   │   <UM790_LAN_IP>            <TORRE_LAN_IP>     │
    │        │                         ▲             │
    │        │   LAN → 11434  ✗ BLOCKED │            │
    │        └─────────────────────────┘            │
    └───────────────────────────────────────────────┘
             │                         ▲
             │  Tailscale (WireGuard)  │
-            │  100.68.180.69 ────────▶ 100.91.154.124:11434
+            │  <UM790_TAILSCALE_IP> ────────▶ <TORRE_TAILSCALE_IP>:11434
             │  ALLOWED (/32 only)     │
             ▼                         │
          tailnet ─────────────────────┘
@@ -201,7 +201,7 @@ Boundary statements (all gate-validated):
    host-scoped Windows Firewall allow rule (`/32`).
 2. **The LAN cannot reach Torre's Ollama.** The bind is
    `0.0.0.0:11434`, but the LAN is explicitly blocked
-   (G-1.5-7: LAN probe `192.168.178.21:11434` → curl
+   (G-1.5-7: LAN probe `<TORRE_LAN_IP>:11434` → curl
    exit 28, silent drop).
 3. **There is no public path.** Torre sits behind NAT
    with no port-forward and no Cloudflare tunnel.
@@ -237,7 +237,7 @@ Access control = Network layer only.
 Defence-in-depth, as deployed:
 
 - **Least privilege at the network edge** — exactly one
-  remote host (`100.68.180.69/32`) may reach exactly one
+  remote host (`<UM790_TAILSCALE_IP>/32`) may reach exactly one
   port (TCP 11434).
 - **Explicit deny on top of implicit deny** — the LAN is
   blocked by a dedicated Block rule even though the `/32`
@@ -265,8 +265,8 @@ assumptions*.
 
 ```text
 UM790 (homelab) ──WireGuard via Tailscale──▶ Torre (torre)
-  100.68.180.69                                100.91.154.124:11434
-       (direct path on the shared 192.168.178.0/24 segment)
+  <UM790_TAILSCALE_IP>                                <TORRE_TAILSCALE_IP>:11434
+       (direct path on the shared <LAN_CIDR> segment)
 ```
 
 - Torre joins the same single-user tailnet as the UM790
@@ -297,13 +297,13 @@ group **`Amarolab-RTX-1.4`**, on all profiles
 
 | Rule | Action | Dir | Proto/Port | Remote address | Scope |
 |---|---|---|---|---|---|
-| `Ollama-Tailscale-Only` | **Allow** | Inbound | TCP 11434 | `100.68.180.69/32` (UM790 only) | Any profile |
-| `Ollama-Block-LAN` | **Block** | Inbound | TCP 11434 | `192.168.178.0/24` (LAN) | Any profile |
+| `Ollama-Tailscale-Only` | **Allow** | Inbound | TCP 11434 | `<UM790_TAILSCALE_IP>/32` (UM790 only) | Any profile |
+| `Ollama-Block-LAN` | **Block** | Inbound | TCP 11434 | `<LAN_CIDR>` (LAN) | Any profile |
 
 ```text
 Effective policy on TCP 11434:
-  • ALLOW   from 100.68.180.69/32  (UM790 Tailscale IP)
-  • BLOCK   from 192.168.178.0/24  (home LAN)
+  • ALLOW   from <UM790_TAILSCALE_IP>/32  (UM790 Tailscale IP)
+  • BLOCK   from <LAN_CIDR>  (home LAN)
   • DENY    everything else        (Windows default-deny)
 ```
 
@@ -317,7 +317,7 @@ Key properties (gate-validated):
 - **Re-validated after the service migration.** G-1.5-7
   re-confirmed both halves: UM790 → Tailscale
   `/api/version`, `/api/tags`, `/api/generate` succeed;
-  LAN → `192.168.178.21:11434` blocked (curl exit 28).
+  LAN → `<TORRE_LAN_IP>:11434` blocked (curl exit 28).
 - **No allow-all rule exists.** RTX-1.4 confirmed there
   was no pre-existing broad Ollama/11434 allow rule to
   remove, and none was created.
@@ -349,9 +349,9 @@ Application  : C:\Users\<USERNAME>\AppData\Local\Programs\Ollama\ollama.exe
 Arguments    : serve
 Working dir  : C:\Users\<USERNAME>\AppData\Local\Programs\Ollama
 Environment  : OLLAMA_HOST=0.0.0.0:11434
-               OLLAMA_MODELS=D:\ai\ollama\models
-Logs         : D:\ai\ollama\logs\server.log
-               D:\ai\ollama\logs\server-err.log
+               OLLAMA_MODELS=C:\AmaroLab\Volumes\Contenedor\ai\ollama\models
+Logs         : C:\AmaroLab\Volumes\Contenedor\ai\ollama\logs\server.log
+               C:\AmaroLab\Volumes\Contenedor\ai\ollama\logs\server-err.log
 ```
 
 Process and restart behaviour (the **actual** NSSM 2.24
@@ -398,8 +398,10 @@ Process-tree kill = NSSM 2.24 DEFAULT (whole tree killed on stop)
   A pre-change ACL backup was saved for restore
   (`icacls … /restore`).
 - **LocalSystem data access** confirmed by read/write
-  probe in SYSTEM context: `D:\ai\ollama\models`
-  readable, `D:\ai\ollama\logs` writable.
+  probe in SYSTEM context. The original RTX-1.5 validation used the then-current
+  drive-letter path; F-INC-1 later revalidated production access through
+  `C:\AmaroLab\Volumes\Contenedor\ai\ollama\models` and the corresponding
+  stable log path.
 - **Execution policy** does not block service execution
   from `C:\Tools` (SRP not enforcing, no effective
   AppLocker rules, WDAC user-mode CI in audit only).
@@ -425,7 +427,7 @@ Process-tree kill = NSSM 2.24 DEFAULT (whole tree killed on stop)
 Network-exposed on Torre (by RTX-1.4/1.5 policy):
 
   TCP 11434  Ollama REST API   bind 0.0.0.0   no auth
-             reachable ONLY from 100.68.180.69/32 over Tailscale
+             reachable ONLY from <UM790_TAILSCALE_IP>/32 over Tailscale
              LAN blocked · no public path
 
 Not published to the tailnet by these rules:
@@ -444,7 +446,8 @@ The runtime behind port 11434:
 ```text
 Ollama 0.30.10 (GPU)
 Model  : qwen2.5:7b-instruct  (Q4_K_M, 7.6B, ~4.7 GB)
-Store  : D:\ai\ollama\models  (NVMe; C: store empty)
+Store  : C:\AmaroLab\Volumes\Contenedor\ai\ollama\models
+         (stable NTFS volume mount; physical NVMe volume)
 GPU    : RTX 5070, 29/29 layers offloaded
 VRAM   : ~1.5 GB idle  →  ~6.3 GB warm
 Speed  : ~105 tok/s benchmark / ~111 tok/s warm service
@@ -513,7 +516,7 @@ re-evaluate the posture.
 | RTX-SEC-3 | **Service runs as LocalSystem** (high privilege). | NSSM service must start at boot without a login. | ACL hardening of the NSSM binary/folder (no `Authenticated Users` modify) closes the binary-replacement escalation path. |
 | RTX-SEC-4 | **Always-on listener increases LAN-exposure *duration*** vs the manual tray app. | Headless persistence is the RTX-1.5 objective. | Same firewall scope applies continuously; LAN remains blocked whether or not anyone is logged in (G-1.5-6). |
 | RTX-SEC-5 | **No public-exposure probe yet** (G-5 not formally tested). | NAT + no port-forward + no tunnel make a public path not expected. | **Recommendation —** run an off-tailnet probe + a FRITZ!Box port-forward read before RTX-1.6 to confirm formally. |
-| RTX-SEC-6 | **LAN / Tailscale IPs are recorded in docs.** | Treated repo-wide as non-secret operational detail; sanitisation is a deferred repo-wide decision (ROADMAP). | No credentials are exposed; addresses already exist in git history; **Recommendation —** include this file in any future repo-wide IP-sanitisation pass. |
+| RTX-SEC-6 | **Historical Git revisions may contain node-specific LAN / Tailscale IPs.** | Current shared RTX documentation uses placeholders instead of live node addresses. | Existing Git history was not rewritten during F-INC-1; continue using placeholders for current and future shared documentation. |
 
 ## Mitigated risks
 
@@ -521,10 +524,10 @@ re-evaluate the posture.
 |---|---|---|---|
 | RTX-MIT-1 | Orphaned `llama-server` / VRAM retention after a crash. | NSSM 2.24 default process-tree termination kills the whole tree on stop/restart/crash. | G-1.5-8 (critical) PASS; tree-kill logged at G-1.5-9 (events 1023/1027). |
 | RTX-MIT-2 | Service-binary replacement → LocalSystem escalation. | ACL hardening: inheritance removed; `Authenticated Users` removed; `Users` = ReadAndExecute. | RTX-1.5 *Security Hardening*. |
-| RTX-MIT-3 | Model store landing on the `C:` system drive. | Store moved to `D:\ai\ollama\models`; `OLLAMA_MODELS` set in the **service** environment; C: store empty. | RTX-1.3; G-1.5-2; lesson L-RTX-1. |
+| RTX-MIT-3 | Model store path depending on the system drive or a mutable Windows drive letter. | Store remains on the dedicated NVMe volume, exposed to Ollama through `C:\AmaroLab\Volumes\Contenedor\ai\ollama\models`; `OLLAMA_MODELS` is set in the **service** environment to the stable NTFS mount. | RTX-1.3; F-INC-1; lesson L-RTX-1; lesson L-RTX-3. |
 | RTX-MIT-4 | VRAM contention crash (GUI apps starving the GPU → CUDA kernel crash, partial offload). | "Run lean / headless while serving" discipline; headless service keeps VRAM free. | L-RTX-2; G-1.5-4 (29/29 offload, `size_vram == size`). |
 | RTX-MIT-5 | Loss of serving across logoff / reboot. | Headless NSSM service (LocalSystem, Automatic) survives logoff and reboot-without-login; GPU offload restored at cold boot. | G-1.5-5; **G-1.5-6** (core). |
-| RTX-MIT-6 | LAN-direct reach to `:11434`. | Explicit firewall Block on `192.168.178.0/24`; `/32` allow excludes the LAN; Windows default-deny. | RTX-1.4 G-4; G-1.5-7 (curl exit 28). |
+| RTX-MIT-6 | LAN-direct reach to `:11434`. | Explicit firewall Block on `<LAN_CIDR>`; `/32` allow excludes the LAN; Windows default-deny. | RTX-1.4 G-4; G-1.5-7 (curl exit 28). |
 
 ---
 
@@ -548,7 +551,8 @@ Rebuild-from-documentation (Torre holds no unique
 critical state):
 
 1. Re-pull `qwen2.5:7b-instruct` into
-   `D:\ai\ollama\models` (or restore the model store).
+   `C:\AmaroLab\Volumes\Contenedor\ai\ollama\models`
+   (or restore the model store after recreating the stable NTFS mount).
 2. Re-create `OllamaService` from the recorded NSSM
    parameters (Application / Arguments / Working dir /
    Environment / restart behaviour).
@@ -612,12 +616,15 @@ Confirmed operating rules for Torre as deployed:
    **Recommendation —** periodically verify the firewall
    is enabled and that the `Amarolab-RTX-1.4` group still
    contains exactly the two host-scoped rules (allow
-   `100.68.180.69/32`, block `192.168.178.0/24`) and no
+   `<UM790_TAILSCALE_IP>/32`, block `<LAN_CIDR>`) and no
    allow-all 11434 rule has appeared.
 3. **Keep the NSSM binary/folder ACL-hardened** (no
    `Authenticated Users` modify on `C:\Tools\nssm`).
-4. **Keep the model store on `D:`** and confirm the
-   service environment carries `OLLAMA_MODELS`.
+4. **Keep the model store on the stable NTFS volume mount** and confirm the
+   service environment carries
+   `OLLAMA_MODELS=C:\AmaroLab\Volumes\Contenedor\ai\ollama\models`.
+   The workstation drive letter may remain for human use but is not a
+   load-bearing Ollama dependency.
 5. **Validate after any change** with `nssm get` and the
    RTX-1.5 API/GPU/firewall probes — never assume
    configuration from intent (L-RTX-1, L-RTX-3).

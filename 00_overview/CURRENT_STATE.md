@@ -255,7 +255,7 @@ Related documents:
 - ROADMAP.md
 - INITIAL_SYSTEM_STATUS.md (historical)
 
-Last updated: 2026-10-20 (**F-INC-2 model-aware `ollama-proxy` fallback — DONE.** Production change: `nginx.conf` reloaded gracefully, no restart. **G-F2-0…G-F2-7 all PASS**: a missing model or an offline Torre falls back to the UM790, and Torre recovery returns to RTX automatically. Closeout `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`. F-INC-1 and F-INC-3 stay OPEN.) Prior — 2026-10-20 (**Operational drift reconciliation — documentation only, no
+Last updated: 2026-10-23 (**F-INC-2 model-aware `ollama-proxy` fallback — DONE.** Production change: `nginx.conf` reloaded gracefully, no restart. **G-F2-0…G-F2-7 all PASS**: a missing model or an offline Torre falls back to the UM790, and Torre recovery returns to RTX automatically. Closeout `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`. F-INC-1 is DONE 2026-10-23; F-INC-3 remains OPEN.) Prior — 2026-10-20 (**Operational drift reconciliation — documentation only, no
 production change.**
 - **Inventory:** 20 containers running (observed 01:04 CEST), not the documented 17. The extra
   ones are `amarolab-portfolio` (the company website; deployment definition not found) and the
@@ -501,13 +501,17 @@ in force. The UM790 stays the 24/7 node and still serves its
 own CPU Ollama as the always-on fallback.**
 
 **Torre** (Windows 11 Pro + RTX 5070, 12 GB VRAM;
-Tailscale `100.91.154.124` / LAN `192.168.178.21`) is
+Tailscale `<TORRE_TAILSCALE_IP>` / LAN `<TORRE_LAN_IP>`) is
 the on-demand GPU compute node anticipated by
 [`04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md`](../04_ai_system/amarolab-v1/phase-d/06-rtx-node-bridge.md).
 `qwen2.5:7b-instruct` runs on the RTX 5070 at
-**105.3 tok/s** (3-pass 105.5 / 105.5 / 104.9; model on
+**105.3 tok/s** (3-pass 105.5 / 105.5 / 104.9; model originally validated on
 `D:\ai\ollama\models`, 29/29 layers on GPU) — **≈ 17.6×**
-the ~6 tok/s UM790 CPU baseline. As of RTX-1.6 the front
+the ~6 tok/s UM790 CPU baseline.
+
+Historically, RTX-1 used the drive-letter path above. Since F-INC-1 (2026-10-23),
+production Ollama uses `C:\AmaroLab\Volumes\Contenedor\ai\ollama\models`
+through a stable NTFS volume mount. As of RTX-1.6 the front
 doors consume this GPU path via the `ollama-proxy`
 (measured **101.3 tok/s** end-to-end through the proxy; HA
 conversation 24.1 s CPU → 3.9 s Torre). No service was
@@ -725,7 +729,7 @@ As of **RTX-1.6** both integrations target the
 - Open WebUI → `http://ollama-proxy:11434` (docker network).
 - Home Assistant → `http://127.0.0.1:11435` (loopback).
 
-The proxy routes to **Torre's GPU Ollama** (`100.91.154.124:11434`,
+The proxy routes to **Torre's GPU Ollama** (`<TORRE_TAILSCALE_IP>:11434`,
 ~101 tok/s end-to-end, primary) and falls back automatically
 to the **UM790 CPU Ollama** (`ollama:11434`, ~6 tok/s) when
 Torre is unreachable. The UM790 CPU Ollama (v0.17.7) and
@@ -741,7 +745,7 @@ Status: Operational (added RTX-1.6, 2026-06-27)
   `ai-local_default`; published `127.0.0.1:11435` (loopback
   only, for the host-network Home Assistant).
 - Failover front end for the AURORA ollama endpoint:
-  **Torre** `100.91.154.124:11434` (primary) →
+  **Torre** `<TORRE_TAILSCALE_IP>:11434` (primary) →
   **UM790 CPU** `ollama:11434` (`backup`). `nginx` upstream
   with `proxy_next_upstream … non_idempotent` and
   `proxy_buffering off` (streaming preserved).
@@ -766,7 +770,8 @@ Status: Operational (added RTX-1.6, 2026-06-27)
     The result is a loss of performance, not Aurora's disappearance.
   - `http_500` is deliberately not a fallback condition.
   - The access log carries `ustatus=$upstream_status`.
-  - F-INC-1 and F-INC-3 remain open.
+  - **F-INC-1 DONE 2026-10-23:** production Ollama now uses `C:\AmaroLab\Volumes\Contenedor\ai\ollama\models` through a stable NTFS volume mount. Service restart, GPU inference, UM790 proxy routing, and temporary removal of the workstation drive letter were validated. Closeout: `09_logs/2026-10-23_f_inc_1_stable_model_store_closeout.md`.
+  - F-INC-3 remains open.
 
   Closeout: `09_logs/2026-10-20_f_inc_2_model_aware_fallback_closeout.md`.
 - Config + compose:
@@ -1077,7 +1082,7 @@ Status: Operational with **two separate tunnels**.
   **Untouched** throughout Phase D.
 - **Amarolab tunnel** — `cloudflared-amarolab`
   container on `ai-local_default`. Public Hostnames:
-  - `ha.amarolab.es` → `http://192.168.178.79:8123`
+  - `ha.amarolab.es` → `http://<SERVER_LAN_IP>:8123`
     (Home Assistant)
   - `ai.amarolab.es` → Open WebUI (bound during D-1.7;
     serves both chat and audio)

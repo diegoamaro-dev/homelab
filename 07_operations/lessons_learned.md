@@ -523,7 +523,17 @@ mutable drive letter. Before blaming data loss, check
 which volume the configured path actually resolves to.
 ```
 
-Record: `09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`.
+Applied mitigation — F-INC-1, 2026-10-23:
+
+`C:\AmaroLab\Volumes\Contenedor` is now the stable NTFS volume mount used by production Ollama.
+
+`OLLAMA_MODELS` and the NSSM log paths reference that mount rather than the workstation drive letter. Validation proved Ollama could restart, load `qwen2.5:7b-instruct`, and run full-GPU inference while the drive letter was completely absent.
+
+The drive letter may remain for interactive workstation use, but it is not a load-bearing Ollama dependency.
+
+Closeout: `09_logs/2026-10-23_f_inc_1_stable_model_store_closeout.md`.
+
+Incident record: `09_logs/2026-10-20_aurora_ollama_drive_letter_incident.md`.
 
 ---
 

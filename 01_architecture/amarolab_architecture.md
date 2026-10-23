@@ -104,9 +104,9 @@ Provisioned 2026-06-18; consumed by the UM790 since RTX-1.6
 | CPU       | Intel Core i5-10600K (6c / 12t) |
 | RAM       | 32 GB |
 | GPU       | NVIDIA RTX 5070, 12 GB VRAM |
-| Model store | `D:\ai\ollama\models` (NVMe) |
-| LAN       | 192.168.178.21 |
-| Tailscale | 100.91.154.124 (node `torre`) |
+| Model store | `C:\AmaroLab\Volumes\Contenedor\ai\ollama\models` via stable NTFS volume mount |
+| LAN       | `<TORRE_LAN_IP>` |
+| Tailscale | `<TORRE_TAILSCALE_IP>` (node `torre`) |
 | Runtime   | Ollama 0.30.10 (GPU) |
 | Availability | On-demand (not 24/7) |
 
